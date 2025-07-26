@@ -1,73 +1,63 @@
-# Welcome to your Lovable project
+# 🚀 Kupintar - Your Smart Indonesian Learning Companion
 
-## Project info
+[![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/tailwind_css-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/supabase-%233ECF8E.svg?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.io/)
 
-**URL**: https://lovable.dev/projects/c6345315-9e0d-4401-a3e7-ef233e4151a1
+**Kupintar** is a web application designed to help you learn the Indonesian language in a fun and interactive way. 🇮🇩
 
-## How can I edit this code?
+## ✨ Features
 
-There are several ways of editing your application.
+*   **Interactive Exercises:** Engage with a variety of exercises to practice your vocabulary, grammar, and listening skills.
+*   **Personalized Learning:** Our smart system adapts to your learning pace and provides personalized recommendations.
+*   **Gamified Experience:** Earn points, unlock achievements, and compete with friends to stay motivated.
+*   **Cultural Insights:** Learn about Indonesian culture and customs as you progress through the lessons.
+*   **Community Forum:** Connect with other learners, ask questions, and practice your Indonesian with native speakers.
 
-**Use Lovable**
+## 🚀 Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c6345315-9e0d-4401-a3e7-ef233e4151a1) and start prompting.
+To get a local copy up and running, follow these simple steps.
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+*   Node.js (v18 or higher)
+*   npm
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1.  Clone the repo
+    ```sh
+    git clone https://github.com/your_username_/Project-Name.git
+    ```
+2.  Install NPM packages
+    ```sh
+    npm install
+    ```
+3.  Create a `.env` file and add your Supabase credentials.
+    ```
+    VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+    VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+    ```
+4.  Run the development server
+    ```sh
+    npm run dev
+    ```
 
-Follow these steps:
+## 🤝 Contributing
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 
-# Step 3: Install the necessary dependencies.
-npm i
+Don't forget to give the project a star! Thanks again! ⭐
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
-**Edit a file directly in GitHub**
+## 📜 License
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c6345315-9e0d-4401-a3e7-ef233e4151a1) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Distributed under the MIT License. See `LICENSE` for more information.

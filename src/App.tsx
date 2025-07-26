@@ -1,27 +1,51 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
+import TemanKuPage from './pages/TemanKuPage';
+import { useAuth } from './contexts/AuthContext';
+import { Toaster } from './components/Toaster';
 
-const queryClient = new QueryClient();
+function App() {
+  const { user, loading } = useAuth();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Router>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route 
+          path="/home" 
+          element={user ? <HomePage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/profile" 
+          element={user ? <ProfilePage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/temanku" 
+          element={user ? <TemanKuPage /> : <Navigate to="/" replace />} 
+        />
+        <Route 
+          path="/@:username" 
+          element={user ? <ProfilePage /> : <Navigate to="/" replace />} 
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;
