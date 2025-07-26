@@ -13,6 +13,7 @@ export interface UserProfile {
   rooms_created: number;
   rooms_joined: number;
   messages_sent: number;
+  interests: string[];
   created_at: string;
   updated_at: string;
 }
@@ -123,6 +124,7 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
       rooms_created: 0,
       rooms_joined: 0,
       messages_sent: 0,
+      interests: [],
     };
 
     const { data, error } = await supabase
