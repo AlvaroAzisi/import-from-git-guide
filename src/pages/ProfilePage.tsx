@@ -6,18 +6,13 @@ import {
   BookOpen, 
   Users, 
   MessageCircle, 
-  TrendingUp, 
   Edit3, 
   Save, 
   X,
   Camera,
   Award,
   Calendar,
-  Target,
   LogOut,
-  Upload,
-  Globe,
-  Trash2,
   Plus
 } from 'lucide-react';
 import { updateProfile } from '../lib/auth';
@@ -44,7 +39,7 @@ const ProfilePage: React.FC = () => {
     full_name: profile?.full_name || '',
     username: profile?.username || '',
     bio: profile?.bio || '',
-    interests: profile?.interests || ''
+    interests: Array.isArray(profile?.interests) ? profile.interests : []
   });
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({
@@ -105,7 +100,7 @@ const ProfilePage: React.FC = () => {
         full_name: profile.full_name || '',
         username: profile.username || '',
         bio: profile.bio || '',
-        interests: profile.interests || ''
+        interests: Array.isArray(profile.interests) ? profile.interests : []
       });
     }
   }, [profile]);
@@ -115,7 +110,10 @@ const ProfilePage: React.FC = () => {
     
     setSaving(true);
     try {
-      await updateProfile(user.id, editForm);
+      await updateProfile(user.id, {
+        ...editForm,
+        interests: Array.isArray(editForm.interests) ? editForm.interests : []
+      });
       toast({
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
@@ -142,7 +140,7 @@ const ProfilePage: React.FC = () => {
     try {
       await updateProfile(user.id, { 
         bio: editForm.bio,
-        interests: editForm.interests 
+        interests: Array.isArray(editForm.interests) ? editForm.interests : []
       });
       toast({
         title: "Bio updated",
@@ -216,7 +214,7 @@ const ProfilePage: React.FC = () => {
       full_name: profile?.full_name || '',
       username: profile?.username || '',
       bio: profile?.bio || '',
-      interests: profile?.interests || ''
+      interests: Array.isArray(profile?.interests) ? profile.interests : []
     });
     setIsEditing(false);
     setIsEditingBio(false);
@@ -225,21 +223,24 @@ const ProfilePage: React.FC = () => {
   const handleAddInterest = () => {
     if (!newInterest.trim()) return;
     
-    const currentInterests = editForm.interests ? editForm.interests.split(',').map(i => i.trim()) : [];
+    const currentInterests = Array.isArray(editForm.interests) ? editForm.interests : [];
     if (!currentInterests.includes(newInterest.trim())) {
-      const updatedInterests = [...currentInterests, newInterest.trim()].join(', ');
+      const updatedInterests = [...currentInterests, newInterest.trim()];
       setEditForm(prev => ({ ...prev, interests: updatedInterests }));
     }
     setNewInterest('');
   };
 
   const handleRemoveInterest = (interestToRemove: string) => {
-    const currentInterests = editForm.interests ? editForm.interests.split(',').map(i => i.trim()) : [];
-    const updatedInterests = currentInterests.filter(i => i !== interestToRemove).join(', ');
+    const currentInterests = Array.isArray(editForm.interests) ? editForm.interests : [];
+    const updatedInterests = currentInterests.filter(i => i !== interestToRemove);
     setEditForm(prev => ({ ...prev, interests: updatedInterests }));
   };
 
-  const getInterestsArray = (interests: string) => {
+  const getInterestsArray = (interests: string[] | string) => {
+    if (Array.isArray(interests)) {
+      return interests.filter(i => i.length > 0);
+    }
     return interests ? interests.split(',').map(i => i.trim()).filter(i => i.length > 0) : [];
   };
 

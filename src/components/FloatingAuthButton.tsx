@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { LogIn, Sparkles } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 interface FloatingAuthButtonProps {
   onClick: () => void;

@@ -86,7 +86,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => 
           return;
         }
         
-        if (data.user) {
+        if (data?.user) {
           onSuccess(data.user);
           onClose();
         }
@@ -98,7 +98,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => 
           return;
         }
         
-        if (data.user) {
+        if (data?.user) {
           if (data.user.email_confirmed_at) {
             onSuccess(data.user);
             onClose();

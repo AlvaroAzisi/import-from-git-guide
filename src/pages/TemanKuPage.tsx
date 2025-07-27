@@ -8,8 +8,6 @@ import {
   Users, 
   UserPlus, 
   MessageCircle,
-  Star,
-  MapPin,
   UserCheck,
   UserX,
   Clock
@@ -27,7 +25,7 @@ const TemanKuPage: React.FC = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -235,9 +233,9 @@ const TemanKuPage: React.FC = () => {
                 )}
 
                 {/* Interests */}
-                {user.interests && (
+                {user.interests && Array.isArray(user.interests) && user.interests.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {user.interests.split(',').slice(0, 3).map((interest, idx) => (
+                    {user.interests.slice(0, 3).map((interest: string, idx: number) => (
                       <span
                         key={idx}
                         className="px-3 py-1 bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium"

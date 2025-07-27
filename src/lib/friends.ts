@@ -97,7 +97,7 @@ export const getFriends = async (): Promise<UserProfile[]> => {
 
     if (error) throw error;
 
-    return (data || []).map(item => item.friend_profile).filter(Boolean);
+    return (data || []).map(item => item.friend_profile).filter(Boolean) as unknown as UserProfile[];
   } catch (error) {
     console.error('Get friends error:', error);
     return [];

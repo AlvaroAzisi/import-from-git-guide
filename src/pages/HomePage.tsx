@@ -2,7 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-import { useLanguage } from '../hooks/useLanguage';
+
 import { Navigate } from 'react-router-dom';
 import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search } from 'lucide-react';
 import { getRooms } from '../lib/rooms';
@@ -15,7 +15,7 @@ import type { UserProfile } from '../lib/auth';
 
 const HomePage: React.FC = () => {
   const { user, profile, loading } = useAuth();
-  const { t } = useLanguage();
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);

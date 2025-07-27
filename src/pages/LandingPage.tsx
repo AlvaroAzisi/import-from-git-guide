@@ -25,7 +25,7 @@ const LandingPage: React.FC = () => {
     return <Navigate to="/home" replace />;
   }
 
-  const handleAuthSuccess = (user: any) => {
+  const handleAuthSuccess = () => {
     setShowSuccessToast(true);
     // Redirect will happen automatically via the auth state change
   };
