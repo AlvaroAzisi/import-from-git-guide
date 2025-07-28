@@ -5,6 +5,8 @@ import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import TemanKuPage from './pages/TemanKuPage';
+import RuangkuPage from './pages/RuangkuPage';
+import PublicProfilePage from './pages/PublicProfilePage';
 import { useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/Toaster';
 
@@ -43,8 +45,12 @@ function App() {
           element={user ? <TemanKuPage /> : <Navigate to="/" replace />}
         />
         <Route
+          path="/ruangku/:roomId"
+          element={user ? <RuangkuPage /> : <Navigate to="/" replace />}
+        />
+        <Route
           path="/@:username"
-          element={user ? <ProfilePage /> : <Navigate to="/" replace />}
+          element={<PublicProfilePage />}
         />
 
         {/* Catch-all redirect */}

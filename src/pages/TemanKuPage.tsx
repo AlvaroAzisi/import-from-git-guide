@@ -212,9 +212,12 @@ const TemanKuPage: React.FC = () => {
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-800 dark:text-gray-200 text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <a 
+                      href={`/@${user.username}`}
+                      className="font-bold text-gray-800 dark:text-gray-200 text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors hover:underline"
+                    >
                       {user.full_name}
-                    </h3>
+                    </a>
                     <p className="text-blue-500 text-sm">@{user.username}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-blue-500 font-medium">

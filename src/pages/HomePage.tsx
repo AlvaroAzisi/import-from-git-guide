@@ -88,12 +88,48 @@ const HomePage: React.FC = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-8"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-            Welcome back, {profile?.full_name?.split(' ')[0] || 'Friend'}! 👋
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Ready to find your perfect study buddy and boost your learning?
-          </p>
+          <motion.h1 
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-200 mb-4"
+          >
+            Welcome back, {profile?.full_name?.split(' ')[0] || 'Friend'}! 
+            <motion.span
+              animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 2.5, delay: 1 }}
+              className="inline-block"
+            >
+              👋
+            </motion.span>
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
+          >
+            {(profile?.streak || 0) > 0 
+              ? `🔥 Amazing ${profile?.streak || 0} day streak! Keep the momentum going!`
+              : "Ready to find your perfect study buddy and boost your learning?"
+            }
+          </motion.p>
+          
+          {/* Welcome Animation - Confetti Effect */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="mt-4"
+          >
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="text-6xl"
+            >
+              {(profile?.xp || 0) > 0 ? '🎉' : '📚'}
+            </motion.div>
+          </motion.div>
         </motion.div>
 
         {/* Search Bar */}
@@ -166,9 +202,10 @@ const HomePage: React.FC = () => {
                 ))
               ) : rooms.length > 0 ? (
                 rooms.slice(0, 3).map((room) => (
-                  <div
+                  <a
                     key={room.id}
-                    className="p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/10 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 cursor-pointer"
+                    href={`/ruangku/${room.id}`}
+                    className="block p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/10 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -182,7 +219,7 @@ const HomePage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </a>
                 ))
               ) : (
                 <div className="text-center py-8">
