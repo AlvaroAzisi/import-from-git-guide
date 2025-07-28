@@ -28,6 +28,7 @@ import { useToast } from '../hooks/useToast';
 import { cn } from '../lib/utils';
 
 const ProfilePage: React.FC = () => {
+  // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -47,30 +48,6 @@ const ProfilePage: React.FC = () => {
     roomsJoined: 0,
     messagesSent: 0
   });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
-          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/" replace />;
-  }
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      // Navigation will be handled by the auth state change
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
 
   // Fetch user stats
   React.useEffect(() => {
@@ -104,6 +81,32 @@ const ProfilePage: React.FC = () => {
       });
     }
   }, [profile]);
+
+  // ✅ Early returns AFTER all hooks
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return <Navigate to="/" replace />;
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Navigation will be handled by the auth state change
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
 
   const handleSave = async () => {
     if (!user) return;

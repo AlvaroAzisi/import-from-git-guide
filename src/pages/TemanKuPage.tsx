@@ -21,31 +21,16 @@ import CreateRoomModal from '../components/CreateRoomModal';
 import type { UserProfile } from '../lib/auth';
 
 const TemanKuPage: React.FC = () => {
+  // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
-          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/" replace />;
-  }
 
   // Search users
   React.useEffect(() => {
@@ -78,6 +63,23 @@ const TemanKuPage: React.FC = () => {
     const debounceTimer = setTimeout(searchUsersDebounced, 300);
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, user?.id]);
+
+  // ✅ Early returns AFTER all hooks
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return <Navigate to="/" replace />;
+  }
+
 
   const handleSendFriendRequest = async (friendId: string) => {
     try {

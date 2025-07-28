@@ -14,8 +14,8 @@ import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
 const HomePage: React.FC = () => {
+  // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
-  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -48,6 +48,7 @@ const HomePage: React.FC = () => {
     }
   }, [user]);
 
+  // ✅ Early returns AFTER all hooks
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
