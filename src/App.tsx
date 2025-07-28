@@ -1,3 +1,5 @@
+// App.tsx
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
@@ -9,6 +11,7 @@ import { Toaster } from './components/Toaster';
 function App() {
   const { user, loading } = useAuth();
 
+  // Loading screen saat status auth belum siap
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
@@ -25,22 +28,26 @@ function App() {
       <Toaster />
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route 
-          path="/home" 
-          element={user ? <HomePage /> : <Navigate to="/" replace />} 
+
+        {/* Protected routes */}
+        <Route
+          path="/home"
+          element={user ? <HomePage /> : <Navigate to="/" replace />}
         />
-        <Route 
-          path="/profile" 
-          element={user ? <ProfilePage /> : <Navigate to="/" replace />} 
+        <Route
+          path="/profile"
+          element={user ? <ProfilePage /> : <Navigate to="/" replace />}
         />
-        <Route 
-          path="/temanku" 
-          element={user ? <TemanKuPage /> : <Navigate to="/" replace />} 
+        <Route
+          path="/temanku"
+          element={user ? <TemanKuPage /> : <Navigate to="/" replace />}
         />
-        <Route 
-          path="/@:username" 
-          element={user ? <ProfilePage /> : <Navigate to="/" replace />} 
+        <Route
+          path="/@:username"
+          element={user ? <ProfilePage /> : <Navigate to="/" replace />}
         />
+
+        {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
