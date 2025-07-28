@@ -23,43 +23,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const getInitialSession = async () => {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user || null;
-      setUser(currentUser);
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user || null;
+        setUser(currentUser);
 
-      if (currentUser) {
-        try {
-          const userProfile = await createOrUpdateProfile(currentUser);
-          setProfile(userProfile);
-        } catch (err) {
-          console.error('Failed to fetch/create profile:', err);
-          setProfile(null);
+        if (currentUser) {
+          try {
+            const userProfile = await createOrUpdateProfile(currentUser);
+            setProfile(userProfile);
+          } catch (err) {
+            console.error('Failed to fetch/create profile:', err);
+            setProfile(null);
+          }
         }
+      } catch (err) {
+        console.error('Failed to get session:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     getInitialSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
         setProfile(null); // Reset profile on auth change
 
         if (currentUser) {
-          setLoading(true);
-          try {
-            const userProfile = await createOrUpdateProfile(currentUser);
-            setProfile(userProfile);
-          } catch (err) {
-            console.error('Auth change profile fetch error:', err);
-            setProfile(null);
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          setLoading(false);
+          // Don't set loading here to avoid blocking UI
+          createOrUpdateProfile(currentUser)
+            .then(userProfile => {
+              setProfile(userProfile);
+            })
+            .catch(err => {
+              console.error('Auth change profile fetch error:', err);
+              setProfile(null);
+            });
         }
       }
     );
