@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Get initial session when app mounts
   useEffect(() => {
+    console.log('[Auth] Fetching session...');
     const getInitialSession = async () => {
       setLoading(true);
       try {
@@ -59,25 +60,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     getInitialSession();
 
     // Listen to login/logout changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      setProfile(null); // Reset profile while fetching
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('[Auth] onAuthStateChange:', event, session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        setProfile(null); // Reset profile while fetching
 
-      if (currentUser) {
-        try {
-          const userProfile = await createOrUpdateProfile(currentUser);
-          setProfile(userProfile);
-        } catch (err) {
-          console.error('[AuthContext] Error updating profile:', err);
-          setProfile(null);
+        if (currentUser) {
+          try {
+            const userProfile = await createOrUpdateProfile(currentUser);
+            setProfile(userProfile);
+          } catch (err) {
+            console.error('[AuthContext] Error updating profile:', err);
+            setProfile(null);
+          }
         }
       }
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      listener?.subscription.unsubscribe();
+      console.log('[Auth] Auth listener unsubscribed');
+    };
   }, []);
 
   const value = {

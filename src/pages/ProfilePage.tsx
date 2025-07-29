@@ -88,11 +88,7 @@ const ProfilePage: React.FC = () => {
   }, [profile]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin w-8 h-8 text-gray-400" />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   if (!user || !profile) {
