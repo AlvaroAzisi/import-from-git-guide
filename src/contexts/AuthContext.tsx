@@ -29,23 +29,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const isFetching = useRef(true); // Track if initial fetch is ongoing
+  const isFetching = useRef(true); // Tracks if operations are ongoing
 
-  // Timeout fallback: after 10s, set error only if still fetching
+  // Set a 20-second timeout to allow more time for slow operations
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (isFetching.current) {
         setError('Loading timed out. Please try refreshing.');
         setLoading(false);
-        console.error('[AuthContext] Loading timed out.');
+        console.error('[AuthContext] Loading timed out after 20 seconds.');
       }
-    }, 10000);
+    }, 20000); // Increased to 20 seconds
     return () => clearTimeout(timeout);
   }, []);
 
-  // Get initial session when app mounts
+  // Handle initial session fetch and auth state changes
   useEffect(() => {
     const getInitialSession = async () => {
+      // Prevent duplicate runs in Strict Mode by checking if already fetching
+      if (!isFetching.current) return;
+      isFetching.current = true;
       setLoading(true);
       setError(null);
       try {
@@ -55,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: { session },
           error,
         } = await supabase.auth.getSession();
-        console.timeEnd('getSession');
+        console.timeEnd('getSession'); // Logs time taken
 
         if (error) {
           console.error('[AuthContext] getSession error:', error);
@@ -74,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               currentUser.id
             );
             const userProfile = await createOrUpdateProfile(currentUser);
-            console.timeEnd('createOrUpdateProfile');
+            console.timeEnd('createOrUpdateProfile'); // Logs time taken
             setProfile(userProfile);
             console.log('[Auth] setProfile after getSession:', userProfile);
           } catch (profileErr) {
@@ -94,15 +97,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
         setError('Failed to fetch session: ' + (err?.message || err));
       } finally {
-        isFetching.current = false; // Mark fetch as complete
+        isFetching.current = false;
         setLoading(false);
-        console.log('[Auth] getSession loading set to false');
+        console.log('[Auth] getInitialSession completed');
       }
     };
 
     getInitialSession();
 
-    // Listen to login/logout changes
+    // Listen to auth state changes (e.g., SIGNED_IN)
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[Auth] onAuthStateChange:', event, session);
@@ -141,18 +144,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const value = {
-    user,
-    profile,
-    loading,
-    error,
-  };
+  const value = { user, profile, loading, error };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
