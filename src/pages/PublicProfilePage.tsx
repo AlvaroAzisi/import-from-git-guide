@@ -201,7 +201,7 @@ const PublicProfilePage: React.FC = () => {
             <div className="relative">
               <Avatar className="w-32 h-32 border-4 border-white/20 shadow-lg">
                 <AvatarImage 
-                  src={profile.avatar_url} 
+                  src={profile.avatar_url || undefined} 
                   alt={profile.full_name}
                   className="object-cover"
                 />
