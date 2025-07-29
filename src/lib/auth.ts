@@ -88,7 +88,6 @@ export const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     
-    // Redirect to landing page
     window.location.href = '/';
   } catch (error: any) {
     console.error('Sign out error:', error);
@@ -110,13 +109,12 @@ export const getCurrentUser = async (): Promise<User | null> => {
 export const createOrUpdateProfile = async (user: User): Promise<UserProfile | null> => {
   try {
     const username = user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-
     const profileData = {
       id: user.id,
       email: user.email || '',
       full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Anonymous User',
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
-      username: username,
+      username,
       bio: '',
       xp: 0,
       streak: 0,
@@ -124,51 +122,23 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
       rooms_joined: 0,
       messages_sent: 0,
       interests: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
-    // Cek apakah profil sudah ada
-    const { data: existing, error: fetchError } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('*')
-      .eq('id', user.id)
+      .upsert([profileData], { onConflict: 'id' })
+      .select()
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      // Kalau error bukan "no rows found"
-      throw fetchError;
-    }
-
-    if (existing) {
-      // Sudah ada, update saja
-      const { data: updated, error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          ...profileData,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-      return updated;
-    } else {
-      // Belum ada, insert baru
-      const { data: inserted, error: insertError } = await supabase
-        .from('profiles')
-        .insert([profileData])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-      return inserted;
-    }
+    if (error) throw error;
+    return data;
   } catch (error: any) {
     console.error('Create/update profile error:', error.message || error);
     return null;
   }
 };
-
 
 export const getProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
@@ -250,7 +220,6 @@ export const incrementUserXP = async (userId: string, xpAmount: number = 10): Pr
   }
 };
 
-// Validation helpers
 export const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
