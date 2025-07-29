@@ -196,15 +196,22 @@ const HomePage: React.FC = () => {
             <div className="space-y-3">
               {loadingRooms ? (
                 [...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-16 bg-white/20 dark:bg-gray-800/20 rounded-2xl"></div>
+                  <div key={i} className="p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="h-4 bg-white/30 dark:bg-gray-700/30 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-white/20 dark:bg-gray-700/20 rounded w-1/2"></div>
+                      </div>
+                      <div className="h-4 bg-white/20 dark:bg-gray-700/20 rounded w-16"></div>
+                    </div>
                   </div>
                 ))
               ) : rooms.length > 0 ? (
                 rooms.slice(0, 3).map((room) => (
-                  <a
+                  <motion.a
                     key={room.id}
-                    href={`/ruangku/${room.id}`}
+                    href={`/room/${room.id}`}
+                    whileHover={{ y: -5, scale: 1.02 }}
                     className="block p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/10 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
@@ -219,7 +226,7 @@ const HomePage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  </a>
+                  </motion.a>
                 ))
               ) : (
                 <div className="text-center py-8">
@@ -241,8 +248,15 @@ const HomePage: React.FC = () => {
             <div className="space-y-3">
               {loadingUsers ? (
                 [...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-16 bg-white/20 dark:bg-gray-800/20 rounded-2xl"></div>
+                  <div key={i} className="p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/30 dark:bg-gray-700/30 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-white/30 dark:bg-gray-700/30 rounded w-3/4 mb-1"></div>
+                        <div className="h-3 bg-white/20 dark:bg-gray-700/20 rounded w-1/2"></div>
+                      </div>
+                      <div className="h-3 bg-white/20 dark:bg-gray-700/20 rounded w-12"></div>
+                    </div>
                   </div>
                 ))
               ) : recommendedUsers.length > 0 ? (

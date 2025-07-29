@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import TemanKuPage from './pages/TemanKuPage';
 import RuangkuPage from './pages/RuangkuPage';
+import RoomPage from './pages/RoomPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import { useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/Toaster';
@@ -47,6 +48,10 @@ function App() {
         <Route
           path="/ruangku/:roomId"
           element={user ? <RuangkuPage /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/room/:roomId"
+          element={user ? <RoomPage /> : <Navigate to="/" replace />}
         />
         <Route
           path="/@:username"

@@ -7,11 +7,12 @@ export interface Room {
   subject: string;
   max_members: number;
   is_public: boolean;
-  created_by: string;
+  creator_id: string;
   created_at: string;
   updated_at: string;
   member_count?: number;
   creator?: {
+    id?: string;
     full_name: string;
     avatar_url: string;
   };
@@ -57,25 +58,15 @@ export const createRoom = async (roomData: {
       .from('rooms')
       .insert({
         ...roomData,
-        created_by: user.id
+        creator_id: user.id // Fixed: changed from created_by to creator_id
       })
       .select(`
         *,
-        creator:profiles!created_by(full_name, avatar_url)
+        creator:profiles!creator_id(full_name, avatar_url)
       `)
       .single();
 
     if (error) throw error;
-
-    // Add creator as admin member
-    await supabase
-      .from('room_members')
-      .insert({
-        room_id: data.id,
-        user_id: user.id,
-        role: 'admin'
-      });
-
     return data;
   } catch (error) {
     console.error('Create room error:', error);
@@ -89,10 +80,11 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       .from('rooms')
       .select(`
         *,
-        creator:profiles!created_by(full_name, avatar_url),
+        creator:profiles!creator_id(full_name, avatar_url),
         room_members(count)
       `)
       .eq('is_public', true)
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -108,15 +100,44 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
   }
 };
 
+export const getMyRooms = async (): Promise<Room[]> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('rooms')
+      .select(`
+        *,
+        creator:profiles!creator_id(full_name, avatar_url),
+        room_members(count)
+      `)
+      .eq('creator_id', user.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(room => ({
+      ...room,
+      member_count: room.room_members?.[0]?.count || 0
+    }));
+  } catch (error) {
+    console.error('Get my rooms error:', error);
+    return [];
+  }
+};
+
 export const getRoom = async (roomId: string): Promise<Room | null> => {
   try {
     const { data, error } = await supabase
       .from('rooms')
       .select(`
         *,
-        creator:profiles!created_by(full_name, avatar_url)
+        creator:profiles!creator_id(full_name, avatar_url)
       `)
       .eq('id', roomId)
+      .eq('is_active', true)
       .single();
 
     if (error) throw error;

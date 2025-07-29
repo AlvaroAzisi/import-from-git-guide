@@ -68,6 +68,9 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
           max_members: 10,
           is_public: true
         });
+
+        // Redirect to the new room
+        window.location.href = `/room/${room.id}`;
       } else {
         throw new Error('Failed to create room');
       }
