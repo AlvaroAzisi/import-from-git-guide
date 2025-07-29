@@ -109,9 +109,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 export const createOrUpdateProfile = async (user: User): Promise<UserProfile | null> => {
   try {
-    // Generate username from email
     const username = user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-    
+
     const profileData = {
       id: user.id,
       email: user.email || '',
@@ -127,22 +126,49 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
       interests: [],
     };
 
-    const { data, error } = await supabase
+    // Cek apakah profil sudah ada
+    const { data: existing, error: fetchError } = await supabase
       .from('profiles')
-      .upsert(profileData, { 
-        onConflict: 'id',
-        ignoreDuplicates: false 
-      })
-      .select()
+      .select('*')
+      .eq('id', user.id)
       .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Create/update profile error:', error);
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // Kalau error bukan "no rows found"
+      throw fetchError;
+    }
+
+    if (existing) {
+      // Sudah ada, update saja
+      const { data: updated, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          ...profileData,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      return updated;
+    } else {
+      // Belum ada, insert baru
+      const { data: inserted, error: insertError } = await supabase
+        .from('profiles')
+        .insert([profileData])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      return inserted;
+    }
+  } catch (error: any) {
+    console.error('Create/update profile error:', error.message || error);
     return null;
   }
 };
+
 
 export const getProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
