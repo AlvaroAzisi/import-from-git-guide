@@ -53,6 +53,36 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          message_type: string | null
+          room_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          message_type?: string | null
+          room_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          message_type?: string | null
+          room_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -76,7 +106,7 @@ export type Database = {
           created_at?: string | null
           email: string
           full_name?: string
-          id: string
+          id?: string
           interests?: string[] | null
           messages_sent?: number | null
           rooms_created?: number | null
@@ -104,12 +134,86 @@ export type Database = {
         }
         Relationships: []
       }
+      room_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: string | null
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_public: boolean | null
+          max_members: number | null
+          name: string
+          subject: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_public?: boolean | null
+          max_members?: number | null
+          name: string
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_public?: boolean | null
+          max_members?: number | null
+          name?: string
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_room_member_count: {
+        Args: { room_uuid: string }
+        Returns: number
+      }
+      increment_user_xp: {
+        Args: { user_id: string; xp_amount?: number }
+        Returns: undefined
+      }
+      is_room_member: {
+        Args: { room_uuid: string; user_uuid?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
