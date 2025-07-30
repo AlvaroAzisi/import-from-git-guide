@@ -244,11 +244,19 @@ export type Database = {
         Args: { room_uuid: string }
         Returns: number
       }
+      get_user_room_count: {
+        Args: { room_uuid: string }
+        Returns: number
+      }
       increment_user_xp: {
         Args: { user_id: string; xp_amount?: number }
         Returns: undefined
       }
       is_room_member: {
+        Args: { room_uuid: string; user_uuid?: string }
+        Returns: boolean
+      }
+      is_user_room_member: {
         Args: { room_uuid: string; user_uuid?: string }
         Returns: boolean
       }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -28,7 +28,7 @@ import { useToast } from '../hooks/useToast';
 import { cn } from '../lib/utils';
 
 const ProfilePage: React.FC = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
 
   // Local loading state for fetch-or-create
@@ -88,7 +88,14 @@ const ProfilePage: React.FC = () => {
   }, [profile]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
+        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user || !profile) {
@@ -102,7 +109,7 @@ const ProfilePage: React.FC = () => {
       await updateProfile(user.id, { ...editForm, interests: editForm.interests });
       toast({ title: 'Profile updated', description: 'Your profile has been updated.' });
       setIsEditing(false);
-      await upsertProfile(user);
+      await refreshProfile();
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to update profile.', variant: 'destructive' });
       console.error(err);
@@ -117,7 +124,7 @@ const ProfilePage: React.FC = () => {
       await updateProfile(user.id, { bio: editForm.bio, interests: editForm.interests });
       toast({ title: 'Bio updated', description: 'Your bio has been updated.' });
       setIsEditingBio(false);
-      await upsertProfile(user);
+      await refreshProfile();
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to update bio.', variant: 'destructive' });
       console.error(err);
@@ -132,9 +139,13 @@ const ProfilePage: React.FC = () => {
     setUploadingAvatar(true);
     try {
       const url = await uploadAvatar(file, user.id);
-      await updateProfile(user.id, { avatar_url: url ?? undefined });
-      toast({ title: 'Avatar updated', description: 'Your avatar has been updated.' });
-      await upsertProfile(user);
+      if (url) {
+        await updateProfile(user.id, { avatar_url: url });
+        toast({ title: 'Avatar updated', description: 'Your avatar has been updated.' });
+        await refreshProfile();
+      } else {
+        throw new Error('Failed to upload avatar');
+      }
     } catch (err) {
       toast({ title: 'Error', description: 'Avatar upload failed.', variant: 'destructive' });
       console.error(err);

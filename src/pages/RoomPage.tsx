@@ -189,7 +189,7 @@ const RoomPage: React.FC = () => {
 
     try {
       setUploadingFile(true);
-      const fileUrl = await uploadChatMedia(file, roomId);
+      const fileUrl = await uploadChatMedia(file, roomId, user.id);
       
       if (fileUrl) {
         const message = await sendMessage(roomId, `📷 [Image](${fileUrl})`);

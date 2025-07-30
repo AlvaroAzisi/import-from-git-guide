@@ -3,8 +3,9 @@ import { supabase } from './supabase';
 export const uploadAvatar = async (file: File, userId: string): Promise<string | null> => {
   try {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Math.random()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+    // Structure path for RLS policy: userId/filename
+    const filePath = `${userId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
@@ -50,7 +51,7 @@ export const deleteAvatar = async (url: string): Promise<boolean> => {
   }
 };
 
-export const uploadChatMedia = async (file: File, roomId: string): Promise<string | null> => {
+export const uploadChatMedia = async (file: File, roomId: string, userId: string): Promise<string | null> => {
   try {
     // Validate file size (max 3MB)
     if (file.size > 3 * 1024 * 1024) {
@@ -65,7 +66,8 @@ export const uploadChatMedia = async (file: File, roomId: string): Promise<strin
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-    const filePath = `chat/${roomId}/${fileName}`;
+    // Structure path for RLS policy: roomId/userId/filename
+    const filePath = `${roomId}/${userId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('chat_media')

@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const freshProfile = await getProfile(user.id);
         setProfile(freshProfile);
+        setError(null);
       } catch (err: any) {
         console.error('[AuthContext] Error refreshing profile:', err);
         setError('Failed to refresh profile: ' + (err?.message || err));
