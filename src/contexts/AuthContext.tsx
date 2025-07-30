@@ -38,20 +38,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const isFetching = useRef(true);
+  const initialized = useRef(false);
 
-  const fetchAndSetProfile = async (currentUser: User | null) => {
-    if (!currentUser) return;
+  const fetchProfile = async (currentUser: User) => {
     try {
       console.time('createOrUpdateProfile');
       const userProfile = await createOrUpdateProfile(currentUser);
       console.timeEnd('createOrUpdateProfile');
-      setProfile(userProfile);
-      setError(null);
+      if (userProfile) {
+        setProfile(userProfile);
+        setError(null);
+      } else {
+        throw new Error('Failed to create/update profile');
+      }
     } catch (err: any) {
-      console.error('[AuthContext] Error fetching profile:', err);
+      console.error('[AuthContext] Profile error:', err);
       setProfile(null);
-      setError('Failed to fetch profile: ' + (err?.message || err));
+      setError('Failed to load profile: ' + (err?.message || err));
     }
   };
 
@@ -74,28 +77,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (isFetching.current) {
-        setError('Loading timed out. Please try refreshing.');
-        setLoading(false);
-        console.error('[AuthContext] Loading timed out after 20 seconds.');
-      }
-    }, 20000);
-    return () => clearTimeout(timeout);
-  }, []);
+    if (initialized.current) return;
+    initialized.current = true;
 
-  useEffect(() => {
-    const getInitialSession = async () => {
-      if (!isFetching.current) return;
-      isFetching.current = true;
-      setLoading(true);
-      setError(null);
+    let timeoutId: NodeJS.Timeout;
 
+    const initAuth = async () => {
       try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
+        console.log('[Auth] Initializing auth...');
+        
+        // Set timeout
+        timeoutId = setTimeout(() => {
+          console.error('[AuthContext] Auth initialization timed out');
+          setError('Authentication timed out. Please refresh the page.');
+          setLoading(false);
+        }, 30000);
+
+        // Get initial session
+        console.time('getSession');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.timeEnd('getSession');
 
         if (error) throw error;
 
@@ -103,41 +104,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(currentUser);
 
         if (currentUser) {
-          await fetchAndSetProfile(currentUser);
-        } else {
-          setProfile(null);
+          await fetchProfile(currentUser);
         }
+
+        clearTimeout(timeoutId);
+        setLoading(false);
+        console.log('[Auth] Auth initialization complete');
+
       } catch (err: any) {
-        console.error('[AuthContext] Error fetching session:', err);
+        console.error('[AuthContext] Init error:', err);
         setUser(null);
         setProfile(null);
-        setError('Failed to fetch session: ' + (err?.message || err));
-      } finally {
-        isFetching.current = false;
+        setError('Authentication failed: ' + (err?.message || err));
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
 
-    getInitialSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('[Auth] Auth state changed:', event);
+        
         const currentUser = session?.user ?? null;
         setUser(currentUser);
-        setProfile(null);
 
-        if (currentUser) {
-          await fetchAndSetProfile(currentUser);
-        } else {
+        if (currentUser && event === 'SIGNED_IN') {
+          // Only fetch profile on sign in, not on token refresh
+          setTimeout(() => fetchProfile(currentUser), 0);
+        } else if (!currentUser) {
           setProfile(null);
         }
 
-        setLoading(false);
+        if (initialized.current) {
+          setLoading(false);
+        }
       }
     );
 
+    initAuth();
+
     return () => {
-      listener?.subscription.unsubscribe();
+      subscription?.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
