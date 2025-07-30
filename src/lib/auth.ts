@@ -1,4 +1,3 @@
-// src/lib/auth.ts
 import { supabase } from './supabase';
 import type { User } from '@supabase/supabase-js';
 
@@ -19,11 +18,10 @@ export interface UserProfile {
   updated_at: string;
 }
 
-// ✅ Sign in with Google
 export const signInWithGoogle = async () => {
   try {
     const redirectTo = `${window.location.origin}/home`;
-
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -43,10 +41,13 @@ export const signInWithGoogle = async () => {
   }
 };
 
-// ✅ Email Sign In
 export const signInWithEmail = async (email: string, password: string) => {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
     if (error) throw error;
     return { data, error: null };
   } catch (error: any) {
@@ -55,7 +56,6 @@ export const signInWithEmail = async (email: string, password: string) => {
   }
 };
 
-// ✅ Email Sign Up
 export const signUpWithEmail = async (email: string, password: string) => {
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -74,7 +74,6 @@ export const signUpWithEmail = async (email: string, password: string) => {
   }
 };
 
-// ✅ Sign Out
 export const signOut = async () => {
   try {
     const { error } = await supabase.auth.signOut();
@@ -86,7 +85,6 @@ export const signOut = async () => {
   }
 };
 
-// ✅ Get current authenticated user
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -98,7 +96,6 @@ export const getCurrentUser = async (): Promise<User | null> => {
   }
 };
 
-// ✅ Create or Update user profile
 export const createOrUpdateProfile = async (user: User): Promise<UserProfile | null> => {
   try {
     const username = user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
@@ -133,7 +130,6 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
   }
 };
 
-// ✅ Get profile by user ID
 export const getProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
@@ -150,7 +146,6 @@ export const getProfile = async (userId: string): Promise<UserProfile | null> =>
   }
 };
 
-// ✅ Get profile by username
 export const getProfileByUsername = async (username: string): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
@@ -167,7 +162,6 @@ export const getProfileByUsername = async (username: string): Promise<UserProfil
   }
 };
 
-// ✅ Update profile
 export const updateProfile = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
@@ -185,7 +179,6 @@ export const updateProfile = async (userId: string, updates: Partial<UserProfile
   }
 };
 
-// ✅ Search users by full name or username
 export const searchUsers = async (query: string): Promise<UserProfile[]> => {
   try {
     const { data, error } = await supabase
@@ -202,7 +195,6 @@ export const searchUsers = async (query: string): Promise<UserProfile[]> => {
   }
 };
 
-// ✅ Increment XP (RPC)
 export const incrementUserXP = async (userId: string, xpAmount: number = 10): Promise<boolean> => {
   try {
     const { error } = await supabase.rpc('increment_user_xp', {
@@ -218,13 +210,11 @@ export const incrementUserXP = async (userId: string, xpAmount: number = 10): Pr
   }
 };
 
-// ✅ Utility: Validate email
 export const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// ✅ Utility: Validate password
 export const validatePassword = (password: string): string | null => {
   if (password.length < 6) {
     return 'Password must be at least 6 characters long';
@@ -232,7 +222,6 @@ export const validatePassword = (password: string): string | null => {
   return null;
 };
 
-// ✅ Utility: Validate form
 export const validateForm = (email: string, password: string, confirmPassword?: string) => {
   const errors: { [key: string]: string } = {};
 
