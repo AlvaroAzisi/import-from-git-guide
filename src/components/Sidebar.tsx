@@ -151,6 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onCreateRoom }) => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => handleNavigation('/settings')}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-300"
             >
               <Settings className="w-5 h-5" />

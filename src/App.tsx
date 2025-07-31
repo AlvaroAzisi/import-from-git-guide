@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
+import RoomsPage from './pages/RoomsPage';
+import SettingsPage from './pages/SettingsPage';
 import TemanKuPage from './pages/TemanKuPage';
 import RuangkuPage from './pages/RuangkuPage';
 import RoomPage from './pages/RoomPage';
@@ -40,6 +42,14 @@ function App() {
         <Route
           path="/profile"
           element={user ? <ProfilePage /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/rooms"
+          element={user ? <RoomsPage /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/settings"
+          element={user ? <SettingsPage /> : <Navigate to="/" replace />}
         />
         <Route
           path="/temanku"
