@@ -1,6 +1,6 @@
 // App.tsx
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -15,7 +15,7 @@ import { Toaster } from './components/Toaster';
 
 function App() {
   return (
-    <Router>
+    <>
       <Toaster />
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -85,7 +85,7 @@ function App() {
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+    </>
   );
 }
 
