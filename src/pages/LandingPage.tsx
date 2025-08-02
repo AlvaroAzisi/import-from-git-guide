@@ -12,18 +12,9 @@ import FloatingShapes from '../components/FloatingShapes';
 import AuthPanel from '../components/AuthPanel';
 import FloatingAuthButton from '../components/FloatingAuthButton';
 import SuccessToast from '../components/SuccessToast';
-import { useAuth } from '../hooks/useAuth';
-import { Navigate } from 'react-router-dom';
-
 const LandingPage: React.FC = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const { user } = useAuth();
-
-  // Redirect to home if user is already logged in
-  if (user) {
-    return <Navigate to="/home" replace />;
-  }
 
   const handleAuthSuccess = () => {
     setShowSuccessToast(true);

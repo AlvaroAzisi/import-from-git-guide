@@ -6,6 +6,7 @@ import {
   ReactNode,
   useRef,
 } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import {
@@ -39,6 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const initialized = useRef(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const fetchProfile = async (currentUser: User) => {
     try {
@@ -133,8 +136,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (currentUser && event === 'SIGNED_IN') {
           // Only fetch profile on sign in, not on token refresh
           setTimeout(() => fetchProfile(currentUser), 0);
+          // Redirect to /home after successful authentication
+          if (location.pathname === '/') {
+            navigate('/home', { replace: true });
+          }
         } else if (!currentUser) {
           setProfile(null);
+          // Redirect to landing page when logged out
+          if (location.pathname !== '/') {
+            navigate('/', { replace: true });
+          }
         }
 
         if (initialized.current) {
