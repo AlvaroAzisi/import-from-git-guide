@@ -137,13 +137,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Only fetch profile on sign in, not on token refresh
           setTimeout(() => fetchProfile(currentUser), 0);
           // Redirect to /home after successful authentication
-          if (location.pathname === '/') {
+          if (location.pathname === '/' || location.pathname === '/auth') {
             navigate('/home', { replace: true });
           }
         } else if (!currentUser) {
           setProfile(null);
           // Redirect to landing page when logged out
-          if (location.pathname !== '/') {
+          if (location.pathname !== '/' && !location.pathname.startsWith('/@')) {
             navigate('/', { replace: true });
           }
         }

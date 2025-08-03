@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Menu, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
+import { NotificationBell } from './NotificationBell';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -26,7 +27,10 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
         </motion.button>
 
         {/* Right side - Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Notification Bell */}
+          <NotificationBell />
+          
           {/* Language Toggle */}
           <div className="flex items-center gap-1 backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 rounded-xl p-1">
             <motion.button
