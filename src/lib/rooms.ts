@@ -233,14 +233,17 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   try {
     const { data, error } = await supabase
       .from('room_members')
-      .select(
-        `
+      .select(`
         *,
-        profile:profiles!user_id(full_name, avatar_url, username)
-      `
-      )
+        profile:profiles!fk_room_members_user_id(
+          full_name,
+          avatar_url,
+          username
+        )
+      `)
       .eq('room_id', roomId)
       .order('joined_at', { ascending: true });
+
     if (error) throw error;
     return data || [];
   } catch (error) {
@@ -248,6 +251,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
     return [];
   }
 };
+
 
 
 // Send a message in a room
