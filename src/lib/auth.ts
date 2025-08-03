@@ -98,6 +98,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 export const createOrUpdateProfile = async (user: User): Promise<UserProfile | null> => {
   try {
+    console.log('Creating/updating profile for user:', user.id);
+    
     const username = user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
     const profileData = {
       id: user.id,
@@ -116,11 +118,15 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
       updated_at: new Date().toISOString(),
     };
 
+    console.log('Profile data to upsert:', profileData);
+
     const { data, error } = await supabase
       .from('profiles')
       .upsert([profileData], { onConflict: 'id' })
       .select()
       .single();
+
+    console.log('Upsert result:', { data, error });
 
     if (error) throw error;
     return data;
@@ -132,11 +138,15 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
 
 export const getProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
+    console.log('Getting profile for user:', userId);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
+
+    console.log('Get profile result:', { data, error });
 
     if (error) throw error;
     return data;
@@ -148,11 +158,15 @@ export const getProfile = async (userId: string): Promise<UserProfile | null> =>
 
 export const getProfileByUsername = async (username: string): Promise<UserProfile | null> => {
   try {
+    console.log('Getting profile by username:', username);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('username', username)
       .single();
+
+    console.log('Get profile by username result:', { data, error });
 
     if (error) throw error;
     return data;
@@ -162,30 +176,50 @@ export const getProfileByUsername = async (username: string): Promise<UserProfil
   }
 };
 
-export const updateProfile = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | null> => {
+export const updateProfile = async (userId: string, updates: Partial<UserProfile>) => {
   try {
+    console.log('updateProfile called with:', { userId, updates });
+    
+    // Add updated_at timestamp
+    const updateData = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('Final update data:', updateData);
+
     const { data, error } = await supabase
       .from('profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', userId)
-      .select()
+      .select('*')
       .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
+    console.log('Supabase update response:', { data, error });
+
+    if (error) {
+      console.error('Supabase update error details:', error);
+      throw error;
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
     console.error('Update profile error:', error);
-    return null;
+    throw error;
   }
 };
 
 export const searchUsers = async (query: string): Promise<UserProfile[]> => {
   try {
+    console.log('Searching users with query:', query);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .or(`full_name.ilike.%${query}%,username.ilike.%${query}%`)
       .limit(10);
+
+    console.log('Search users result:', { data, error });
 
     if (error) throw error;
     return data || [];
@@ -197,10 +231,14 @@ export const searchUsers = async (query: string): Promise<UserProfile[]> => {
 
 export const incrementUserXP = async (userId: string, xpAmount: number = 10): Promise<boolean> => {
   try {
+    console.log('Incrementing XP for user:', userId, 'amount:', xpAmount);
+    
     const { error } = await supabase.rpc('increment_user_xp', {
       user_id: userId,
       xp_amount: xpAmount
     });
+
+    console.log('Increment XP result:', { error });
 
     if (error) throw error;
     return true;

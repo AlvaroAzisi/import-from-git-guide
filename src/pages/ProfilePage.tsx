@@ -104,17 +104,38 @@ const ProfilePage: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  // Handlers
+  // Handlers with debug logging
   const handleSave = async () => {
     setSaving(true);
+    console.log('Starting profile update...');
+    console.log('User ID:', user.id);
+    console.log('Form data:', editForm);
+    
     try {
-      await updateProfile(user.id, { ...editForm, interests: editForm.interests });
+      const result = await updateProfile(user.id, {
+        full_name: editForm.full_name,
+        username: editForm.username,
+        bio: editForm.bio,
+        interests: editForm.interests
+      });
+      
+      console.log('Update result:', result);
+      
       toast({ title: 'Profile updated', description: 'Your profile has been updated.' });
       setIsEditing(false);
-      await refreshProfile();
+      
+      // Wait a moment before refreshing
+      setTimeout(async () => {
+        await refreshProfile();
+      }, 300);
+      
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to update profile.', variant: 'destructive' });
-      console.error(err);
+      console.error('Update failed:', err);
+      toast({ 
+        title: 'Error', 
+        description: `Update failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 
+        variant: 'destructive' 
+      });
     } finally {
       setSaving(false);
     }
@@ -122,14 +143,30 @@ const ProfilePage: React.FC = () => {
 
   const handleSaveBio = async () => {
     setSaving(true);
+    console.log('Updating bio and interests:', { bio: editForm.bio, interests: editForm.interests });
+    
     try {
-      await updateProfile(user.id, { bio: editForm.bio, interests: editForm.interests });
+      const result = await updateProfile(user.id, { 
+        bio: editForm.bio, 
+        interests: editForm.interests 
+      });
+      
+      console.log('Bio update result:', result);
+      
       toast({ title: 'Bio updated', description: 'Your bio has been updated.' });
       setIsEditingBio(false);
-      await refreshProfile();
+      
+      setTimeout(async () => {
+        await refreshProfile();
+      }, 300);
+      
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to update bio.', variant: 'destructive' });
-      console.error(err);
+      console.error('Bio update failed:', err);
+      toast({ 
+        title: 'Error', 
+        description: `Bio update failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 
+        variant: 'destructive' 
+      });
     } finally {
       setSaving(false);
     }
@@ -155,7 +192,6 @@ const ProfilePage: React.FC = () => {
       setUploadingAvatar(false);
     }
   };
-
 
   const handleAddInterest = () => {
     if (!newInterest.trim()) return;
