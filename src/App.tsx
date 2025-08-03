@@ -1,5 +1,6 @@
 // App.tsx
 
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
@@ -11,16 +12,33 @@ import RuangkuPage from './pages/RuangkuPage';
 import RoomPage from './pages/RoomPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/Toaster';
 
 function App() {
+  const { user, loading } = useAuth();
+
+  // While we’re checking session, render nothing (or a spinner)
+  if (loading) {
+    return <div className="h-screen flex items-center justify-center">Loading…</div>;
+  }
+
   return (
     <>
       <Toaster />
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
 
-        {/* Protected routes */}
+      <Routes>
+        {/* 1) Landing: if already signed in, send to /home */}
+        <Route
+          path="/"
+          element={
+            user
+              ? <Navigate to="/home" replace />
+              : <LandingPage />
+          }
+        />
+
+        {/* 2) Protected screens */}
         <Route
           path="/home"
           element={
@@ -77,13 +95,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* 3) Public profile pages */}
         <Route
           path="/@:username"
           element={<PublicProfilePage />}
         />
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* 4) Catch-all: if signed in, go home; otherwise go landing */}
+        <Route
+          path="*"
+          element={
+            user
+              ? <Navigate to="/home" replace />
+              : <Navigate to="/" replace />
+          }
+        />
       </Routes>
     </>
   );
