@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Lock, UserPlus, X } from 'lucide-react';
+import { Users, UserPlus, X } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface RoomAccessModalProps {
