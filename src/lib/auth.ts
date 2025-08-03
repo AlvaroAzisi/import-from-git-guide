@@ -100,6 +100,27 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
   try {
     console.log('Creating/updating profile for user:', user.id);
     
+    // First, check if profile already exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // PGRST116 is "not found" error, which is expected for new users
+      throw fetchError;
+    }
+
+    // If profile exists, return it without overwriting
+    if (existingProfile) {
+      console.log('Profile already exists, returning existing profile:', existingProfile);
+      return existingProfile;
+    }
+
+    // Only create new profile if it doesn't exist
+    console.log('Profile does not exist, creating new profile...');
+    
     const username = user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
     const profileData = {
       id: user.id,
@@ -118,15 +139,16 @@ export const createOrUpdateProfile = async (user: User): Promise<UserProfile | n
       updated_at: new Date().toISOString(),
     };
 
-    console.log('Profile data to upsert:', profileData);
+    console.log('Profile data to insert:', profileData);
 
+    // Use INSERT instead of UPSERT for new profiles
     const { data, error } = await supabase
       .from('profiles')
-      .upsert([profileData], { onConflict: 'id' })
+      .insert([profileData])
       .select()
       .single();
 
-    console.log('Upsert result:', { data, error });
+    console.log('Insert result:', { data, error });
 
     if (error) throw error;
     return data;
