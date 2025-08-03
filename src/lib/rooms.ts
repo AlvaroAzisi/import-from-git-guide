@@ -236,7 +236,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
       .select(
         `
         *,
-        profile:profiles(full_name, avatar_url, username)
+        profile:profiles!user_id(full_name, avatar_url, username)
       `
       )
       .eq('room_id', roomId)
@@ -248,6 +248,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
     return [];
   }
 };
+
 
 // Send a message in a room
 export const sendMessage = async (roomId: string, content: string): Promise<Message | null> => {
