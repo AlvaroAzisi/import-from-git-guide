@@ -187,10 +187,8 @@ export const joinRoom = async (roomId: string): Promise<boolean> => {
       .single();
     if (existingMember) throw new Error('Already a member of this room');
 
-    const { count, error: countError } = await supabase
-      .from('room_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('room_id', roomId);
+    const { data: count, error: countError } = await supabase
+      .rpc('get_room_member_count', { p_room_id: roomId });
     if (countError) throw countError;
     if (count !== null && count >= room.max_members) throw new Error('Room is full');
 
@@ -329,13 +327,9 @@ export const isRoomMember = async (roomId: string): Promise<boolean> => {
     if (!user) return false;
 
     const { data, error } = await supabase
-      .from('room_members')
-      .select('id')
-      .eq('room_id', roomId)
-      .eq('user_id', user.id)
-      .single();
+      .rpc('is_room_member', { p_room_id: roomId, p_user_id: user.id });
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return !!data;
   } catch (error) {
     console.error('Check room membership error:', error);
