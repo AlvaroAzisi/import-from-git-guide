@@ -1,33 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, 
-  Users, 
-  Copy, 
-  Crown, 
-  ArrowLeft,
-  Paperclip
-} from 'lucide-react';
+import { Send, Users, Copy, Crown, ArrowLeft, Paperclip } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { 
-  getRoom, 
-  getRoomMembers, 
-  getMessages, 
-  sendMessage, 
-  joinRoom, 
-  leaveRoom, 
-  isRoomMember,
-  type Room, 
-  type RoomMember, 
-  type Message 
-} from '../lib/rooms';
+import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, type Room, type RoomMember, type Message } from '../lib/rooms';
 import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
 import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
 import CreateRoomModal from '../components/CreateRoomModal';
+// Optional: Install lodash for debouncing (npm install lodash)
+import { debounce } from 'lodash';
 
 const RoomPage: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -83,7 +67,7 @@ const RoomPage: React.FC = () => {
         setMessages(messagesData);
         setIsMember(membershipStatus);
       } catch (error) {
-        console.error('Error loading room data:', error);
+        console.error('Error loading room data:', JSON.stringify(error, null, 2));
         toast({
           title: "Error",
           description: "Failed to load room data.",
@@ -101,6 +85,21 @@ const RoomPage: React.FC = () => {
   useEffect(() => {
     if (!roomId || !isMember) return;
 
+    // Optional: Debounce fetchMembers for performance
+    const fetchMembersDebounced = debounce(async () => {
+      try {
+        const membersData = await getRoomMembers(roomId);
+        setMembers(membersData);
+      } catch (error) {
+        console.error('Error fetching members:', JSON.stringify(error, null, 2));
+        toast({
+          title: "Error",
+          description: "Failed to update member list.",
+          variant: "destructive"
+        });
+      }
+    }, 500);
+
     // Subscribe to new messages
     const messagesChannel = supabase
       .channel(`messages-${roomId}`)
@@ -114,18 +113,20 @@ const RoomPage: React.FC = () => {
         },
         async (payload) => {
           const newMessage = payload.new as Message;
-          
-          // Fetch profile data for the message
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', newMessage.user_id)
-            .single();
+          try {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', newMessage.user_id)
+              .single();
 
-          setMessages(prev => [...prev, {
-            ...newMessage,
-            profile: profileData || undefined
-          }]);
+            setMessages(prev => [...prev, {
+              ...newMessage,
+              profile: profileData || undefined
+            }]);
+          } catch (error) {
+            console.error('Error fetching profile for message:', JSON.stringify(error, null, 2));
+          }
         }
       )
       .subscribe();
@@ -136,15 +137,49 @@ const RoomPage: React.FC = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'room_members',
-          filter: `room_id=eq.${roomId}`
+          filter: `room_id=eq.${roomId}`,
         },
-        async () => {
-          // Reload members when changes occur
-          const membersData = await getRoomMembers(roomId);
-          setMembers(membersData);
+        async (payload) => {
+          console.log('Member added:', payload);
+          try {
+            const membersData = await getRoomMembers(roomId);
+            setMembers(membersData);
+            // Use fetchMembersDebounced() if debouncing
+          } catch (error) {
+            console.error('Error fetching members:', JSON.stringify(error, null, 2));
+            toast({
+              title: "Error",
+              description: "Failed to update member list.",
+              variant: "destructive"
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'room_members',
+          filter: `room_id=eq.${roomId}`,
+        },
+        async (payload) => {
+          console.log('Member removed:', payload);
+          try {
+            const membersData = await getRoomMembers(roomId);
+            setMembers(membersData);
+            // Use fetchMembersDebounced() if debouncing
+          } catch (error) {
+            console.error('Error fetching members:', JSON.stringify(error, null, 2));
+            toast({
+              title: "Error",
+              description: "Failed to update member list.",
+              variant: "destructive"
+            });
+          }
         }
       )
       .subscribe();
@@ -153,7 +188,7 @@ const RoomPage: React.FC = () => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(membersChannel);
     };
-  }, [roomId, isMember]);
+  }, [roomId, isMember, toast]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !roomId || sendingMessage) return;
@@ -172,7 +207,7 @@ const RoomPage: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending message:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
         description: "Failed to send message.",
@@ -202,7 +237,7 @@ const RoomPage: React.FC = () => {
         }
       }
     } catch (error: any) {
-      console.error('Error uploading file:', error);
+      console.error('Error uploading file:', JSON.stringify(error, null, 2));
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload image.",
@@ -227,6 +262,7 @@ const RoomPage: React.FC = () => {
         description: "Welcome to the study room!"
       });
     } catch (error: any) {
+      console.error('Join room error:', JSON.stringify(error, null, 2));
       toast({
         title: "Failed to join",
         description: error.message || "Could not join the room.",
@@ -246,6 +282,7 @@ const RoomPage: React.FC = () => {
       });
       navigate('/home');
     } catch (error) {
+      console.error('Leave room error:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
         description: "Failed to leave room.",
