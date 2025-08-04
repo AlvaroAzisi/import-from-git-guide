@@ -44,7 +44,6 @@ export interface Message {
   };
 }
 
-// Create a new room
 export const createRoom = async (roomData: {
   name: string;
   description: string;
@@ -62,7 +61,7 @@ export const createRoom = async (roomData: {
       .insert({
         ...roomData,
         creator_id: user.id,
-        is_active: true // ensure room is active by default
+        is_active: true
       })
       .select(
         `
@@ -80,16 +79,14 @@ export const createRoom = async (roomData: {
   }
 };
 
-// Get public rooms
 export const getRooms = async (limit: number = 10): Promise<Room[]> => {
   try {
-    const { data, error } = await supabase
+    const { data: rooms, error: roomsError } = await supabase
       .from('rooms')
       .select(
         `
         *,
-        creator:profiles!creator_id(full_name, avatar_url),
-        room_members(count)
+        creator:profiles!creator_id(full_name, avatar_url)
       `
       )
       .eq('is_public', true)
@@ -97,56 +94,82 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
-    return (data || []).map(room => ({
-      ...room,
-      member_count: room.room_members?.[0]?.count || 0
-    }));
+    if (roomsError) throw roomsError;
+
+    const memberCounts = await Promise.all(
+      rooms.map(async (room) => {
+        const { data: count, error } = await supabase
+          .rpc('get_room_member_count', { p_room_id: room.id });
+        if (error) throw error;
+        return { id: room.id, member_count: count || 0 };
+      })
+    );
+
+    const roomsWithCounts = rooms.map(room => {
+      const countObj = memberCounts.find(c => c.id === room.id);
+      return {
+        ...room,
+        member_count: countObj ? countObj.member_count : 0
+      };
+    });
+
+    return roomsWithCounts;
   } catch (error) {
     console.error('Get rooms error:', error);
     return [];
   }
 };
 
-// Get rooms created by current user
 export const getMyRooms = async (): Promise<Room[]> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('You must be logged in');
 
-    const { data, error } = await supabase
+    const { data: rooms, error: roomsError } = await supabase
       .from('rooms')
       .select(
         `
         *,
-        creator:profiles!creator_id(full_name, avatar_url),
-        room_members(count)
+        creator:profiles!creator_id(full_name, avatar_url)
       `
       )
       .eq('creator_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return (data || []).map(room => ({
-      ...room,
-      member_count: room.room_members?.[0]?.count || 0
-    }));
+    if (roomsError) throw roomsError;
+
+    const memberCounts = await Promise.all(
+      rooms.map(async (room) => {
+        const { data: count, error } = await supabase
+          .rpc('get_room_member_count', { p_room_id: room.id });
+        if (error) throw error;
+        return { id: room.id, member_count: count || 0 };
+      })
+    );
+
+    const roomsWithCounts = rooms.map(room => {
+      const countObj = memberCounts.find(c => c.id === room.id);
+      return {
+        ...room,
+        member_count: countObj ? countObj.member_count : 0
+      };
+    });
+
+    return roomsWithCounts;
   } catch (error) {
     console.error('Get my rooms error:', error);
     return [];
   }
 };
 
-// Join an existing room
 export const joinRoom = async (roomId: string): Promise<boolean> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('You must be logged in to join a room');
 
-    // Check room exists and is active
     const { data: room, error: roomError } = await supabase
       .from('rooms')
       .select('max_members')
@@ -156,7 +179,6 @@ export const joinRoom = async (roomId: string): Promise<boolean> => {
     if (roomError) throw roomError;
     if (!room) throw new Error('Room not found or inactive');
 
-    // Prevent duplicate membership
     const { data: existingMember } = await supabase
       .from('room_members')
       .select('id')
@@ -165,7 +187,6 @@ export const joinRoom = async (roomId: string): Promise<boolean> => {
       .single();
     if (existingMember) throw new Error('Already a member of this room');
 
-    // Check capacity
     const { count, error: countError } = await supabase
       .from('room_members')
       .select('id', { count: 'exact', head: true })
@@ -176,7 +197,7 @@ export const joinRoom = async (roomId: string): Promise<boolean> => {
     const { error } = await supabase.from('room_members').insert({
       room_id: roomId,
       user_id: user.id,
-      role: 'member' // default role
+      role: 'member'
     });
     if (error) throw error;
     return true;
@@ -186,7 +207,6 @@ export const joinRoom = async (roomId: string): Promise<boolean> => {
   }
 };
 
-// Leave a room
 export const leaveRoom = async (roomId: string): Promise<boolean> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -206,7 +226,6 @@ export const leaveRoom = async (roomId: string): Promise<boolean> => {
   }
 };
 
-// Get a single room (active only)
 export const getRoom = async (roomId: string): Promise<Room | null> => {
   try {
     const { data, error } = await supabase
@@ -228,7 +247,6 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
   }
 };
 
-// Get members of a room
 export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   try {
     const { data, error } = await supabase
@@ -252,16 +270,12 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   }
 };
 
-
-
-// Send a message in a room
 export const sendMessage = async (roomId: string, content: string): Promise<Message | null> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('You must be logged in');
 
-    // Prevent sending empty messages
     if (!content.trim()) throw new Error('Message content is empty');
 
     const { data, error } = await supabase
@@ -287,7 +301,6 @@ export const sendMessage = async (roomId: string, content: string): Promise<Mess
   }
 };
 
-// Get messages in a room
 export const getMessages = async (roomId: string, limit: number = 50): Promise<Message[]> => {
   try {
     const { data, error } = await supabase
@@ -309,7 +322,6 @@ export const getMessages = async (roomId: string, limit: number = 50): Promise<M
   }
 };
 
-// Check if current user is a member of a room
 export const isRoomMember = async (roomId: string): Promise<boolean> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -330,4 +342,3 @@ export const isRoomMember = async (roomId: string): Promise<boolean> => {
     return false;
   }
 };
-
