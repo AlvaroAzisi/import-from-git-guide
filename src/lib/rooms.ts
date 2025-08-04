@@ -263,7 +263,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Get room members error:', error);
+    console.error('Get room members error:', JSON.stringify(error, null, 2));
     return [];
   }
 };
