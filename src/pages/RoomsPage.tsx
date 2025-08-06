@@ -10,7 +10,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getRooms, joinRoom } from '../lib/rooms';
+import { getRooms, joinRoom, isRoomMember } from '../lib/rooms';
 import { useToast } from '../hooks/useToast';
 import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
@@ -30,6 +30,7 @@ const RoomsPage: React.FC = () => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
+  const [isMemberMap, setIsMemberMap] = useState<{ [key: string]: boolean }>({});
 
   const filterOptions = [
     'Mathematics', 'Science', 'History', 'Literature', 'Programming', 
@@ -48,6 +49,22 @@ const RoomsPage: React.FC = () => {
     try {
       const data = await getRooms(50);
       setRooms(data);
+      
+      // Check membership status for each room
+      if (user && data.length > 0) {
+        const membershipStatus = await Promise.all(
+          data.map(async (room) => {
+            try {
+              const isMember = await isRoomMember(room.id);
+              return { [room.id]: isMember || false };
+            } catch (error) {
+              console.error(`Error checking membership for room ${room.id}:`, error);
+              return { [room.id]: false };
+            }
+          })
+        );
+        setIsMemberMap(Object.assign({}, ...membershipStatus));
+      }
     } catch (error) {
       console.error('Error loading rooms:', error);
       toast({
@@ -94,21 +111,45 @@ const RoomsPage: React.FC = () => {
   const handleJoinRoom = async (roomId: string) => {
     if (!user) return;
     
+    // Check if user is already a member
+    if (isMemberMap[roomId]) {
+      toast({
+        title: "Already joined",
+        description: "You are already a member of this room.",
+        variant: "default"
+      });
+      navigate(`/room/${roomId}`);
+      return;
+    }
+    
     setJoining(roomId);
     try {
       await joinRoom(roomId);
+      setIsMemberMap(prev => ({ ...prev, [roomId]: true }));
       toast({
         title: 'Success',
         description: 'Joined room successfully!'
       });
       navigate(`/room/${roomId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error joining room:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to join room',
-        variant: 'destructive'
-      });
+      
+      // Handle specific error cases
+      if (error.message?.includes('already a member')) {
+        setIsMemberMap(prev => ({ ...prev, [roomId]: true }));
+        toast({
+          title: "Already joined",
+          description: "You are already a member of this room.",
+          variant: "default"
+        });
+        navigate(`/room/${roomId}`);
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to join room',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setJoining(null);
     }
@@ -299,15 +340,26 @@ const RoomsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleJoinRoom(room.id)}
-                    disabled={joining === room.id}
-                    className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 disabled:opacity-50"
-                  >
-                    {joining === room.id ? 'Joining...' : 'Join Room'}
-                  </motion.button>
+                  {!isMemberMap[room.id] ? (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleJoinRoom(room.id)}
+                      disabled={joining === room.id}
+                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+                    >
+                      {joining === room.id ? 'Joining...' : 'Join Room'}
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(`/room/${room.id}`)}
+                      className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                    >
+                      Enter Room
+                    </motion.button>
+                  )}
                 </motion.div>
               ))}
             </motion.div>
