@@ -10,8 +10,7 @@ import { useToast } from '../hooks/useToast';
 import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
 import CreateRoomModal from '../components/CreateRoomModal';
-// Optional: Install lodash for debouncing (npm install lodash)
-import { debounce } from 'lodash';
+// Simple debounce implementation without lodash
 
 const RoomPage: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -85,8 +84,8 @@ const RoomPage: React.FC = () => {
   useEffect(() => {
     if (!roomId || !isMember) return;
 
-    // Optional: Debounce fetchMembers for performance
-    const fetchMembersDebounced = debounce(async () => {
+    // Fetch members function for member updates
+    const fetchMembers = async () => {
       try {
         const membersData = await getRoomMembers(roomId);
         setMembers(membersData);
@@ -98,7 +97,7 @@ const RoomPage: React.FC = () => {
           variant: "destructive"
         });
       }
-    }, 500);
+    };
 
     // Subscribe to new messages
     const messagesChannel = supabase
@@ -144,18 +143,7 @@ const RoomPage: React.FC = () => {
         },
         async (payload) => {
           console.log('Member added:', payload);
-          try {
-            const membersData = await getRoomMembers(roomId);
-            setMembers(membersData);
-            // Use fetchMembersDebounced() if debouncing
-          } catch (error) {
-            console.error('Error fetching members:', JSON.stringify(error, null, 2));
-            toast({
-              title: "Error",
-              description: "Failed to update member list.",
-              variant: "destructive"
-            });
-          }
+          fetchMembers();
         }
       )
       .on(
@@ -168,18 +156,7 @@ const RoomPage: React.FC = () => {
         },
         async (payload) => {
           console.log('Member removed:', payload);
-          try {
-            const membersData = await getRoomMembers(roomId);
-            setMembers(membersData);
-            // Use fetchMembersDebounced() if debouncing
-          } catch (error) {
-            console.error('Error fetching members:', JSON.stringify(error, null, 2));
-            toast({
-              title: "Error",
-              description: "Failed to update member list.",
-              variant: "destructive"
-            });
-          }
+          fetchMembers();
         }
       )
       .subscribe();
