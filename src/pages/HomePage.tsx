@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 
 import { Navigate } from 'react-router-dom';
 import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search } from 'lucide-react';
+import { JoinRoomButton } from '../components/JoinRoomButton';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
 import TopBar from '../components/TopBar';
@@ -296,7 +297,7 @@ const HomePage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
-          className="grid md:grid-cols-2 gap-6"
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <button
             onClick={() => setCreateRoomOpen(true)}
@@ -312,6 +313,19 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           </button>
+
+          <div className="p-6 backdrop-blur-md bg-gradient-to-r from-purple-500/20 to-pink-500/20 dark:from-purple-500/10 dark:to-pink-500/10 rounded-3xl border border-purple-200/50 dark:border-purple-700/50 hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+                <Search className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">Join Study Room</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Enter a room code to join instantly</p>
+              </div>
+              <JoinRoomButton />
+            </div>
+          </div>
 
           <button
             onClick={() => window.location.href = '/temanku'}

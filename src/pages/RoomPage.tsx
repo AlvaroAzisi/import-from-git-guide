@@ -10,6 +10,7 @@ import { useToast } from '../hooks/useToast';
 import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
 import CreateRoomModal from '../components/CreateRoomModal';
+import { RoomSettingsPanel } from '../components/RoomSettingsPanel';
 // Simple debounce implementation without lodash
 
 const RoomPage: React.FC = () => {
@@ -306,16 +307,24 @@ const RoomPage: React.FC = () => {
   };
 
   const handleCopyInvite = () => {
-  if (!room) return;
+    if (!room) return;
 
-  const inviteUrl = `${window.location.origin}/room/${room.code || room.id}`;
-  navigator.clipboard.writeText(inviteUrl);
+    const message = `Join my study room "${room.name}" on Kupintar! Use code: ${room.short_code}`;
+    navigator.clipboard.writeText(message);
 
-  toast({
-    title: "Invite link copied!",
-    description: `Link: ${inviteUrl}`
-  });
-};
+    toast({
+      title: "Invite message copied!",
+      description: "Share this message with your friends.",
+    });
+  };
+
+  const handleRoomUpdate = (updatedRoom: Room) => {
+    setRoom(updatedRoom);
+  };
+
+  const handleRoomDelete = () => {
+    navigate('/home');
+  };
 
 
   const renderMessage = (message: Message) => {
@@ -447,6 +456,13 @@ const RoomPage: React.FC = () => {
                 <Copy className="w-4 h-4" />
                 <span className="hidden sm:inline">Invite</span>
               </button>
+              
+              <RoomSettingsPanel
+                room={room}
+                isCreator={room.creator_id === user?.id}
+                onRoomUpdate={handleRoomUpdate}
+                onRoomDelete={handleRoomDelete}
+              />
               
               {isMember && room.creator_id !== user?.id && (
                 <button
