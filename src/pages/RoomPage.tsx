@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Users, Copy, Crown, ArrowLeft, Paperclip } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, type Room, type RoomMember, type Message } from '../lib/rooms';
+import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, getRoomByCode, isValidUUID, type Room, type RoomMember, type Message } from '../lib/rooms';
 import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
@@ -13,7 +13,7 @@ import CreateRoomModal from '../components/CreateRoomModal';
 // Simple debounce implementation without lodash
 
 const RoomPage: React.FC = () => {
-  const { roomId } = useParams<{ roomId: string }>();
+  const { roomId, code } = useParams<{ roomId?: string; code?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -40,16 +40,45 @@ const RoomPage: React.FC = () => {
   // Load room data
   useEffect(() => {
     const loadRoomData = async () => {
-      if (!roomId || !user) return;
+      if (!user) return;
+      
+      const identifier = roomId || code;
+      if (!identifier) return;
 
       try {
         setLoading(true);
-        const [roomData, membersData, messagesData, membershipStatus] = await Promise.all([
-          getRoom(roomId),
-          getRoomMembers(roomId),
-          getMessages(roomId),
-          isRoomMember(roomId)
-        ]);
+        
+        // First, resolve the room - either by UUID or by code
+        let resolvedRoomId: string;
+        let roomData: Room | null = null;
+        
+        if (roomId && isValidUUID(roomId)) {
+          // Direct UUID route
+          resolvedRoomId = roomId;
+          roomData = await getRoom(roomId);
+        } else if (code) {
+          // Code route - resolve to UUID first
+          roomData = await getRoomByCode(code);
+          if (!roomData) {
+            toast({
+              title: "Invalid room code",
+              description: "This room code doesn't exist or has expired.",
+              variant: "destructive"
+            });
+            navigate('/home');
+            return;
+          }
+          resolvedRoomId = roomData.id;
+        } else {
+          // Invalid identifier
+          toast({
+            title: "Invalid room",
+            description: "The room identifier is not valid.",
+            variant: "destructive"
+          });
+          navigate('/home');
+          return;
+        }
 
         if (!roomData) {
           toast({
@@ -60,6 +89,13 @@ const RoomPage: React.FC = () => {
           navigate('/home');
           return;
         }
+
+        // Now use the resolved UUID for all subsequent operations
+        const [membersData, messagesData, membershipStatus] = await Promise.all([
+          getRoomMembers(resolvedRoomId),
+          getMessages(resolvedRoomId),
+          isRoomMember(resolvedRoomId)
+        ]);
 
         setRoom(roomData);
         setMembers(membersData);
@@ -78,16 +114,17 @@ const RoomPage: React.FC = () => {
     };
 
     loadRoomData();
-  }, [roomId, user, navigate, toast]);
+  }, [roomId, code, user, navigate, toast]);
 
   // Set up real-time subscriptions
   useEffect(() => {
-    if (!roomId || !isMember) return;
+    const actualRoomId = room?.id;
+    if (!actualRoomId || !isMember) return;
 
     // Fetch members function for member updates
     const fetchMembers = async () => {
       try {
-        const membersData = await getRoomMembers(roomId);
+        const membersData = await getRoomMembers(actualRoomId);
         setMembers(membersData);
       } catch (error) {
         console.error('Error fetching members:', JSON.stringify(error, null, 2));
@@ -101,14 +138,14 @@ const RoomPage: React.FC = () => {
 
     // Subscribe to new messages
     const messagesChannel = supabase
-      .channel(`messages-${roomId}`)
+      .channel(`messages-${actualRoomId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `room_id=eq.${roomId}`
+          filter: `room_id=eq.${actualRoomId}`
         },
         async (payload) => {
           const newMessage = payload.new as Message;
@@ -132,14 +169,14 @@ const RoomPage: React.FC = () => {
 
     // Subscribe to room member changes
     const membersChannel = supabase
-      .channel(`members-${roomId}`)
+      .channel(`members-${actualRoomId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'room_members',
-          filter: `room_id=eq.${roomId}`,
+          filter: `room_id=eq.${actualRoomId}`,
         },
         async (payload) => {
           console.log('Member added:', payload);
@@ -152,7 +189,7 @@ const RoomPage: React.FC = () => {
           event: 'DELETE',
           schema: 'public',
           table: 'room_members',
-          filter: `room_id=eq.${roomId}`,
+          filter: `room_id=eq.${actualRoomId}`,
         },
         async (payload) => {
           console.log('Member removed:', payload);
@@ -165,14 +202,14 @@ const RoomPage: React.FC = () => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(membersChannel);
     };
-  }, [roomId, isMember, toast]);
+  }, [room?.id, isMember, toast]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !roomId || sendingMessage) return;
+    if (!newMessage.trim() || !room?.id || sendingMessage) return;
 
     try {
       setSendingMessage(true);
-      const message = await sendMessage(roomId, newMessage);
+      const message = await sendMessage(room.id, newMessage);
       
       if (message) {
         setNewMessage('');
@@ -197,14 +234,14 @@ const RoomPage: React.FC = () => {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !roomId || !user) return;
+    if (!file || !room?.id || !user) return;
 
     try {
       setUploadingFile(true);
-      const fileUrl = await uploadChatMedia(file, roomId, user.id);
+      const fileUrl = await uploadChatMedia(file, room.id, user.id);
       
       if (fileUrl) {
-        const message = await sendMessage(roomId, `📷 [Image](${fileUrl})`);
+        const message = await sendMessage(room.id, `📷 [Image](${fileUrl})`);
         if (!message) {
           toast({
             title: "Error",
@@ -229,10 +266,10 @@ const RoomPage: React.FC = () => {
   };
 
   const handleJoinRoom = async () => {
-    if (!roomId) return;
+    if (!room?.id) return;
 
     try {
-      await joinRoom(roomId);
+      await joinRoom(room.id);
       setIsMember(true);
       toast({
         title: "Joined room!",
@@ -249,10 +286,10 @@ const RoomPage: React.FC = () => {
   };
 
   const handleLeaveRoom = async () => {
-    if (!roomId) return;
+    if (!room?.id) return;
 
     try {
-      await leaveRoom(roomId);
+      await leaveRoom(room.id);
       toast({
         title: "Left room",
         description: "You have left the study room."

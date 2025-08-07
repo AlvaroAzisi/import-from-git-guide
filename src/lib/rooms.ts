@@ -1,5 +1,9 @@
 import { supabase } from './supabase';
 
+export const isValidUUID = (value: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+};
+
 export interface Room {
   id: string;
   name: string;

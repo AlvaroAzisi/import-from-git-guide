@@ -94,6 +94,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/join/:code"
+          element={
+            <ProtectedRoute>
+              <RoomPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 3) Public profile pages */}
         <Route
