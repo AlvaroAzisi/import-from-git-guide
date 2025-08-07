@@ -190,6 +190,7 @@ export type Database = {
       }
       rooms: {
         Row: {
+          code: string | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -200,9 +201,9 @@ export type Database = {
           name: string
           subject: string | null
           updated_at: string | null
-          code: string | null /// Added code field for room code
         }
         Insert: {
+          code?: string | null
           created_at?: string | null
           creator_id: string
           description?: string | null
@@ -215,6 +216,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          code?: string | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
@@ -238,11 +240,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      my_room_ids: {
+        Row: {
+          room_id: string | null
+        }
+        Insert: {
+          room_id?: string | null
+        }
+        Update: {
+          room_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_room_members_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_room_member_count: {
-        Args: { room_uuid: string }
+        Args: { p_room_id: string }
         Returns: number
       }
       get_user_room_count: {
@@ -254,7 +275,7 @@ export type Database = {
         Returns: undefined
       }
       is_room_member: {
-        Args: { room_uuid: string; user_uuid?: string }
+        Args: { p_room_id: string; p_user_id: string }
         Returns: boolean
       }
       is_user_room_member: {
