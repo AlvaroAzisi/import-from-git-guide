@@ -50,13 +50,15 @@ export interface Message {
   };
 }
 
+// Update generateRoomCode untuk uppercase
 function generateRoomCode(length = 6) {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   return Array.from({ length }, () =>
     chars[Math.floor(Math.random() * chars.length)]
   ).join('');
 }
 
+// Update createRoom
 export const createRoom = async (roomData: {
   name: string;
   description: string;
@@ -75,7 +77,7 @@ export const createRoom = async (roomData: {
         ...roomData,
         creator_id: user.id,
         is_active: true,
-        code: generateRoomCode(), // 👈 Ini dia
+        short_code: generateRoomCode(), // ✅ pakai short_code
       })
       .select(
         `
@@ -260,23 +262,27 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
   }
 };
 
+// Update getRoomByCode
 export const getRoomByCode = async (roomCode: string): Promise<Room | null> => {
+  const normalizedCode = roomCode.trim().toUpperCase(); // ✅ normalize casing
+
   const { data, error } = await supabase
     .from('rooms')
     .select(`
       *,
       creator:profiles!creator_id(full_name, avatar_url)
     `)
-    .eq('code', roomCode)
+    .eq('short_code', normalizedCode)
     .single();
 
   if (error) {
-    console.error('Error fetching room by CODE:', error);
+    console.error('Error fetching room by short_code:', error);
     return null;
   }
 
   return data;
 };
+
 
 export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   try {
