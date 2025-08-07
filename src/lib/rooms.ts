@@ -44,6 +44,13 @@ export interface Message {
   };
 }
 
+function generateRoomCode(length = 6) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join('');
+}
+
 export const createRoom = async (roomData: {
   name: string;
   description: string;
@@ -61,7 +68,8 @@ export const createRoom = async (roomData: {
       .insert({
         ...roomData,
         creator_id: user.id,
-        is_active: true
+        is_active: true,
+        code: generateRoomCode(), // 👈 Ini dia
       })
       .select(
         `
@@ -78,6 +86,7 @@ export const createRoom = async (roomData: {
     return null;
   }
 };
+
 
 export const getRooms = async (limit: number = 10): Promise<Room[]> => {
   try {
