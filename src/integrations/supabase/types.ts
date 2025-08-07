@@ -200,6 +200,7 @@ export type Database = {
           name: string
           subject: string | null
           updated_at: string | null
+          code: string | null /// Added code field for room code
         }
         Insert: {
           created_at?: string | null

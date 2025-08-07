@@ -269,13 +269,17 @@ const RoomPage: React.FC = () => {
   };
 
   const handleCopyInvite = () => {
-    const inviteUrl = window.location.href;
-    navigator.clipboard.writeText(inviteUrl);
-    toast({
-      title: "Invite link copied!",
-      description: "Share this link with your study buddies."
-    });
-  };
+  if (!room) return;
+
+  const inviteUrl = `${window.location.origin}/room/${room.code || room.id}`;
+  navigator.clipboard.writeText(inviteUrl);
+
+  toast({
+    title: "Invite link copied!",
+    description: `Link: ${inviteUrl}`
+  });
+};
+
 
   const renderMessage = (message: Message) => {
     const isOwn = message.user_id === user?.id;
