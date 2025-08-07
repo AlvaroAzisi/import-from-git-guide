@@ -12,6 +12,7 @@ export interface Room {
   created_at: string;
   updated_at: string;
   member_count?: number;
+  code?: string;
   creator?: {
     id?: string;
     full_name: string;
