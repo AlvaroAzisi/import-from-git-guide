@@ -255,6 +255,24 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
   }
 };
 
+export const getRoomByCode = async (roomCode: string): Promise<Room | null> => {
+  const { data, error } = await supabase
+    .from('rooms')
+    .select(`
+      *,
+      creator:profiles!creator_id(full_name, avatar_url)
+    `)
+    .eq('code', roomCode)
+    .single();
+
+  if (error) {
+    console.error('Error fetching room by CODE:', error);
+    return null;
+  }
+
+  return data;
+};
+
 export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   try {
     const { data, error } = await supabase
