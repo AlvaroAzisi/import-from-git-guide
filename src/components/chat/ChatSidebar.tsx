@@ -1,19 +1,89 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
-import { ChatList } from './ChatList';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import type { ActiveChat } from '../../pages/ChatPage';
 
-export const ChatSidebar: React.FC = () => {
+interface ChatSidebarProps {
+  activeChat: ActiveChat | null;
+  onSelectChat: (chat: ActiveChat) => void;
+}
+
+export const ChatSidebar: React.FC<ChatSidebarProps> = ({
+  activeChat,
+  onSelectChat,
+}) => {
+  const [friends, setFriends] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // fetch current user once
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    async function fetchData() {
+      const [{ data: f }, { data: g }] = await Promise.all([
+        supabase
+          .from('friends')
+          .select('id, friend:profiles!friends_friend_id_fkey(username)')
+          .eq('profile_id', userId),
+        supabase
+          .from('room_members')
+          .select('room_id, rooms(title)')
+          .eq('profile_id', userId),
+      ]);
+      setFriends(f ?? []);
+      setGroups(g ?? []);
+    }
+    fetchData();
+  }, [userId]);
+
   return (
-    <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-6 h-[75vh] flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">Chats</h2>
-        <button className="px-3 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2">
-          <Plus className="w-4 h-4" /> New Group
+    <div className="space-y-4">
+      <h3 className="text-sm text-gray-500 uppercase">Friends</h3>
+      {friends.map((f) => (
+        <button
+          key={f.id}
+          className={`block px-3 py-2 rounded-md w-full text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${
+            activeChat?.id === f.friend.id && activeChat?.type === 'friend'
+              ? 'bg-gray-100 dark:bg-gray-800'
+              : ''
+          }`}
+          onClick={() =>
+            onSelectChat({
+              id: f.friend.id,
+              type: 'friend',
+              name: f.friend.username,
+            })
+          }
+        >
+          @{f.friend.username}
         </button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <ChatList />
-      </div>
+      ))}
+
+      <h3 className="text-sm text-gray-500 uppercase mt-6">Groups</h3>
+      {groups.map((g) => (
+        <button
+          key={g.room_id}
+          className={`block px-3 py-2 rounded-md w-full text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${
+            activeChat?.id === g.room_id && activeChat?.type === 'group'
+              ? 'bg-gray-100 dark:bg-gray-800'
+              : ''
+          }`}
+          onClick={() =>
+            onSelectChat({
+              id: g.room_id,
+              type: 'group',
+              name: g.rooms.title,
+            })
+          }
+        >
+          #{g.rooms.title}
+        </button>
+      ))}
     </div>
   );
 };

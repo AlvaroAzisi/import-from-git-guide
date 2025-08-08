@@ -1,31 +1,110 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
 
-export const ChatWindow: React.FC = () => {
-  const [messages] = React.useState([
-    { id: 'm1', author: 'You', text: 'Hello!', at: new Date().toLocaleTimeString() },
-    { id: 'm2', author: 'Alice', text: 'Hi there 👋', at: new Date().toLocaleTimeString() },
-  ]);
+interface ChatWindowProps {
+  chatId: string;
+  type: 'friend' | 'group';
+  name: string;
+}
+
+export const ChatWindow: React.FC<ChatWindowProps> = ({
+  chatId,
+  type,
+  name,
+}) => {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [text, setText] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // fetch current user once
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!chatId) return;
+
+    // fetch existing messages
+    async function load() {
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .eq(type === 'friend' ? 'friend_id' : 'group_id', chatId)
+        .order('created_at');
+      setMessages(data ?? []);
+    }
+
+    // subscribe to new ones
+    const channel = supabase
+      .channel(`chat-${chatId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `${type === 'friend' ? 'friend_id' : 'group_id'}=eq.${chatId}`,
+        },
+        (payload: any) => {
+          setMessages((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    load();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chatId, type]);
+
+  const sendMessage = async () => {
+    if (!text.trim() || !userId) return;
+    await supabase.from('messages').insert({
+      content: text,
+      sender_id: userId,
+      ...(type === 'friend'
+        ? { friend_id: chatId }
+        : { group_id: chatId }),
+    });
+    setText('');
+  };
 
   return (
-    <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg h-[75vh] flex flex-col">
-      <header className="p-6 border-b border-white/20 dark:border-gray-700/20">
-        <h3 className="font-semibold">Conversation</h3>
-      </header>
-      <section className="flex-1 overflow-y-auto p-6 space-y-3">
-        {messages.map((m, idx) => (
-          <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.1, delay: idx * 0.03 }} className="max-w-md rounded-2xl px-4 py-2 bg-white/40 dark:bg-gray-800/40">
-            <p className="text-xs text-muted-foreground">{m.author} • {m.at}</p>
-            <p>{m.text}</p>
-          </motion.div>
+    <div className="h-full flex flex-col justify-between border rounded-lg bg-white dark:bg-gray-900 p-4">
+      <div className="font-semibold mb-2 text-lg">
+        {type === 'friend' ? '@' : '#'}
+        {name}
+      </div>
+      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`p-2 rounded ${
+              msg.sender_id === userId
+                ? 'bg-blue-200 dark:bg-blue-800 self-end'
+                : 'bg-gray-100 dark:bg-gray-700 self-start'
+            }`}
+          >
+            {msg.content}
+          </div>
         ))}
-      </section>
-      <footer className="p-4 border-t border-white/20 dark:border-gray-700/20">
-        <form className="flex gap-2">
-          <input className="flex-1 rounded-xl px-3 py-2 bg-white/60 dark:bg-gray-800/60 outline-none" placeholder="Type a message..." />
-          <button type="submit" className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">Send</button>
-        </form>
-      </footer>
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type a message..."
+          className="flex-1 px-3 py-2 border rounded dark:bg-gray-800"
+        />
+        <button
+          onClick={sendMessage}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 };
