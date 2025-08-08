@@ -142,7 +142,7 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="fixed inset-0 flex items-center justify-center z-50 p-4"
           >
             <div className="backdrop-blur-md bg-white/30 border border-white/20 rounded-3xl shadow-2xl p-8 w-full max-w-md relative overflow-hidden">

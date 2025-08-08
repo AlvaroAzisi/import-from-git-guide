@@ -190,7 +190,6 @@ export type Database = {
       }
       rooms: {
         Row: {
-          code: string | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -199,11 +198,11 @@ export type Database = {
           is_public: boolean | null
           max_members: number | null
           name: string
+          short_code: string | null
           subject: string | null
           updated_at: string | null
         }
         Insert: {
-          code?: string | null
           created_at?: string | null
           creator_id: string
           description?: string | null
@@ -212,11 +211,11 @@ export type Database = {
           is_public?: boolean | null
           max_members?: number | null
           name: string
+          short_code?: string | null
           subject?: string | null
           updated_at?: string | null
         }
         Update: {
-          code?: string | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
@@ -225,6 +224,7 @@ export type Database = {
           is_public?: boolean | null
           max_members?: number | null
           name?: string
+          short_code?: string | null
           subject?: string | null
           updated_at?: string | null
         }
@@ -262,6 +262,10 @@ export type Database = {
       }
     }
     Functions: {
+      generate_short_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_room_member_count: {
         Args: { p_room_id: string }
         Returns: number

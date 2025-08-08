@@ -11,6 +11,8 @@ import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { RoomSettingsPanel } from '../components/RoomSettingsPanel';
+import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
+import { RequestToJoinButton } from '../components/RequestToJoinButton';
 // Simple debounce implementation without lodash
 
 const RoomPage: React.FC = () => {
@@ -463,6 +465,7 @@ const RoomPage: React.FC = () => {
                 onRoomUpdate={handleRoomUpdate}
                 onRoomDelete={handleRoomDelete}
               />
+              <AdminRoomRequestsPanel roomId={room.id} isCreator={room.creator_id === user?.id} />
               
               {isMember && room.creator_id !== user?.id && (
                 <button
@@ -483,14 +486,18 @@ const RoomPage: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 text-center"
           >
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Join this study room?</h2>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">{room.is_public ? 'Join this study room?' : 'Request access to this private room?'}</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{room.description}</p>
-            <button
-              onClick={handleJoinRoom}
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:shadow-lg transition-all duration-300"
-            >
-              Join Room
-            </button>
+            {room.is_public ? (
+              <button
+                onClick={handleJoinRoom}
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:shadow-lg transition-all duration-300"
+              >
+                Join Room
+              </button>
+            ) : (
+              <RequestToJoinButton roomId={room.id} />
+            )}
           </motion.div>
         ) : (
           /* Chat Interface */

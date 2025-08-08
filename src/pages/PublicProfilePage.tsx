@@ -24,6 +24,8 @@ import CreateRoomModal from '../components/CreateRoomModal';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { BadgeGallery } from '../components/badges/BadgeGallery';
+import { fetchAllBadges, fetchProfileBadges, type Badge as BadgeType, type ProfileBadge as ProfileBadgeType } from '../lib/badges';
 
 const PublicProfilePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
@@ -37,6 +39,8 @@ const PublicProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [friendshipStatus, setFriendshipStatus] = useState<string>('none');
   const [sendingRequest, setSendingRequest] = useState(false);
+  const [allBadges, setAllBadges] = useState<BadgeType[]>([]);
+  const [earnedBadges, setEarnedBadges] = useState<ProfileBadgeType[]>([]);
 
   // Load profile data
   useEffect(() => {
@@ -63,6 +67,27 @@ const PublicProfilePage: React.FC = () => {
 
     loadProfile();
   }, [username, user]);
+
+  // Load badges when profile is available
+  useEffect(() => {
+    const loadBadges = async () => {
+      if (!profile) return;
+      const [all, earned] = await Promise.all([
+        fetchAllBadges(),
+        fetchProfileBadges(profile.id)
+      ]);
+      setAllBadges(all);
+      setEarnedBadges(earned);
+    };
+    loadBadges();
+  }, [profile]);
+
+  // SEO
+  useEffect(() => {
+    if (profile) {
+      document.title = `${profile.full_name} (@${profile.username}) | Profile`;
+    }
+  }, [profile]);
 
   // ✅ Early returns AFTER all hooks
   if (authLoading || loading) {
@@ -320,6 +345,13 @@ const PublicProfilePage: React.FC = () => {
                 </div>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Badges */}
+        {allBadges.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }} className="mb-8">
+            <BadgeGallery badges={allBadges} earned={earnedBadges} />
           </motion.div>
         )}
 

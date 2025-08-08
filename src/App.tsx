@@ -10,6 +10,7 @@ import TemanKuPage from './pages/TemanKuPage';
 import RuangkuPage from './pages/RuangkuPage';
 import RoomPage from './pages/RoomPage';
 import PublicProfilePage from './pages/PublicProfilePage';
+import ChatPage from './pages/ChatPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/Toaster';
@@ -67,6 +68,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
             </ProtectedRoute>
           }
         />
