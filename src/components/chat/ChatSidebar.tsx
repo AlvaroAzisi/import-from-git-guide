@@ -28,12 +28,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       const [{ data: f }, { data: g }] = await Promise.all([
         supabase
           .from('friends')
-          .select('id, friend:profiles!friends_friend_id_fkey(username)')
-          .eq('profile_id', userId),
+          .select('id, status, friend:profiles!friends_friend_id_fkey(id, username)')
+          .eq('user_id', userId)
+          .eq('status', 'accepted'),
         supabase
           .from('room_members')
-          .select('room_id, rooms(title)')
-          .eq('profile_id', userId),
+          .select('room_id, rooms(name)')
+          .eq('user_id', userId),
       ]);
       setFriends(f ?? []);
       setGroups(g ?? []);
@@ -77,11 +78,11 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             onSelectChat({
               id: g.room_id,
               type: 'group',
-              name: g.rooms.title,
+              name: g.rooms.name,
             })
           }
         >
-          #{g.rooms.title}
+          #{g.rooms.name}
         </button>
       ))}
     </div>

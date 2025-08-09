@@ -31,7 +31,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       const { data } = await supabase
         .from('messages')
         .select('*')
-        .eq(type === 'friend' ? 'friend_id' : 'group_id', chatId)
+        .eq('room_id', chatId)
         .order('created_at');
       setMessages(data ?? []);
     }
@@ -41,12 +41,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       .channel(`chat-${chatId}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `${type === 'friend' ? 'friend_id' : 'group_id'}=eq.${chatId}`,
-        },
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `room_id=eq.${chatId}`,
+          },
         (payload: any) => {
           setMessages((prev) => [...prev, payload.new]);
         }
@@ -63,10 +63,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!text.trim() || !userId) return;
     await supabase.from('messages').insert({
       content: text,
-      sender_id: userId,
-      ...(type === 'friend'
-        ? { friend_id: chatId }
-        : { group_id: chatId }),
+      user_id: userId,
+      room_id: chatId,
     });
     setText('');
   };
@@ -82,7 +80,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <div
             key={msg.id}
             className={`p-2 rounded ${
-              msg.sender_id === userId
+              msg.user_id === userId
                 ? 'bg-blue-200 dark:bg-blue-800 self-end'
                 : 'bg-gray-100 dark:bg-gray-700 self-start'
             }`}
