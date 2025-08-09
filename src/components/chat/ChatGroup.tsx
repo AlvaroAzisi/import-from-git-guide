@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { subscribeToGroupMessages } from '@/lib/supabaseRealtime';
+import { supabase } from '../../lib/supabaseClient';
+import { subscribeToGroupMessages } from '../../lib/supabaseRealtime';
 import MessageComposer from './MessageComposer';
 
 interface ChatGroupProps {

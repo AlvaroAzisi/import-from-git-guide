@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import TopBar from '@/components/TopBar';
-import Sidebar from '@/components/Sidebar';
-import { ChatSidebar } from '@/components/chat/ChatSidebar';
-import { ChatWindow } from '@/components/chat/ChatWindow';
+import TopBar from '../components/TopBar';
+import Sidebar from '../components/Sidebar';
+import { ChatSidebar } from '../components/chat/ChatSidebar';
+import { ChatWindow } from '../components/chat/ChatWindow';
 
 export type ActiveChat = {
   id: string;

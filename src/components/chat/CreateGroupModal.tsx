@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { panelBase, panelHeader, panelTitle, panelActions } from '@/styles/panelBase';
+import { panelBase, panelHeader, panelTitle, panelActions } from '../../styles/panelBase';
 import { X, Users } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
-import { useToast } from '@/hooks/useToast';
+import { supabase } from '../../lib/supabaseClient';
+import { useToast } from '../../hooks/useToast';
 
 interface CreateGroupModalProps {
   open: boolean;

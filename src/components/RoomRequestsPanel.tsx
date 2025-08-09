@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { panelBase, panelHeader, panelTitle } from '@/styles/panelBase';
-import { useToast } from '@/hooks/useToast';
-import { supabase } from '@/lib/supabaseClient';
+import { panelBase, panelHeader, panelTitle } from '../styles/panelBase';
+import { useToast } from '../hooks/useToast';
+import { supabase } from '../lib/supabaseClient';
 import RoomRequestItem, { RoomRequestItemData } from './RoomRequestItem';
 import { Users } from 'lucide-react';
-import { subscribeToRoomRequests } from '@/lib/supabaseRealtime';
+import { subscribeToRoomRequests } from '../lib/supabaseRealtime';
 
 interface RoomRequestsPanelProps {
   roomId: string;
