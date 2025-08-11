@@ -47,6 +47,160 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          message_type: string | null
+          reply_to_id: string | null
+          sender_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_type?: string | null
+          reply_to_id?: string | null
+          sender_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_type?: string | null
+          reply_to_id?: string | null
+          sender_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_members: {
+        Row: {
+          conversation_id: string | null
+          id: string
+          joined_at: string | null
+          last_read_at: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          last_message_at: string | null
+          name: string | null
+          room_id: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          last_message_at?: string | null
+          name?: string | null
+          room_id?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          last_message_at?: string | null
+          name?: string | null
+          room_id?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friends: {
         Row: {
           created_at: string | null
@@ -86,13 +240,96 @@ export type Database = {
           },
         ]
       }
+      join_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          room_id: string
+          uses_remaining: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          room_id: string
+          uses_remaining?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          room_id?: string
+          uses_remaining?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "join_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "join_codes_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reads: {
+        Row: {
+          id: string
+          message_id: string | null
+          read_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          message_id?: string | null
+          read_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          message_id?: string | null
+          read_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
           created_at: string | null
           id: string
           message_type: string | null
+          recipient_id: string | null
           room_id: string
+          sender_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -101,7 +338,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           message_type?: string | null
+          recipient_id?: string | null
           room_id: string
+          sender_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -110,7 +349,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           message_type?: string | null
+          recipient_id?: string | null
           room_id?: string
+          sender_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -257,6 +498,48 @@ export type Database = {
           },
         ]
       }
+      room_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          room_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          room_id: string
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          room_id?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_requests_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           created_at: string | null
@@ -331,9 +614,50 @@ export type Database = {
       }
     }
     Functions: {
+      accept_room_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          message: string | null
+          room_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+      }
+      create_dm_conversation: {
+        Args: { other_user_id: string }
+        Returns: string
+      }
+      create_room_request: {
+        Args: { p_room_id: string; p_message?: string }
+        Returns: {
+          created_at: string
+          id: string
+          message: string | null
+          room_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+      }
+      decline_room_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          message: string | null
+          room_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+      }
       generate_short_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_conversation_unread_count: {
+        Args: { conversation_uuid: string; user_uuid?: string }
+        Returns: number
       }
       get_room_member_count: {
         Args: { p_room_id: string }
@@ -347,6 +671,12 @@ export type Database = {
         Args: { user_id: string; xp_amount?: number }
         Returns: undefined
       }
+      is_conversation_member: {
+        Args:
+          | { conv_id: string }
+          | { p_conversation_id: string; p_profile_id: string }
+        Returns: boolean
+      }
       is_room_member: {
         Args: { p_room_id: string; p_user_id: string }
         Returns: boolean
@@ -355,9 +685,20 @@ export type Database = {
         Args: { room_uuid: string; user_uuid?: string }
         Returns: boolean
       }
+      mark_messages_read: {
+        Args: { conversation_uuid: string; user_uuid?: string }
+        Returns: undefined
+      }
+      validate_join_code: {
+        Args: { p_code: string }
+        Returns: {
+          room_id: string
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      request_status: "pending" | "accepted" | "declined"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -484,6 +825,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      request_status: ["pending", "accepted", "declined"],
+    },
   },
 } as const
