@@ -90,6 +90,22 @@ function App() {
           }
         />
         <Route
+          path="/chat/@:username"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat/group/:groupId"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/temanku"
           element={
             <ProtectedRoute>

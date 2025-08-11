@@ -1,73 +1,117 @@
 import React, { useState } from 'react';
-import { panelBase, panelHeader, panelTitle, panelActions } from '../../styles/panelBase';
-import { X, Users } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
-import { useToast } from '../../hooks/useToast';
+import { Users, Hash } from 'lucide-react';
+import { FloatingPanel } from '../ui/floating-panel';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 
 interface CreateGroupModalProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
-  onCreated?: (groupId: string) => void;
+  onSuccess: (name: string, description?: string) => void;
 }
 
-const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onClose, onCreated }) => {
+export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess
+}) => {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
-  if (!open) return null;
-
-  const submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || loading) return;
+
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('groups').insert({ name }).select('id').single();
-      if (error) throw error;
-      toast({ title: 'Group created' });
-      onCreated?.(data.id);
+      await onSuccess(name.trim(), description.trim() || undefined);
+      setName('');
+      setDescription('');
       onClose();
-    } catch (e: any) {
-      toast({ title: 'Could not create group', description: e.message ?? 'Please try again', variant: 'destructive' });
+    } catch (error) {
+      console.error('Error creating group:', error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
-      <div className={`${panelBase} relative w-full max-w-md`}>
-        <div className={panelHeader}>
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h2 className={panelTitle}>Create Group</h2>
+    <FloatingPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create Group Chat"
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Icon */}
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Hash className="w-8 h-8 text-white" />
           </div>
-          <div className={panelActions}>
-            <button onClick={onClose} aria-label="Close" className="p-2 rounded hover:bg-muted">
-              <X className="w-5 h-5" />
-            </button>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Create a group chat to collaborate with multiple study partners
+          </p>
+        </div>
+
+        {/* Form Fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Group Name *
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter group name..."
+              required
+              className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What's this group about?"
+              rows={3}
+              className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 resize-none"
+            />
           </div>
         </div>
-        <form onSubmit={submit} className="space-y-4">
-          <label className="block text-sm font-medium">Group name</label>
-          <input
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Study Group"
-            className="w-full px-4 py-2 rounded-lg border bg-background"
-          />
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border">Cancel</button>
-            <button type="submit" disabled={loading || !name} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-60">
-              {loading ? 'Creating…' : 'Create'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="outline"
+            className="flex-1"
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          
+          <Button
+            type="submit"
+            disabled={loading || !name.trim()}
+            className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <Users className="w-4 h-4 mr-2" />
+                Create Group
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </FloatingPanel>
   );
 };
-
-export default CreateGroupModal;

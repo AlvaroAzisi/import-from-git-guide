@@ -7,24 +7,50 @@ import { NotificationBell } from './NotificationBell';
 
 interface TopBarProps {
   onMenuClick: () => void;
+  showMinimizeButton?: boolean;
+  onToggleMinimized?: () => void;
+  sidebarMinimized?: boolean;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
+const TopBar: React.FC<TopBarProps> = ({ 
+  onMenuClick,
+  showMinimizeButton = false,
+  onToggleMinimized,
+  sidebarMinimized = false
+}) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
 
   return (
     <div className="sticky top-0 z-30 backdrop-blur-md bg-white/20 dark:bg-gray-900/20 border-b border-white/20 dark:border-gray-700/20">
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Left side - Menu button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onMenuClick}
-          className="p-2 rounded-xl backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300"
-        >
-          <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </motion.button>
+        {/* Left side - Menu and minimize buttons */}
+        <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onMenuClick}
+            className="p-2 rounded-xl backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300"
+          >
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </motion.button>
+          
+          {showMinimizeButton && onToggleMinimized && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onToggleMinimized}
+              className="p-2 rounded-xl backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300"
+              title={sidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            >
+              {sidebarMinimized ? (
+                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              ) : (
+                <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              )}
+            </motion.button>
+          )}
+        </div>
 
         {/* Right side - Controls */}
         <div className="flex items-center gap-3">

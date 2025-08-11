@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -8,8 +8,11 @@ import {
   User, 
   Settings,
   LogOut,
-  Plus
+  Plus,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { signOut } from '../lib/auth';
@@ -18,9 +21,17 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateRoom: () => void;
+  minimized?: boolean;
+  onToggleMinimized?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onCreateRoom }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isOpen, 
+  onClose, 
+  onCreateRoom,
+  minimized = false,
+  onToggleMinimized
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -51,6 +62,69 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onCreateRoom }) => {
     onClose();
   };
 
+  const SidebarButton: React.FC<{
+    icon: React.ComponentType<any>;
+    label: string;
+    onClick: () => void;
+    isActive?: boolean;
+    variant?: 'default' | 'create' | 'danger';
+  }> = ({ icon: Icon, label, onClick, isActive = false, variant = 'default' }) => {
+    const getButtonStyles = () => {
+      if (variant === 'create') {
+        return 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg hover:shadow-xl';
+      }
+      if (variant === 'danger') {
+        return 'text-red-600 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20';
+      }
+      if (isActive) {
+        return 'bg-blue-500 text-white shadow-lg';
+      }
+      return 'text-gray-600 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-800/20';
+    };
+
+    const button = (
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onClick}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${getButtonStyles()}`}
+      >
+        <Icon className="w-5 h-5 flex-shrink-0" />
+        <AnimatePresence>
+          {!minimized && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
+              className="truncate"
+            >
+              {label}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+    );
+
+    if (minimized) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {button}
+            </TooltipTrigger>
+            <TooltipContent side="right" className="z-50">
+              <div className="rounded-lg px-3 py-2 bg-popover text-popover-foreground shadow-lg">
+                {label}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return button;
+  };
   if (!isOpen) return null;
 
   return (
@@ -66,23 +140,68 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onCreateRoom }) => {
 
       {/* Sidebar */}
       <motion.div
-        initial={{ x: -300 }}
-        animate={{ x: 0 }}
-        exit={{ x: -300 }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 top-0 h-full w-80 backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
+        initial={{ x: minimized ? -72 : -320 }}
+        animate={{ 
+          x: 0,
+          width: minimized ? '72px' : '320px'
+        }}
+        exit={{ x: minimized ? -72 : -320 }}
+        transition={{ 
+          type: "spring", 
+          damping: 25, 
+          stiffness: 200,
+          duration: 0.22
+        }}
+        className="fixed left-0 top-0 h-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
       >
         {/* Header */}
         <div className="p-6 border-b border-white/10 dark:border-gray-700/10">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
             <BookOpen className="w-8 h-8 text-blue-500" />
-            <span className="text-2xl font-bold text-gray-800 dark:text-gray-200">Kupintar</span>
+            <AnimatePresence>
+              {!minimized && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-2xl font-bold text-gray-800 dark:text-gray-200"
+                >
+                  Kupintar
+                </motion.span>
+              )}
+            </AnimatePresence>
+            </div>
+            
+            {onToggleMinimized && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onToggleMinimized}
+                className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
+                title={minimized ? "Expand sidebar" : "Minimize sidebar"}
+              >
+                {minimized ? (
+                  <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                )}
+              </motion.button>
+            )}
           </div>
         </div>
 
         {/* User Profile */}
-        {profile && (
+        {profile && !minimized && (
           <div className="p-6 border-b border-white/10 dark:border-gray-700/10">
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
             <div className="flex items-center gap-4">
               <img
                 src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=3b82f6&color=fff`}
@@ -106,67 +225,77 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onCreateRoom }) => {
                 </div>
               </div>
             </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         )}
 
+        {/* Minimized User Avatar */}
+        {profile && minimized && (
+          <div className="p-3 border-b border-white/10 dark:border-gray-700/10 flex justify-center">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <img
+                    src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=3b82f6&color=fff`}
+                    alt={profile.full_name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-white/20 dark:border-gray-700/20 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => handleNavigation('/profile')}
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="z-50">
+                  <div className="rounded-lg px-3 py-2 bg-popover text-popover-foreground shadow-lg">
+                    <p className="font-medium">{profile.full_name}</p>
+                    <p className="text-xs opacity-80">@{profile.username}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
         {/* Navigation */}
         <nav className="flex-1 p-4">
           <div className="space-y-2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <motion.button
+                <SidebarButton
                   key={item.path}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  icon={item.icon}
+                  label={item.label}
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${
-                    isActive
-                      ? 'bg-blue-500 text-white shadow-lg'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-800/20'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.label}
-                </motion.button>
+                  isActive={isActive}
+                />
               );
             })}
 
             {/* Create Room Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCreateRoom}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 mt-4"
-            >
-              <Plus className="w-5 h-5" />
-              {t('rooms.create')}
-            </motion.button>
+            <div className="mt-4">
+              <SidebarButton
+                icon={Plus}
+                label={t('rooms.create')}
+                onClick={handleCreateRoom}
+                variant="create"
+              />
+            </div>
           </div>
         </nav>
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
           <div className="space-y-2">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <SidebarButton
+              icon={Settings}
+              label="Settings"
               onClick={() => handleNavigation('/settings')}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-gray-600 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-800/20 transition-all duration-300"
-            >
-              <Settings className="w-5 h-5" />
-              Settings
-            </motion.button>
+            />
             
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <SidebarButton
+              icon={LogOut}
+              label={t('nav.signOut')}
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-red-600 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20 transition-all duration-300"
-            >
-              <LogOut className="w-5 h-5" />
-              {t('nav.signOut')}
-            </motion.button>
+              variant="danger"
+            />
           </div>
         </div>
       </motion.div>

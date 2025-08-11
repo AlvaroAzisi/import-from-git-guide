@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Save, Trash2, RotateCcw, Copy, Share2 } from 'lucide-react';
+import { Settings, Save, Trash2, RotateCcw, Copy, Share2 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import { supabase } from '../lib/supabase';
 import type { Room } from '../lib/rooms';
+import { FloatingPanel } from './ui/floating-panel';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 
@@ -156,40 +156,14 @@ export const RoomSettingsPanel: React.FC<RoomSettingsPanelProps> = ({
       </button>
 
       {/* Settings Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-              onClick={() => setIsOpen(false)}
-            />
-
-            {/* Panel */}
-            <motion.div
-              initial={{ opacity: 0, x: '100%' }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 h-full w-full max-w-md z-50"
-            >
-              <div className="h-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-l border-white/20 dark:border-gray-700/20 shadow-2xl flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/20 dark:border-gray-700/20">
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Room Settings</h2>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <FloatingPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Room Settings"
+        size="lg"
+        position="right"
+      >
+        <div className="space-y-6">
                   {/* Room Info Section */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Room Information</h3>
@@ -337,12 +311,8 @@ export const RoomSettingsPanel: React.FC<RoomSettingsPanelProps> = ({
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+        </div>
+      </FloatingPanel>
     </>
   );
 };
