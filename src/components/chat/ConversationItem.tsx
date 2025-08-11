@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Hash, AtSign } from 'lucide-react';
+import { Hash } from 'lucide-react';
 import type { Conversation } from '../../lib/chat';
 
 interface ConversationItemProps {
@@ -31,17 +31,16 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
 
   const getDisplayName = () => {
     if (conversation.type === 'dm' && conversation.other_user) {
-      return conversation.other_user.full_name;
+      return conversation.other_user.full_name ?? conversation.other_user.username ?? 'Unknown';
     }
     return conversation.name || 'Unnamed Group';
   };
 
   const getDisplayAvatar = () => {
     if (conversation.type === 'dm' && conversation.other_user) {
-      return conversation.other_user.avatar_url || 
-             `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user.full_name)}&background=3b82f6&color=fff`;
+      return conversation.other_user.avatar_url ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user.full_name ?? conversation.other_user.username ?? 'User')}&background=3b82f6&color=fff`;
     }
-    return conversation.avatar_url || null;
+    return conversation.avatar_url ?? undefined;
   };
 
   const getLastMessagePreview = () => {

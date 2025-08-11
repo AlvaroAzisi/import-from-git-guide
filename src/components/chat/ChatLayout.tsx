@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Users, Info } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatWindow } from './ChatWindow';

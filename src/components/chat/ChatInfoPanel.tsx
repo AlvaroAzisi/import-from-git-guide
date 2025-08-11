@@ -6,12 +6,11 @@ import {
   Settings, 
   UserMinus, 
   Crown,
-  AtSign,
   Hash,
   Calendar,
   MessageCircle
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+// Removed unused useAuth import to fix lint error
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -26,7 +25,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
   conversation,
   onClose
 }) => {
-  const { user } = useAuth();
+  // Removed unused 'user' variable to fix lint error
   const [members, setMembers] = useState<ConversationMember[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,17 +60,18 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
 
   const getDisplayName = () => {
     if (conversation.type === 'dm' && conversation.other_user) {
-      return conversation.other_user.full_name;
+      // fallback to username or 'Unknown' if full_name is missing
+      return conversation.other_user.full_name ?? conversation.other_user.username ?? 'Unknown';
     }
     return conversation.name || 'Unnamed Group';
   };
 
   const getDisplayAvatar = () => {
     if (conversation.type === 'dm' && conversation.other_user) {
-      return conversation.other_user.avatar_url || 
-             `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user.full_name)}&background=3b82f6&color=fff`;
+      // fallback to generated avatar if avatar_url is null/undefined
+      return conversation.other_user.avatar_url ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user.full_name ?? conversation.other_user.username ?? 'User')}&background=3b82f6&color=fff`;
     }
-    return conversation.avatar_url;
+    return conversation.avatar_url ?? undefined;
   };
 
   return (
@@ -120,7 +120,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
             {getDisplayName()}
           </h3>
           
-          {conversation.type === 'dm' && conversation.other_user && (
+          {conversation.type === 'dm' && conversation.other_user?.username && (
             <p className="text-blue-500 font-medium">
               @{conversation.other_user.username}
             </p>
@@ -134,7 +134,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
         </div>
 
         {/* DM Profile Info */}
-        {conversation.type === 'dm' && conversation.other_user && (
+  {conversation.type === 'dm' && conversation.other_user && (
           <div className="space-y-4">
             {conversation.other_user.bio && (
               <div>
@@ -145,7 +145,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
               </div>
             )}
 
-            {conversation.other_user.interests && Array.isArray(conversation.other_user.interests) && conversation.other_user.interests.length > 0 && (
+            {Array.isArray(conversation.other_user.interests) && conversation.other_user.interests.length > 0 && (
               <div>
                 <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Interests</h4>
                 <div className="flex flex-wrap gap-2">
@@ -164,13 +164,13 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-white/20 dark:bg-gray-800/20 rounded-xl">
                 <div className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                  {conversation.other_user.xp || 0}
+                  {conversation.other_user.xp ?? 0}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">XP</div>
               </div>
               <div className="text-center p-3 bg-white/20 dark:bg-gray-800/20 rounded-xl">
                 <div className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                  {Math.floor((conversation.other_user.xp || 0) / 1000) + 1}
+                  {Math.floor((conversation.other_user.xp ?? 0) / 1000) + 1}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">Level</div>
               </div>
@@ -215,7 +215,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
                     className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/20 dark:hover:bg-gray-800/20 transition-colors"
                   >
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src={member.profile?.avatar_url} />
+                      <AvatarImage src={member.profile?.avatar_url ?? undefined} />
                       <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
                         {member.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
                       </AvatarFallback>
@@ -224,14 +224,14 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
                         <p className="font-medium text-gray-800 dark:text-gray-200 text-sm truncate">
-                          {member.profile?.full_name}
+                          {member.profile?.full_name ?? member.profile?.username ?? 'Unknown'}
                         </p>
                         {member.role === 'admin' && (
                           <Crown className="w-3 h-3 text-yellow-500" />
                         )}
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
-                        @{member.profile?.username}
+                        @{member.profile?.username ?? 'unknown'}
                       </p>
                     </div>
                   </motion.div>

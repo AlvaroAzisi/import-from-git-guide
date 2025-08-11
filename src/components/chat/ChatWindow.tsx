@@ -7,8 +7,7 @@ import {
   Paperclip, 
   Smile,
   MoreVertical,
-  Hash,
-  AtSign
+  Hash
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { 
@@ -127,7 +126,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     setSending(true);
     try {
-      const message = await sendChatMessage(conversation.id, newMessage.trim());
+  const message = await sendChatMessage(conversation.id, newMessage.trim() ?? '');
       if (message) {
         setNewMessage('');
         sendTypingIndicator(conversation.id, false);
@@ -185,7 +184,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const getDisplayAvatar = () => {
     if (conversation.type === 'dm' && conversation.other_user) {
       return conversation.other_user.avatar_url || 
-             `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user.full_name)}&background=3b82f6&color=fff`;
+             `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user.full_name ?? conversation.other_user.username ?? 'User')}&background=3b82f6&color=fff`;
     }
     return conversation.avatar_url;
   };

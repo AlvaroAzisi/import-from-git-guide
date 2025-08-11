@@ -4,7 +4,6 @@ import {
   Search, 
   Plus, 
   MessageCircle, 
-  Users, 
   ChevronLeft,
   ChevronRight,
   Hash,
@@ -40,7 +39,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
+  // Removed unused 'searching' state to fix lint error
 
   // obtain navigate from react-router
   const navigate = useNavigate();
@@ -103,14 +102,14 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         return;
       }
 
-      setSearching(true);
+  // removed setSearching(true) as searching state was removed
       try {
         const results = await searchUsers(searchQuery);
         setSearchResults(results);
       } catch (error) {
         console.error('Search error:', error);
       } finally {
-        setSearching(false);
+  // removed setSearching(false) as searching state was removed
       }
     };
 
@@ -152,8 +151,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     
     const query = searchQuery.toLowerCase();
     if (conv.type === 'dm' && conv.other_user) {
-      return conv.other_user.full_name.toLowerCase().includes(query) ||
-             conv.other_user.username.toLowerCase().includes(query);
+      return (
+        (conv.other_user.full_name?.toLowerCase().includes(query) ?? false) ||
+        (conv.other_user.username?.toLowerCase().includes(query) ?? false)
+      );
     } else if (conv.type === 'group' && conv.name) {
       return conv.name.toLowerCase().includes(query);
     }
@@ -344,8 +345,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 >
                   {conversation.type === 'dm' ? (
                     <img
-                      src={conversation.other_user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user?.full_name || 'User')}&background=3b82f6&color=fff`}
-                      alt={conversation.other_user?.full_name}
+                      src={conversation.other_user?.avatar_url ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.other_user?.full_name ?? 'User')}&background=3b82f6&color=fff`}
+                      alt={conversation.other_user?.full_name ?? 'User'}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
@@ -353,13 +354,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   )}
                   
                   {/* Unread Badge */}
-                  {(conversation.unread_count || 0) > 0 && (
+                  {(conversation.unread_count ?? 0) > 0 && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-xs font-medium text-white"
                     >
-                      {conversation.unread_count! > 9 ? '9+' : conversation.unread_count}
+                      {conversation.unread_count && conversation.unread_count > 9 ? '9+' : conversation.unread_count}
                     </motion.div>
                   )}
                 </motion.button>
