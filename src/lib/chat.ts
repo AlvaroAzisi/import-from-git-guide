@@ -73,7 +73,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
     }
     if (!user) throw new Error('Not authenticated');
 
-    // Use an inner join on conversation_members to ensure the user is member
+    // include conversation_members so we can filter
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -85,7 +85,6 @@ export const getConversations = async (): Promise<Conversation[]> => {
         created_at,
         updated_at,
         last_message_at,
-        // include conversation_members so we can filter
         conversation_members!inner(user_id)
       `)
       .eq('conversation_members.user_id', user.id)
