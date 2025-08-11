@@ -17,6 +17,9 @@ import { CreateGroupModal } from './CreateGroupModal';
 import { ConversationItem } from './ConversationItem';
 import type { Conversation } from '../../lib/chat';
 import type { UserProfile } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+
 
 interface ChatSidebarProps {
   activeConversation: Conversation | null;
@@ -38,6 +41,14 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+
+  // obtain navigate from react-router
+  const navigate = useNavigate();
+
+  // expose a local handler that delegates to the prop (fix undefined handler usage)
+  const handleConversationSelect = (conversation: Conversation) => {
+    onConversationSelect(conversation);
+  };
 
   // Load conversations
   useEffect(() => {
@@ -71,7 +82,16 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        // removeChannel is v2 API — keep this guarded in case of different supabase client versions
+        // @ts-ignore
+        if (supabase.removeChannel) supabase.removeChannel(channel);
+        // fallback: unsubscribe if available
+        // @ts-ignore
+        if (channel.unsubscribe) channel.unsubscribe();
+      } catch (err) {
+        console.warn('Error while removing supabase channel:', err);
+      }
     };
   }, []);
 
