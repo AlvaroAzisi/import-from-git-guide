@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Only fetch profile on sign in, not on token refresh
           setTimeout(() => fetchProfile(currentUser), 0);
           // Redirect to /home after successful authentication
-          if (location.pathname === '/' || location.pathname === '/auth') {
+          if (['/', '/auth', '/login'].includes(location.pathname)) {
             navigate('/home', { replace: true });
           }
         } else if (!currentUser) {

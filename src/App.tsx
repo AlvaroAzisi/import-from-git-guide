@@ -11,6 +11,7 @@ import RuangkuPage from './pages/RuangkuPage';
 import RoomPage from './pages/RoomPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import ChatPage from './pages/ChatPage';
+import LoginPage from './pages/LoginPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/Toaster';
@@ -35,6 +36,15 @@ function App() {
             user
               ? <Navigate to="/home" replace />
               : <LandingPage />
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            user
+              ? <Navigate to="/home" replace />
+              : <LoginPage />
           }
         />
 
