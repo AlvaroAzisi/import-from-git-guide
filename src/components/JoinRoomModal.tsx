@@ -2,9 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-// Adjust this import if your supabase client file is at a different path:
+// relative path to your supabase client
 import { supabase } from "../lib/supabaseClient";
-
 
 type Props = {
   isOpen: boolean;
@@ -62,7 +61,6 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
       // 2) Get current user id (supports supabase-js v2)
       let userId: string | null = null;
       try {
-        // supabase-js v2
         const { data: userRes, error: getUserErr } = await supabase.auth.getUser();
         if (getUserErr) throw getUserErr;
         userId = userRes?.user?.id ?? null;
@@ -212,3 +210,6 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
     </AnimatePresence>
   );
 }
+
+// also export named symbol to avoid import-style breakage elsewhere
+export { JoinRoomModal };
