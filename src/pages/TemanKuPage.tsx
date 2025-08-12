@@ -290,7 +290,6 @@ const TemanKuPage: React.FC = () => {
             </div>
           </motion.div>
         )}
-      </div>
 
       {/* Floating Profile Panel */}
       <FloatingProfilePanel
@@ -299,17 +298,6 @@ const TemanKuPage: React.FC = () => {
         userId={selectedUserId || ''}
       />
     </div>
-  );
-};
-
-export default TemanKuPage;
-
-      {/* Floating Profile Panel */}
-      <FloatingProfilePanel
-        isOpen={!!selectedUserId}
-        onClose={() => setSelectedUserId(null)}
-        userId={selectedUserId || ''}
-      />
   );
 };
 
