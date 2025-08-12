@@ -5,7 +5,6 @@ import { useAuth } from '../hooks/useAuth';
 
 import { Navigate } from 'react-router-dom';
 import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search, UserPlus } from 'lucide-react';
-import { JoinRoomButton } from '../components/JoinRoomButton';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
 import { JoinRoomModal } from '../components/modals/JoinRoomModal';
@@ -17,7 +16,6 @@ import type { UserProfile } from '../lib/auth';
 const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -32,7 +30,7 @@ const HomePage: React.FC = () => {
       try {
         const [roomsData, usersData] = await Promise.all([
           getRooms(6),
-          searchUsers('') // Get some random users
+          searchUsers('').then(result => result.data || []) // Get some random users
         ]);
         
         setRooms(roomsData);
@@ -266,7 +264,7 @@ const HomePage: React.FC = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-400">@{user.username}</p>
                       </div>
                       <div className="text-xs text-blue-500 font-medium">
-                        Level {Math.floor(user.xp / 1000) + 1}
+                        Level {Math.floor((user.xp || 0) / 1000) + 1}
                       </div>
                     </div>
                   </div>

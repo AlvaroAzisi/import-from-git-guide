@@ -39,9 +39,10 @@ const TemanKuPage: React.FC = () => {
 
       setLoadingUsers(true);
       try {
-        const results = await searchUsers(searchQuery);
+        const searchResult = await searchUsers(searchQuery);
+        const results = searchResult.data || [];
         // Filter out current user
-        const filteredResults = results.filter(u => u.id !== user?.id);
+        const filteredResults = results.filter((u: UserProfile) => u.id !== user?.id);
         setUsers(filteredResults);
 
         // Get friendship statuses
@@ -208,10 +209,10 @@ const TemanKuPage: React.FC = () => {
                     <p className="text-blue-500 text-sm">@{user.username}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-blue-500 font-medium">
-                        Level {Math.floor(user.xp / 1000) + 1}
+                        Level {Math.floor((user.xp || 0) / 1000) + 1}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {user.xp} XP
+                        {user.xp || 0} XP
                       </span>
                     </div>
                   </div>

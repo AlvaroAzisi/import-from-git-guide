@@ -26,8 +26,6 @@ const RuangkuPage: React.FC = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const { roomId } = useParams<{ roomId: string }>();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'members'>('chat');
   const [room, setRoom] = useState<Room | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);

@@ -7,8 +7,8 @@ import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom,
 import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
-import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
 import { Settings } from 'lucide-react';
+import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
 import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
 import { RequestToJoinButton } from '../components/RequestToJoinButton';
 // Simple debounce implementation without lodash
@@ -318,7 +318,12 @@ const RoomPage: React.FC = () => {
   };
 
   const handleRoomUpdate = (updatedRoom: Room) => {
-    setRoom(updatedRoom);
+    setRoom({
+      ...updatedRoom,
+      is_active: updatedRoom.is_active ?? true,
+      created_at: updatedRoom.created_at ?? new Date().toISOString(),
+      updated_at: updatedRoom.updated_at ?? new Date().toISOString()
+    });
   };
 
   const handleRoomDelete = () => {
