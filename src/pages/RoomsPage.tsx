@@ -12,9 +12,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { getRooms, joinRoom, isRoomMember } from '../lib/rooms';
 import { useToast } from '../hooks/useToast';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import CreateRoomModal from '../components/CreateRoomModal';
+import { JoinRoomModal } from '../components/modals/JoinRoomModal';
 import type { Room } from '../lib/rooms';
 
 const RoomsPage: React.FC = () => {
@@ -31,6 +29,7 @@ const RoomsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
   const [isMemberMap, setIsMemberMap] = useState<{ [key: string]: boolean }>({});
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   const filterOptions = [
     'Mathematics', 'Science', 'History', 'Literature', 'Programming', 
@@ -161,17 +160,7 @@ const RoomsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Top Bar */}
-      <TopBar onMenuClick={() => setSidebarOpen(true)} />
-      
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        onCreateRoom={() => setCreateRoomOpen(true)}
-      />
-
+    <div>
       {/* Hero Section */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
@@ -226,7 +215,7 @@ const RoomsPage: React.FC = () => {
                     className="absolute right-2 top-1/2 -translate-y-1/2"
                   >
                     <button
-                      onClick={() => setCreateRoomOpen(true)}
+                      onClick={() => setJoinModalOpen(true)}
                       className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-xl transition-all duration-300"
                     >
                       <Plus className="w-6 h-6" />
@@ -388,21 +377,20 @@ const RoomsPage: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setCreateRoomOpen(true)}
+                onClick={() => setJoinModalOpen(true)}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
               >
-                Create Room
+                Join Room
               </motion.button>
             </div>
           </motion.div>
         )}
       </div>
 
-      {/* Create Room Modal */}
-      <CreateRoomModal
-        isOpen={createRoomOpen}
-        onClose={() => setCreateRoomOpen(false)}
-        onSuccess={handleRoomCreated}
+      {/* Join Room Modal */}
+      <JoinRoomModal
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Menu, Sun, Moon } from 'lucide-react';
+import { Menu, Sun, Moon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
 import { NotificationBell } from './NotificationBell';

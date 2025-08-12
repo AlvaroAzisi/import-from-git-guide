@@ -15,9 +15,7 @@ import {
 import { searchUsers } from '../lib/auth';
 import { sendFriendRequest, getFriendshipStatus } from '../lib/friends';
 import { useToast } from '../hooks/useToast';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import CreateRoomModal from '../components/CreateRoomModal';
+import { FloatingProfilePanel } from '../components/FloatingProfilePanel';
 import type { UserProfile } from '../lib/auth';
 
 const TemanKuPage: React.FC = () => {
@@ -26,11 +24,10 @@ const TemanKuPage: React.FC = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Search users
   React.useEffect(() => {
@@ -125,18 +122,7 @@ const TemanKuPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Top Bar */}
-      <TopBar onMenuClick={() => setSidebarOpen(true)} />
-      
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        onCreateRoom={() => setCreateRoomOpen(true)}
-      />
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -207,17 +193,18 @@ const TemanKuPage: React.FC = () => {
                     <img
                       src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3b82f6&color=fff`}
                       alt={user.full_name}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-white/20 dark:border-gray-700/20"
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-white/20 dark:border-gray-700/20 cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => setSelectedUserId(user.id)}
                     />
                   </div>
                   
                   <div className="flex-1">
-                    <a 
-                      href={`/@${user.username}`}
+                    <button
+                      onClick={() => setSelectedUserId(user.id)}
                       className="font-bold text-gray-800 dark:text-gray-200 text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors hover:underline"
                     >
                       {user.full_name}
-                    </a>
+                    </button>
                     <p className="text-blue-500 text-sm">@{user.username}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-blue-500 font-medium">
@@ -305,11 +292,11 @@ const TemanKuPage: React.FC = () => {
         )}
       </div>
 
-      {/* Create Room Modal */}
-      <CreateRoomModal
-        isOpen={createRoomOpen}
-        onClose={() => setCreateRoomOpen(false)}
-        onSuccess={() => {}}
+      {/* Floating Profile Panel */}
+      <FloatingProfilePanel
+        isOpen={!!selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        userId={selectedUserId || ''}
       />
     </div>
   );

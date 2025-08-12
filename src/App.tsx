@@ -1,6 +1,8 @@
 // App.tsx
 
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthRedirectHandler } from './components/AuthRedirectHandler';
+import { AppLayout } from './layouts/AppLayout';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -26,6 +28,7 @@ function App() {
 
   return (
     <>
+      <AuthRedirectHandler />
       <Toaster />
 
       <Routes>
@@ -50,93 +53,25 @@ function App() {
 
         {/* 2) Protected screens */}
         <Route
-          path="/home"
+          path="/*"
           element={
             <ProtectedRoute>
-              <HomePage />
+              <AppLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/rooms"
-          element={
-            <ProtectedRoute>
-              <RoomsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat/@:username"
-          element={
-            <ProtectedRoute>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chat/group/:groupId"
-          element={
-            <ProtectedRoute>
-              <ChatPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/temanku"
-          element={
-            <ProtectedRoute>
-              <TemanKuPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/ruangku/:roomId"
-          element={
-            <ProtectedRoute>
-              <RuangkuPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId"
-          element={
-            <ProtectedRoute>
-              <RoomPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/join/:code"
-          element={
-            <ProtectedRoute>
-              <RoomPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route path="home" element={<HomePage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="rooms" element={<RoomsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="chat/@:username" element={<ChatPage />} />
+          <Route path="chat/group/:groupId" element={<ChatPage />} />
+          <Route path="temanku" element={<TemanKuPage />} />
+          <Route path="ruangku/:roomId" element={<RuangkuPage />} />
+          <Route path="room/:roomId" element={<RoomPage />} />
+          <Route path="join/:code" element={<RoomPage />} />
+        </Route>
 
         {/* 3) Public profile pages */}
         <Route

@@ -7,10 +7,7 @@ import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom,
 import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import CreateRoomModal from '../components/CreateRoomModal';
-import { RoomSettingsPanel } from '../components/RoomSettingsPanel';
+import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
 import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
 import { RequestToJoinButton } from '../components/RequestToJoinButton';
 // Simple debounce implementation without lodash
@@ -29,8 +26,7 @@ const RoomPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -415,16 +411,7 @@ const RoomPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <TopBar onMenuClick={() => setSidebarOpen(true)} />
-      
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        onCreateRoom={() => setCreateRoomOpen(true)}
-      />
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Room Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -459,12 +446,15 @@ const RoomPage: React.FC = () => {
                 <span className="hidden sm:inline">Invite</span>
               </button>
               
-              <RoomSettingsPanel
-                room={room}
-                isCreator={room.creator_id === user?.id}
-                onRoomUpdate={handleRoomUpdate}
-                onRoomDelete={handleRoomDelete}
-              />
+              {(room.creator_id === user?.id) && (
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
+                  title="Room Settings"
+                >
+                  <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </button>
+              )}
               <AdminRoomRequestsPanel roomId={room.id} isCreator={room.creator_id === user?.id} />
               
               {isMember && room.creator_id !== user?.id && (
@@ -610,13 +600,14 @@ const RoomPage: React.FC = () => {
         )}
       </div>
 
-      <CreateRoomModal
-        isOpen={createRoomOpen}
-        onClose={() => setCreateRoomOpen(false)}
-        onSuccess={() => {
-          setCreateRoomOpen(false);
-          // Optionally refresh room data
-        }}
+      {/* Room Settings Modal */}
+      <RoomSettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        room={room}
+        userRole={room.creator_id === user?.id ? 'admin' : 'member'}
+        onRoomUpdate={handleRoomUpdate}
+        onRoomDelete={handleRoomDelete}
       />
     </div>
   );

@@ -8,9 +8,7 @@ import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search } from 'lucide
 import { JoinRoomButton } from '../components/JoinRoomButton';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import CreateRoomModal from '../components/CreateRoomModal';
+import { JoinRoomModal } from '../components/modals/JoinRoomModal';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
@@ -18,7 +16,7 @@ const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  const [joinRoomOpen, setJoinRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [recommendedUsers, setRecommendedUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,19 +68,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Top Bar */}
-      <TopBar onMenuClick={() => setSidebarOpen(true)} />
-      
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        onCreateRoom={() => setCreateRoomOpen(true)}
-      />
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -323,7 +309,13 @@ const HomePage: React.FC = () => {
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">Join Study Room</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">Enter a room code to join instantly</p>
               </div>
-              <JoinRoomButton />
+              <Button
+                onClick={() => setJoinRoomOpen(true)}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Join Room
+              </Button>
             </div>
           </div>
 
@@ -344,11 +336,10 @@ const HomePage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Create Room Modal */}
-      <CreateRoomModal
-        isOpen={createRoomOpen}
-        onClose={() => setCreateRoomOpen(false)}
-        onSuccess={handleRoomCreated}
+      {/* Join Room Modal */}
+      <JoinRoomModal
+        isOpen={joinRoomOpen}
+        onClose={() => setJoinRoomOpen(false)}
       />
     </div>
   );

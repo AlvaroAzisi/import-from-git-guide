@@ -18,9 +18,6 @@ import {
 import { getProfileByUsername, UserProfile } from '../lib/auth';
 import { sendFriendRequest, getFriendshipStatus } from '../lib/friends';
 import { useToast } from '../hooks/useToast';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import CreateRoomModal from '../components/CreateRoomModal';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -185,18 +182,7 @@ const PublicProfilePage: React.FC = () => {
   const xpProgress = Math.min((profile.xp % 1000) / 1000 * 100, 100);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Top Bar */}
-      <TopBar onMenuClick={() => setSidebarOpen(true)} />
-      
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        onCreateRoom={() => setCreateRoomOpen(true)}
-      />
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -403,12 +389,6 @@ const PublicProfilePage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Create Room Modal */}
-      <CreateRoomModal
-        isOpen={createRoomOpen}
-        onClose={() => setCreateRoomOpen(false)}
-        onSuccess={() => {}}
-      />
     </div>
   );
 };
