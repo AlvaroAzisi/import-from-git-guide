@@ -547,6 +547,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean | null
+          is_deleted: boolean
           is_public: boolean | null
           max_members: number | null
           name: string
@@ -560,6 +561,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          is_deleted?: boolean
           is_public?: boolean | null
           max_members?: number | null
           name: string
@@ -573,6 +575,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          is_deleted?: boolean
           is_public?: boolean | null
           max_members?: number | null
           name?: string
