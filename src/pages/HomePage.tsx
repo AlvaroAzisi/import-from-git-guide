@@ -350,7 +350,8 @@ const HomePage: React.FC = () => {
         onClose={() => setCreateRoomOpen(false)}
         onSuccess={handleRoomCreated}
       />
-    );
+    </>
+  );
 };
 
 export default HomePage;

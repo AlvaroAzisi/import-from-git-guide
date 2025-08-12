@@ -8,6 +8,7 @@ import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
 import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
+import { Settings } from 'lucide-react';
 import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
 import { RequestToJoinButton } from '../components/RequestToJoinButton';
 // Simple debounce implementation without lodash
@@ -410,7 +411,7 @@ const RoomPage: React.FC = () => {
     );
   }
 
-  return (
+  return (<>
     <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Room Header */}
         <motion.div
@@ -609,6 +610,7 @@ const RoomPage: React.FC = () => {
         onRoomUpdate={handleRoomUpdate}
         onRoomDelete={handleRoomDelete}
       />
+    </>
   );
 };
 

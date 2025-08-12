@@ -208,7 +208,7 @@ const RuangkuPage: React.FC = () => {
 
   const isAdmin = members.find(m => m.user_id === user.id)?.role === 'admin';
 
-  return (
+  return (<>
     <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
@@ -474,6 +474,7 @@ const RuangkuPage: React.FC = () => {
           </motion.div>
         </div>
       )}
+    </>
   );
 };
 
