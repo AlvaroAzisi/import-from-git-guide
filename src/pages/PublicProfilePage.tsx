@@ -388,8 +388,6 @@ const PublicProfilePage: React.FC = () => {
           ))}
         </motion.div>
       </div>
-
-    </div>
   );
 };
 

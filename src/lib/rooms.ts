@@ -67,6 +67,12 @@ export const createRoom = async (roomData: {
   is_public: boolean;
 }): Promise<Room | null> => {
   try {
+    // Parameter validation
+    if (!roomData?.name?.trim()) throw new Error('Room name is required');
+    if (!roomData?.subject?.trim()) throw new Error('Subject is required');
+    if (!Number.isInteger(roomData.max_members) || roomData.max_members < 2)
+      throw new Error('Max members must be an integer ≥ 2');
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('You must be logged in to create a room');
@@ -77,7 +83,7 @@ export const createRoom = async (roomData: {
         ...roomData,
         creator_id: user.id,
         is_active: true,
-        short_code: generateRoomCode(), // ✅ pakai short_code
+        short_code: generateRoomCode(), // ✅ short_code
       })
       .select(
         `
@@ -98,6 +104,8 @@ export const createRoom = async (roomData: {
 
 export const getRooms = async (limit: number = 10): Promise<Room[]> => {
   try {
+    const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+
     const { data: rooms, error: roomsError } = await supabase
       .from('rooms')
       .select(
@@ -109,7 +117,7 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       .eq('is_public', true)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(safeLimit);
 
     if (roomsError) throw roomsError;
 
@@ -183,31 +191,33 @@ export const getMyRooms = async (): Promise<Room[]> => {
 
 export const joinRoom = async (roomId: string): Promise<boolean> => {
   try {
+    if (!roomId || !isValidUUID(roomId)) throw new Error('Invalid room ID');
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('You must be logged in to join a room');
 
     const { data: room, error: roomError } = await supabase
       .from('rooms')
-      .select('max_members')
+      .select('max_members, is_active')
       .eq('id', roomId)
-      .eq('is_active', true)
       .single();
     if (roomError) throw roomError;
-    if (!room) throw new Error('Room not found or inactive');
+    if (!room || room.is_active === false) throw new Error('Room not found or inactive');
 
     const { data: existingMember } = await supabase
       .from('room_members')
       .select('id')
       .eq('room_id', roomId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     if (existingMember) throw new Error('Already a member of this room');
 
     const { data: count, error: countError } = await supabase
       .rpc('get_room_member_count', { p_room_id: roomId });
     if (countError) throw countError;
-    if (count !== null && count >= room.max_members) throw new Error('Room is full');
+    if (count !== null && room.max_members !== null && count >= room.max_members)
+      throw new Error('Room is full');
 
     const { error } = await supabase.from('room_members').insert({
       room_id: roomId,

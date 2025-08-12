@@ -609,7 +609,6 @@ const RoomPage: React.FC = () => {
         onRoomUpdate={handleRoomUpdate}
         onRoomDelete={handleRoomDelete}
       />
-    </div>
   );
 };
 

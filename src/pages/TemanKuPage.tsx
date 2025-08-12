@@ -298,7 +298,6 @@ const TemanKuPage: React.FC = () => {
         onClose={() => setSelectedUserId(null)}
         userId={selectedUserId || ''}
       />
-    </div>
   );
 };
 

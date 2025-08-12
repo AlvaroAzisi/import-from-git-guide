@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 
 import { Navigate } from 'react-router-dom';
-import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search } from 'lucide-react';
+import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search, UserPlus } from 'lucide-react';
 import { JoinRoomButton } from '../components/JoinRoomButton';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
 import { JoinRoomModal } from '../components/modals/JoinRoomModal';
+import { Button } from '../components/ui/button';
+import CreateRoomModal from '../components/CreateRoomModal';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
@@ -17,6 +19,7 @@ const HomePage: React.FC = () => {
   const { user, profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
+  const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [recommendedUsers, setRecommendedUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,7 +70,7 @@ const HomePage: React.FC = () => {
     setRooms(prev => [room, ...prev.slice(0, 5)]);
   };
 
-  return (
+  return (<>
     <div className="max-w-6xl mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -341,8 +344,13 @@ const HomePage: React.FC = () => {
         isOpen={joinRoomOpen}
         onClose={() => setJoinRoomOpen(false)}
       />
-    </div>
-  );
+      {/* Create Room Modal */}
+      <CreateRoomModal
+        isOpen={createRoomOpen}
+        onClose={() => setCreateRoomOpen(false)}
+        onSuccess={handleRoomCreated}
+      />
+    );
 };
 
 export default HomePage;

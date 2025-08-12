@@ -63,11 +63,10 @@ export interface RemoveFriendResponse {
  */
 export const joinRoomByCode = async (code: string): Promise<JoinRoomByCodeResponse> => {
   try {
-    // TODO: DB/RLS: Varo will paste SQL for join_room_by_code RPC
-    // Expected params: { p_code: string }
-    // Expected response: { room_id: string, room_title: string, success: boolean }
-    const { data, error } = await supabase.rpc('join_room_by_code', { 
-      p_code: code.trim().toUpperCase() 
+    const normalized = code.trim().toUpperCase();
+
+    const { data, error } = await supabase.rpc('validate_join_code', { 
+      p_code: normalized 
     });
 
     if (error) {
@@ -78,10 +77,25 @@ export const joinRoomByCode = async (code: string): Promise<JoinRoomByCodeRespon
       };
     }
 
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result || !result.valid || !result.room_id) {
+      return { success: false, error: 'Invalid or expired room code' };
+    }
+
+    // Fetch room title for nicer UX (optional)
+    const { data: room, error: roomErr } = await supabase
+      .from('rooms')
+      .select('name')
+      .eq('id', result.room_id)
+      .maybeSingle();
+    if (roomErr) {
+      console.warn('Could not fetch room title:', roomErr.message);
+    }
+
     return {
       success: true,
-      room_id: data?.room_id,
-      room_title: data?.room_title
+      room_id: result.room_id,
+      room_title: room?.name || undefined
     };
   } catch (error: any) {
     console.error('Join room by code error:', error);

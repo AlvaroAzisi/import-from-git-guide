@@ -474,8 +474,6 @@ const RuangkuPage: React.FC = () => {
           </motion.div>
         </div>
       )}
-
-    </div>
   );
 };
 

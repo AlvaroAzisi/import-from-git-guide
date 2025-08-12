@@ -493,7 +493,6 @@ const SettingsPage: React.FC = () => {
           </div>
         </motion.div>
       </div>
-    </div>
   );
 };
 

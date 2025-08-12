@@ -509,7 +509,6 @@ const ProfilePage: React.FC = () => {
           </Card>
         </motion.div>
       </div>
-    </div>
   );
 };
 
