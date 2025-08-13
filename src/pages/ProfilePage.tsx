@@ -46,7 +46,6 @@ const ProfilePage: React.FC = () => {
   const [newInterest, setNewInterest] = useState('');
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ roomsCreated: 0, roomsJoined: 0, messagesSent: 0 });
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Combined loading
   const loading = authLoading || localLoading;
@@ -54,15 +53,19 @@ const ProfilePage: React.FC = () => {
   // 1) Fetch or create profile on mount
   useEffect(() => {
     const init = async () => {
+      console.log('[ProfilePage] Initializing...', { authLoading, user: user?.id });
       if (authLoading) return;
       if (!user) {
+        console.log('[ProfilePage] No user, setting localLoading to false');
         setLocalLoading(false);
         return;
       }
       try {
+        console.log('[ProfilePage] Upserting profile for user:', user.id);
         await upsertProfile(user);
+        console.log('[ProfilePage] Profile upsert complete');
       } catch (err) {
-        console.error('Error upserting profile:', err);
+        console.error('[ProfilePage] Error upserting profile:', err);
       } finally {
         setLocalLoading(false);
       }
@@ -72,22 +75,36 @@ const ProfilePage: React.FC = () => {
 
   // 2) Sync editForm & stats when context profile changes
   useEffect(() => {
+    console.log('[ProfilePage] Profile changed:', profile);
     if (profile) {
-      setEditForm({
+      console.log('[ProfilePage] Profile data:', {
         full_name: profile.full_name,
         username: profile.username,
         bio: profile.bio,
+        interests: profile.interests,
+        interests_type: typeof profile.interests,
+        interests_is_array: Array.isArray(profile.interests),
+        rooms_created: profile.rooms_created,
+        rooms_joined: profile.rooms_joined,
+        messages_sent: profile.messages_sent,
+      });
+
+      setEditForm({
+        full_name: profile.full_name || '',
+        username: profile.username || '',
+        bio: profile.bio || '',
         interests: Array.isArray(profile.interests) ? profile.interests : [],
       });
       setStats({
-        roomsCreated: profile.rooms_created,
-        roomsJoined: profile.rooms_joined,
-        messagesSent: profile.messages_sent,
+        roomsCreated: profile.rooms_created || 0,
+        roomsJoined: profile.rooms_joined || 0,
+        messagesSent: profile.messages_sent || 0,
       });
     }
   }, [profile]);
 
   if (loading) {
+    console.log('[ProfilePage] Showing loading state');
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
         <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
@@ -99,15 +116,18 @@ const ProfilePage: React.FC = () => {
   }
 
   if (!user || !profile) {
+    console.log('[ProfilePage] No user or profile, redirecting', { user: !!user, profile: !!profile });
     return <Navigate to="/" replace />;
   }
+
+  console.log('[ProfilePage] Rendering profile page for:', user.id);
 
   // Handlers with debug logging
   const handleSave = async () => {
     setSaving(true);
-    console.log('Starting profile update...');
-    console.log('User ID:', user.id);
-    console.log('Form data:', editForm);
+    console.log('[ProfilePage] Starting profile update...');
+    console.log('[ProfilePage] User ID:', user.id);
+    console.log('[ProfilePage] Form data:', editForm);
     
     try {
       const result = await updateProfile(user.id, {
@@ -117,18 +137,19 @@ const ProfilePage: React.FC = () => {
         interests: editForm.interests
       });
       
-      console.log('Update result:', result);
+      console.log('[ProfilePage] Update result:', result);
       
       toast({ title: 'Profile updated', description: 'Your profile has been updated.' });
       setIsEditing(false);
       
       // Wait a moment before refreshing
       setTimeout(async () => {
+        console.log('[ProfilePage] Refreshing profile...');
         await refreshProfile();
       }, 300);
       
     } catch (err) {
-      console.error('Update failed:', err);
+      console.error('[ProfilePage] Update failed:', err);
       toast({ 
         title: 'Error', 
         description: `Update failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 
@@ -141,7 +162,7 @@ const ProfilePage: React.FC = () => {
 
   const handleSaveBio = async () => {
     setSaving(true);
-    console.log('Updating bio and interests:', { bio: editForm.bio, interests: editForm.interests });
+    console.log('[ProfilePage] Updating bio and interests:', { bio: editForm.bio, interests: editForm.interests });
     
     try {
       const result = await updateProfile(user.id, { 
@@ -149,17 +170,18 @@ const ProfilePage: React.FC = () => {
         interests: editForm.interests 
       });
       
-      console.log('Bio update result:', result);
+      console.log('[ProfilePage] Bio update result:', result);
       
       toast({ title: 'Bio updated', description: 'Your bio has been updated.' });
       setIsEditingBio(false);
       
       setTimeout(async () => {
+        console.log('[ProfilePage] Refreshing profile after bio update...');
         await refreshProfile();
       }, 300);
       
     } catch (err) {
-      console.error('Bio update failed:', err);
+      console.error('[ProfilePage] Bio update failed:', err);
       toast({ 
         title: 'Error', 
         description: `Bio update failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 
@@ -173,9 +195,13 @@ const ProfilePage: React.FC = () => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    
+    console.log('[ProfilePage] Starting avatar upload:', { fileName: file.name, fileSize: file.size });
     setUploadingAvatar(true);
     try {
       const url = await uploadAvatar(file, user.id);
+      console.log('[ProfilePage] Avatar uploaded successfully:', url);
+      
       if (url) {
         await updateProfile(user.id, { avatar_url: url });
         toast({ title: 'Avatar updated', description: 'Your avatar has been updated.' });
@@ -184,21 +210,31 @@ const ProfilePage: React.FC = () => {
         throw new Error('Failed to upload avatar');
       }
     } catch (err) {
+      console.error('[ProfilePage] Avatar upload failed:', err);
       toast({ title: 'Error', description: 'Avatar upload failed.', variant: 'destructive' });
-      console.error(err);
     } finally {
       setUploadingAvatar(false);
     }
   };
 
   const handleAddInterest = () => {
-    if (!newInterest.trim()) return;
+    if (!newInterest.trim()) {
+      console.log('[ProfilePage] Cannot add empty interest');
+      return;
+    }
+    console.log('[ProfilePage] Adding interest:', newInterest.trim());
     setEditForm((p) => ({ ...p, interests: [...p.interests, newInterest.trim()] }));
     setNewInterest('');
   };
 
-  const handleRemoveInterest = (item: string) =>
+  const handleRemoveInterest = (item: string) => {
+    console.log('[ProfilePage] Removing interest:', item);
     setEditForm((p) => ({ ...p, interests: p.interests.filter((i) => i !== item) }));
+  };
+
+  // Safe interests array with null checks
+  const safeInterests = profile.interests && Array.isArray(profile.interests) ? profile.interests : [];
+  console.log('[ProfilePage] Safe interests:', safeInterests);
 
   // JSX
   return (
@@ -287,7 +323,7 @@ const ProfilePage: React.FC = () => {
                           transition={{ duration: 0.5, delay: 0.2 }}
                           className="text-4xl font-bold text-gray-800 dark:text-gray-200"
                         >
-                          {profile.full_name}
+                          {profile.full_name || 'Unknown User'}
                         </motion.h1>
                         <motion.div whileHover={{ scale: 1.1, rotate: 15 }} whileTap={{ scale: 0.9 }}>
                           <Button size="icon" variant="ghost" onClick={() => setIsEditing(true)} className="hover:bg-blue-100 dark:hover:bg-blue-900/20">
@@ -295,21 +331,21 @@ const ProfilePage: React.FC = () => {
                           </Button>
                         </motion.div>
                       </div>
-                      <p className="text-blue-500 dark:text-blue-400 text-lg font-medium mb-1">@{profile.username}</p>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">{profile.email}</p>
+                      <p className="text-blue-500 dark:text-blue-400 text-lg font-medium mb-1">@{profile.username || 'unknown'}</p>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">{profile.email || 'No email'}</p>
                       <div className="grid grid-cols-2 gap-4">
                         <motion.div
                           whileHover={{ scale: 1.02 }}
                           className="backdrop-blur-sm bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl p-4 text-center"
                         >
-                          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{profile.xp}</div>
+                          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{profile.xp || 0}</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">XP Points</div>
                         </motion.div>
                         <motion.div
                           whileHover={{ scale: 1.02 }}
                           className="backdrop-blur-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl p-4 text-center"
                         >
-                          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{profile.streak}</div>
+                          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{profile.streak || 0}</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">Day Streak</div>
                         </motion.div>
                       </div>
@@ -404,7 +440,7 @@ const ProfilePage: React.FC = () => {
                     {profile.bio || 'No bio yet. Click edit to add one!'}
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {profile.interests.map((interest, index) => (
+                    {safeInterests.map((interest, index) => (
                       <motion.div
                         key={interest}
                         initial={{ opacity: 0, scale: 0.8, y: 20 }}
@@ -417,7 +453,7 @@ const ProfilePage: React.FC = () => {
                         </Badge>
                       </motion.div>
                     ))}
-                    {profile.interests.length === 0 && (
+                    {safeInterests.length === 0 && (
                       <p className="text-gray-500 dark:text-gray-400 italic">No interests added yet.</p>
                     )}
                   </div>
@@ -439,7 +475,7 @@ const ProfilePage: React.FC = () => {
               { icon: Users, label: 'Rooms Created', value: stats.roomsCreated, color: 'from-blue-500 to-cyan-500' },
               { icon: BookOpen, label: 'Rooms Joined', value: stats.roomsJoined, color: 'from-emerald-500 to-teal-500' },
               { icon: MessageCircle, label: 'Messages Sent', value: stats.messagesSent, color: 'from-amber-500 to-orange-500' },
-              { icon: Award, label: 'Study Streak', value: profile.streak, color: 'from-purple-500 to-pink-500' },
+              { icon: Award, label: 'Study Streak', value: profile.streak || 0, color: 'from-purple-500 to-pink-500' },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
