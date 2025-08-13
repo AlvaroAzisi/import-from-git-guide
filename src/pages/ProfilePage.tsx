@@ -232,9 +232,9 @@ const ProfilePage: React.FC = () => {
     setEditForm((p) => ({ ...p, interests: p.interests.filter((i) => i !== item) }));
   };
 
-  // Move useMemo to top level with other hooks
+  // This is now correctly placed at top level with other hooks
   const safeInterests = React.useMemo(() => {
-    if (!profile) return [];
+    if (!profile) return []; // Condition is INSIDE the callback
     const interests = profile.interests;
     if (!interests) return [];
     if (Array.isArray(interests)) return interests;
