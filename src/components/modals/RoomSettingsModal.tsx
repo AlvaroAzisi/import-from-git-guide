@@ -7,29 +7,18 @@ import { useAuth } from '../../hooks/useAuth';
 import { 
   updateRoom, 
   regenerateRoomCode, 
-  softDeleteRoom, 
-  type RoomUpdateData 
+  softDeleteRoom 
 } from '../../lib/supabase-rpc';
+import type { Room } from '../../lib/rooms';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 
-interface Room {
-  id: string;
-  name: string;
-  description?: string;
-  subject?: string;
-  short_code?: string;
-  creator_id: string;
-  max_members: number;
-  is_public: boolean;
-}
-
 interface RoomSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  room: Room;
-  onRoomUpdate?: (room: Room) => void;
+  room: Partial<Room>;
+  onRoomUpdate?: (room: Partial<Room>) => void;
   onRoomDelete?: () => void;
   userRole?: 'admin' | 'member';
 }
@@ -108,7 +97,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // TODO: DB/RLS: Varo will paste SQL for update_room RPC
       // Expected params: { room_id: string, updates: RoomUpdateData }
       // Expected response: { success: boolean, room: Room, error?: string }
-      const result = await updateRoom(room.id, formData);
+      const result = await updateRoom(room.id!, formData);
       
       if (result.success && result.room) {
         toast({
@@ -139,7 +128,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // TODO: DB/RLS: Varo will paste SQL for regenerate_room_code RPC
       // Expected params: { room_id: string }
       // Expected response: { success: boolean, new_code: string, error?: string }
-      const result = await regenerateRoomCode(room.id);
+      const result = await regenerateRoomCode(room.id!);
       
       if (result.success && result.new_code) {
         toast({
@@ -171,7 +160,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // TODO: DB/RLS: Varo will paste SQL for soft_delete_room RPC
       // Expected params: { room_id: string }
       // Expected response: { success: boolean, error?: string }
-      const result = await softDeleteRoom(room.id);
+      const result = await softDeleteRoom(room.id!);
       
       if (result.success) {
         toast({

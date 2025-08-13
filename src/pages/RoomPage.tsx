@@ -317,13 +317,14 @@ const RoomPage: React.FC = () => {
     });
   };
 
-  const handleRoomUpdate = (updatedRoom: Room) => {
-    setRoom({
+  const handleRoomUpdate = (updatedRoom: Partial<Room>) => {
+    setRoom(prev => prev ? {
+      ...prev,
       ...updatedRoom,
-      is_active: updatedRoom.is_active ?? true,
-      created_at: updatedRoom.created_at ?? new Date().toISOString(),
+      is_active: updatedRoom.is_active ?? prev.is_active ?? true,
+      created_at: updatedRoom.created_at ?? prev.created_at ?? new Date().toISOString(),
       updated_at: updatedRoom.updated_at ?? new Date().toISOString()
-    });
+    } : (updatedRoom as Room));
   };
 
   const handleRoomDelete = () => {
@@ -612,7 +613,7 @@ const RoomPage: React.FC = () => {
         onClose={() => setSettingsOpen(false)}
         room={room}
         userRole={room.creator_id === user?.id ? 'admin' : 'member'}
-        onRoomUpdate={handleRoomUpdate}
+        onRoomUpdate={(updated: Partial<Room>) => handleRoomUpdate(updated)}
         onRoomDelete={handleRoomDelete}
       />
     </>
