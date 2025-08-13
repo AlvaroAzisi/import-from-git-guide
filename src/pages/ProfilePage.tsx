@@ -232,8 +232,22 @@ const ProfilePage: React.FC = () => {
     setEditForm((p) => ({ ...p, interests: p.interests.filter((i) => i !== item) }));
   };
 
-  // Safe interests array with null checks
-  const safeInterests = profile.interests && Array.isArray(profile.interests) ? profile.interests : [];
+  // Safe interests array with comprehensive null checks
+  const safeInterests = React.useMemo(() => {
+    const interests = profile?.interests;
+    if (!interests) return [];
+    if (Array.isArray(interests)) return interests;
+    if (typeof interests === 'string') {
+      try {
+        const parsed = JSON.parse(interests);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [interests];
+      }
+    }
+    return [];
+  }, [profile?.interests]);
+
   console.log('[ProfilePage] Safe interests:', safeInterests);
 
   // JSX
@@ -400,7 +414,7 @@ const ProfilePage: React.FC = () => {
                     </motion.div>
                   </div>
                   <motion.div className="flex flex-wrap gap-2 mb-4">
-                    {editForm.interests.map((interest, index) => (
+                    {(editForm.interests || []).map((interest, index) => (
                       <motion.div
                         key={interest}
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -440,20 +454,21 @@ const ProfilePage: React.FC = () => {
                     {profile.bio || 'No bio yet. Click edit to add one!'}
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {safeInterests.map((interest, index) => (
-                      <motion.div
-                        key={interest}
-                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: index * 0.1 }}
-                        whileHover={{ scale: 1.05, y: -2 }}
-                      >
-                        <Badge className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-700/50 px-3 py-1 text-sm">
-                          {interest}
-                        </Badge>
-                      </motion.div>
-                    ))}
-                    {safeInterests.length === 0 && (
+                    {safeInterests.length > 0 ? (
+                      safeInterests.map((interest, index) => (
+                        <motion.div
+                          key={`${interest}-${index}`}
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                        >
+                          <Badge className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-700/50 px-3 py-1 text-sm">
+                            {interest}
+                          </Badge>
+                        </motion.div>
+                      ))
+                    ) : (
                       <p className="text-gray-500 dark:text-gray-400 italic">No interests added yet.</p>
                     )}
                   </div>
