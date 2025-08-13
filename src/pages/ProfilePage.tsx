@@ -232,9 +232,10 @@ const ProfilePage: React.FC = () => {
     setEditForm((p) => ({ ...p, interests: p.interests.filter((i) => i !== item) }));
   };
 
-  // Safe interests array with comprehensive null checks
+  // Move useMemo to top level with other hooks
   const safeInterests = React.useMemo(() => {
-    const interests = profile?.interests;
+    if (!profile) return [];
+    const interests = profile.interests;
     if (!interests) return [];
     if (Array.isArray(interests)) return interests;
     if (typeof interests === 'string') {
@@ -246,8 +247,9 @@ const ProfilePage: React.FC = () => {
       }
     }
     return [];
-  }, [profile?.interests]);
+  }, [profile]); // Only depend on profile, not nested property
 
+  // Log after the hook declaration
   console.log('[ProfilePage] Safe interests:', safeInterests);
 
   // JSX
