@@ -82,12 +82,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
     return () => {
       try {
-        // removeChannel is v2 API — keep this guarded in case of different supabase client versions
-        // @ts-ignore
-        if (supabase.removeChannel) supabase.removeChannel(channel);
-        // fallback: unsubscribe if available
-        // @ts-ignore
-        if (channel.unsubscribe) channel.unsubscribe();
+        // Graceful cleanup for Supabase channels
+        if (channel && typeof channel.unsubscribe === 'function') {
+          channel.unsubscribe();
+        }
       } catch (err) {
         console.warn('Error while removing supabase channel:', err);
       }

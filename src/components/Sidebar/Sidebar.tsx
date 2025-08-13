@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
@@ -34,6 +35,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const { profile } = useAuth();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Handle outside click and ESC key
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!isOpen || !sidebarRef.current) return;
+      if (!sidebarRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen && !minimized) return null;
 
@@ -52,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <motion.div
+        ref={sidebarRef}
         initial={{ x: minimized ? -72 : -320 }}
         animate={{ 
           x: 0,
@@ -150,24 +179,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             })}
 
             {/* Create Room Button */}
-            <div className="mt-4">
-              <SidebarItem
-                icon={sidebarMenuItems.find(item => item.variant === 'create')?.icon!}
-                label="Create Room"
-                onClick={() => {
-                  onCreateRoom();
-                  onClose();
-                }}
-                minimized={minimized}
-                variant="create"
-              />
-            </div>
+            {/* Create Room button moved to prevent duplication */}
           </div>
         </nav>
 
         {/* Footer with Minimize Toggle */}
         <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
           <MinimizeToggle
+            {/* Create Room Button - Single location */}
+            <SidebarItem
+              icon={Plus}
+              label="Create Room"
+              onClick={() => {
+                onCreateRoom();
+                onClose();
+              }}
+              minimized={minimized}
+              variant="create"
+            />
+            
             minimized={minimized}
             onToggle={onToggleMinimized}
           />

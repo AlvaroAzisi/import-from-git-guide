@@ -219,7 +219,7 @@ const ProfilePage: React.FC = () => {
                   <Avatar className="w-36 h-36 border-4 border-white/30 dark:border-gray-700/30 shadow-xl">
                     <AvatarImage src={profile.avatar_url || undefined} />
                     <AvatarFallback className="text-2xl font-bold">
-                      {profile.full_name.charAt(0).toUpperCase() || 'U'}
+                      {profile.full_name?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <input

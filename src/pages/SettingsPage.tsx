@@ -55,8 +55,8 @@ const SettingsPage: React.FC = () => {
       allowFriendRequests: true,
     },
     account: {
-      email: profile?.email || '',
-      username: profile?.username || '',
+      email: profile?.email ?? '',
+      username: profile?.username ?? '',
     }
   });
 

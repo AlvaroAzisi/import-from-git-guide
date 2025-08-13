@@ -225,16 +225,36 @@ export const softDeleteRoom = async (roomId: string): Promise<SoftDeleteRoomResp
  */
 export const getProfileDetails = async (userId: string): Promise<ProfileDetails> => {
   try {
-    // TODO: DB/RLS: Varo will paste SQL for get_profile_details RPC
-    // Expected params: { user_id: string, viewer_id: string }
-    // Expected response: ProfileDetails with mutual_rooms, friendship_status
-    const { data, error } = await supabase.rpc('get_profile_details', {
-      user_id: userId,
-      viewer_id: (await supabase.auth.getUser()).data.user?.id
-    });
+    // Fallback to direct profile query since RPC doesn't exist yet
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-    if (error) throw error;
-    return data;
+    if (profileError) throw profileError;
+    
+    // Get friendship status
+    const currentUser = (await supabase.auth.getUser()).data.user;
+    let friendshipStatus: 'none' | 'pending' | 'accepted' | 'blocked' = 'none';
+    
+    if (currentUser && currentUser.id !== userId) {
+      const { data: friendData } = await supabase
+        .from('friends')
+        .select('status')
+        .or(`and(user_id.eq.${currentUser.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${currentUser.id})`)
+        .single();
+      
+      friendshipStatus = friendData?.status || 'none';
+    }
+    
+    // Return profile with additional fields
+    return {
+      ...profileData,
+      friendship_status: friendshipStatus,
+      mutual_rooms: [], // TODO: Implement mutual rooms query
+      mutual_friends_count: 0 // TODO: Implement mutual friends count
+    } as ProfileDetails;
   } catch (error: any) {
     console.error('Get profile details error:', error);
     throw error;

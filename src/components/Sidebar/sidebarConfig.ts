@@ -17,5 +17,4 @@ export const sidebarMenuItems = [
   { icon: User, label: 'Profile', path: '/profile' },
   { icon: Settings, label: 'Settings', path: '/settings' },
   { icon: LogOut, label: 'Sign Out', path: '/signout', variant: 'danger' as const },
-  { icon: Plus, label: 'Create Room', variant: 'create' as const },
 ];

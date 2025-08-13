@@ -7,7 +7,6 @@ import { Navigate } from 'react-router-dom';
 import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search, UserPlus } from 'lucide-react';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
-import { JoinRoomModal } from '../components/modals/JoinRoomModal';
 import { Button } from '../components/ui/button';
 import CreateRoomModal from '../components/CreateRoomModal';
 import type { Room } from '../lib/rooms';
@@ -30,11 +29,11 @@ const HomePage: React.FC = () => {
       try {
         const [roomsData, usersData] = await Promise.all([
           getRooms(6),
-          searchUsers('').then(result => result.data || []) // Get some random users
+          searchUsers('').then(result => result.data?.slice(0, 4) || []) // Get some random users
         ]);
         
         setRooms(roomsData);
-        setRecommendedUsers(usersData.slice(0, 4));
+        setRecommendedUsers(usersData);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -264,7 +263,7 @@ const HomePage: React.FC = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-400">@{user.username}</p>
                       </div>
                       <div className="text-xs text-blue-500 font-medium">
-                        Level {Math.floor((user.xp || 0) / 1000) + 1}
+                        Level {Math.floor((user.xp ?? 0) / 1000) + 1}
                       </div>
                     </div>
                   </div>
@@ -338,10 +337,30 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Join Room Modal */}
-      <JoinRoomModal
-        isOpen={joinRoomOpen}
-        onClose={() => setJoinRoomOpen(false)}
-      />
+      {/* Moved to global layout - no duplicate here */}
+      {joinRoomOpen && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Join Room</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">Enter a room code to join instantly</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setJoinRoomOpen(false)}
+                className="flex-1 px-4 py-2 bg-white/20 dark:bg-gray-800/20 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-white/30 dark:hover:bg-gray-800/30 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setJoinRoomOpen(false)}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all duration-300"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Create Room Modal */}
       <CreateRoomModal
         isOpen={createRoomOpen}

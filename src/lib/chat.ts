@@ -470,19 +470,13 @@ export const subscribeToConversation = (
     })
     .on('presence', { event: 'sync' }, () => {
       try {
-        const state = typingChannel.presenceState();
-        Object.values(state).forEach((presences: any) => {
-          presences.forEach((presence: any) => {
-            if (onTyping && presence.is_typing) {
-              onTyping({
-                user_id: presence.user_id,
-                conversation_id: conversationId,
-                is_typing: presence.is_typing,
-                user_name: presence.user_name
-              });
-            }
-          });
-        });
+        // Graceful cleanup for Supabase channels
+        if (messagesChannel && typeof messagesChannel.unsubscribe === 'function') {
+          messagesChannel.unsubscribe();
+        }
+        if (typingChannel && typeof typingChannel.unsubscribe === 'function') {
+          typingChannel.unsubscribe();
+        }
       } catch (e) {
         console.warn('[subscribeToConversation] presence handling error:', e);
       }

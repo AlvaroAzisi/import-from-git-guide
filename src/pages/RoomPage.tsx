@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Users, Copy, Crown, ArrowLeft, Paperclip } from 'lucide-react';
+import { Send, Users, Copy, Crown, ArrowLeft, Paperclip, Settings } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, getRoomByCode, isValidUUID, type Room, type RoomMember, type Message } from '../lib/rooms';
 import { uploadChatMedia } from '../lib/storage';
@@ -318,13 +318,17 @@ const RoomPage: React.FC = () => {
   };
 
   const handleRoomUpdate = (updatedRoom: Partial<Room>) => {
-    setRoom(prev => prev ? {
-      ...prev,
-      ...updatedRoom,
-      is_active: updatedRoom.is_active ?? prev.is_active ?? true,
-      created_at: updatedRoom.created_at ?? prev.created_at ?? new Date().toISOString(),
-      updated_at: updatedRoom.updated_at ?? new Date().toISOString()
-    } : (updatedRoom as Room));
+    setRoom(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        ...updatedRoom,
+        // Ensure required Room properties are preserved
+        is_active: updatedRoom.is_active ?? prev.is_active,
+        created_at: updatedRoom.created_at ?? prev.created_at,
+        updated_at: updatedRoom.updated_at ?? prev.updated_at
+      };
+    });
   };
 
   const handleRoomDelete = () => {

@@ -37,9 +37,6 @@ const RuangkuPage: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [leavingRoom, setLeavingRoom] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [isMember, setIsMember] = useState(false);
-
-  // Load room data
   useEffect(() => {
     const loadRoom = async () => {
       if (!roomId || !user) return;
