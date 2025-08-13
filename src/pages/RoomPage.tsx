@@ -10,7 +10,6 @@ import { useToast } from '../hooks/useToast';
 import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
 import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
 import { RequestToJoinButton } from '../components/RequestToJoinButton';
-// Simple debounce implementation without lodash
 
 const RoomPage: React.FC = () => {
   const { roomId, code } = useParams<{ roomId?: string; code?: string }>();
@@ -323,17 +322,17 @@ const RoomPage: React.FC = () => {
         ...prev,
         ...updatedRoom,
         // Ensure required Room properties are preserved
+        id: prev.id, // ID should never change
         is_active: updatedRoom.is_active ?? prev.is_active,
         created_at: updatedRoom.created_at ?? prev.created_at,
         updated_at: updatedRoom.updated_at ?? prev.updated_at
-      };
+      } as Room;
     });
   };
 
   const handleRoomDelete = () => {
     navigate('/home');
   };
-
 
   const renderMessage = (message: Message) => {
     const isOwn = message.user_id === user?.id;
@@ -420,8 +419,9 @@ const RoomPage: React.FC = () => {
     );
   }
 
-  return (<>
-    <div className="max-w-6xl mx-auto px-4 py-8">
+  return (
+    <>
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Room Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -616,7 +616,7 @@ const RoomPage: React.FC = () => {
         onClose={() => setSettingsOpen(false)}
         room={room}
         userRole={room.creator_id === user?.id ? 'admin' : 'member'}
-        onRoomUpdate={(updated: Partial<Room>) => handleRoomUpdate(updated)}
+        onRoomUpdate={handleRoomUpdate}
         onRoomDelete={handleRoomDelete}
       />
     </>
