@@ -2,7 +2,7 @@ import React from 'react';
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Plus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { SidebarItem } from './SidebarItem';
 import { MinimizeToggle } from './MinimizeToggle';
@@ -185,8 +185,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer with Minimize Toggle */}
         <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
+          {/* Create Room Button - Single location */}
           <MinimizeToggle
-            {/* Create Room Button - Single location */}
+            minimized={minimized}
+            onToggle={onToggleMinimized}
+          >
             <SidebarItem
               icon={Plus}
               label="Create Room"
@@ -197,10 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               minimized={minimized}
               variant="create"
             />
-            
-            minimized={minimized}
-            onToggle={onToggleMinimized}
-          />
+          </MinimizeToggle>
         </div>
       </motion.div>
     </>

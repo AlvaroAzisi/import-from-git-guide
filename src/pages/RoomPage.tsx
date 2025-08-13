@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Users, Copy, Crown, ArrowLeft, Paperclip, Settings } from 'lucide-react';
+import { Send, Users, Copy, Crown, ArrowLeft, Paperclip, Settings as SettingsIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, getRoomByCode, isValidUUID, type Room, type RoomMember, type Message } from '../lib/rooms';
 import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/useToast';
-import { Settings } from 'lucide-react';
 import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
 import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
 import { RequestToJoinButton } from '../components/RequestToJoinButton';
@@ -463,7 +462,7 @@ const RoomPage: React.FC = () => {
                   className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
                   title="Room Settings"
                 >
-                  <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <SettingsIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
               )}
               <AdminRoomRequestsPanel roomId={room.id} isCreator={room.creator_id === user?.id} />

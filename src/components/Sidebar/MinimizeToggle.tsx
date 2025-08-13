@@ -6,9 +6,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix
 interface MinimizeToggleProps {
   minimized: boolean;
   onToggle?: () => void;
+  children?: React.ReactNode;
 }
 
-export const MinimizeToggle: React.FC<MinimizeToggleProps> = ({ minimized, onToggle }) => {
+export const MinimizeToggle: React.FC<MinimizeToggleProps> = ({ minimized, onToggle, children }) => {
   if (!onToggle) return null;
 
   const button = (
@@ -47,5 +48,10 @@ export const MinimizeToggle: React.FC<MinimizeToggleProps> = ({ minimized, onTog
     );
   }
 
-  return button;
+  return (
+    <div className="space-y-2">
+      {children}
+      {button}
+    </div>
+  );
 };
