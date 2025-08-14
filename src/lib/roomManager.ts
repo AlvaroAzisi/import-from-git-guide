@@ -1,6 +1,6 @@
 // Centralized room management with atomic operations
 import { supabase } from './supabase';
-import type { Room, RoomMember, CreateRoomPayload, JoinRoomResponse } from '../types/room';
+import type { Room, CreateRoomPayload, JoinRoomResponse } from '../types/room';
 
 export class RoomManager {
   /**

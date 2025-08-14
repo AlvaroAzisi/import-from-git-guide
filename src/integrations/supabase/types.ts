@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           color: string
@@ -628,9 +649,37 @@ export type Database = {
           user_id: string
         }
       }
+      check_rate_limit: {
+        Args: {
+          userid: string
+          action: string
+          max_requests: number
+          window_seconds: number
+        }
+        Returns: boolean
+      }
+      clean_old_audit_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_dm_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      create_room_and_join: {
+        Args: {
+          p_name: string
+          p_description?: string
+          p_subject?: string
+          p_is_public?: boolean
+          p_max_members?: number
+        }
+        Returns: {
+          room_id: string
+          membership_id: string
+          room: Json
+          membership: Json
+        }[]
       }
       create_room_request: {
         Args: { p_room_id: string; p_message?: string }
@@ -687,6 +736,10 @@ export type Database = {
       is_user_room_member: {
         Args: { room_uuid: string; user_uuid?: string }
         Returns: boolean
+      }
+      join_room_safe: {
+        Args: { p_room_identifier: string }
+        Returns: Json
       }
       mark_messages_read: {
         Args: { conversation_uuid: string; user_uuid?: string }
