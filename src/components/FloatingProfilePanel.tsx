@@ -3,14 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   UserPlus, 
-  UserCheck, 
   UserMinus, 
   MessageCircle, 
-  Users,
   BookOpen,
   Award,
-  Clock,
-  MapPin
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -124,7 +121,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
         const result = await sendFriendRequest(userId);
         
         if (result.success) {
-          setProfile(prev => prev ? { ...prev, friendship_status: result.status } : null);
+          setProfile(prev => prev ? { ...prev, friendship_status: result.status as 'pending' | 'accepted' | 'none' | 'blocked' } : null);
           toast({
             title: 'Friend Request Sent',
             description: `Friend request sent to ${profile.full_name}`

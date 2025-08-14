@@ -20,8 +20,7 @@ const RoomsPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  // Remove unused state variables
   const [rooms, setRooms] = useState<Room[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,10 +153,7 @@ const RoomsPage: React.FC = () => {
     }
   };
 
-  const handleRoomCreated = (room: Room) => {
-    setRooms(prev => [room, ...prev]);
-    navigate(`/room/${room.id}`);
-  };
+  // Remove unused function
 
   return (
     <div>

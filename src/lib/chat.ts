@@ -426,7 +426,7 @@ export const searchMessages = async (conversationId: string, query: string): Pro
 export const subscribeToConversation = (
   conversationId: string,
   onMessage: (message: ChatMessage) => void,
-  onTyping?: (event: TypingEvent) => void
+  _onTyping?: (event: TypingEvent) => void
 ) => {
   // Subscribe to new messages
   const messagesChannel = supabase

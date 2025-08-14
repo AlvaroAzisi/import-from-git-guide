@@ -30,8 +30,7 @@ const PublicProfilePage: React.FC = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const { username } = useParams<{ username: string }>();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  // Remove unused state variables
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [friendshipStatus, setFriendshipStatus] = useState<string>('none');
@@ -47,11 +46,11 @@ const PublicProfilePage: React.FC = () => {
       setLoading(true);
       try {
         const profileData = await getProfileByUsername(username);
-        setProfile(profileData);
+        setProfile(profileData.data);
         
         // Get friendship status if user is logged in
         if (user && profileData) {
-          const status = await getFriendshipStatus(profileData.id);
+          const status = await getFriendshipStatus(profileData.data?.id || '');
           setFriendshipStatus(status);
         }
       } catch (error) {
@@ -178,8 +177,8 @@ const PublicProfilePage: React.FC = () => {
   };
 
   const canSendMessage = friendshipStatus === 'accepted' || !user;
-  const currentLevel = Math.floor(profile.xp / 1000) + 1;
-  const xpProgress = Math.min((profile.xp % 1000) / 1000 * 100, 100);
+  const currentLevel = Math.floor((profile.xp || 0) / 1000) + 1;
+  const xpProgress = Math.min(((profile.xp || 0) % 1000) / 1000 * 100, 100);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -233,10 +232,10 @@ const PublicProfilePage: React.FC = () => {
                 <span className="text-sm text-blue-500 font-medium">
                   Level {currentLevel}
                 </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {profile.xp} XP
-                </span>
-                {profile.streak > 0 && (
+                 <span className="text-sm text-gray-500 dark:text-gray-400">
+                   {profile.xp || 0} XP
+                 </span>
+                 {(profile.streak || 0) > 0 && (
                   <div className="flex items-center gap-1 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-1 rounded-full">
                     <Award className="w-4 h-4 text-orange-500" />
                     <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">
@@ -256,9 +255,9 @@ const PublicProfilePage: React.FC = () => {
                     className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
                   />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-                  {1000 - (profile.xp % 1000)} XP to next level
-                </p>
+                 <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+                   {1000 - ((profile.xp || 0) % 1000)} XP to next level
+                 </p>
               </div>
 
               {/* Action Buttons */}

@@ -199,7 +199,7 @@ export const softDeleteRoom = async (roomId: string): Promise<SoftDeleteRoomResp
     // TODO: DB/RLS: Varo will paste SQL for soft_delete_room RPC
     // Expected params: { room_id: string }
     // Expected response: { success: boolean }
-    const { data, error } = await supabase.rpc('soft_delete_room', {
+    const { data: _data, error } = await supabase.rpc('soft_delete_room', {
       room_id: roomId
     });
 
@@ -326,7 +326,7 @@ export const removeFriend = async (friendId: string): Promise<RemoveFriendRespon
     // TODO: DB/RLS: Varo will paste SQL for remove_friend RPC
     // Expected params: { friend_id: string }
     // Expected response: { success: boolean }
-    const { data, error } = await supabase.rpc('remove_friend', {
+    const { data: _data, error } = await supabase.rpc('remove_friend', {
       friend_id: friendId
     });
 

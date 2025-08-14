@@ -32,7 +32,7 @@ const SettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Remove unused state variable
   const [activeTab, setActiveTab] = useState('account');
   const [saving, setSaving] = useState(false);
   

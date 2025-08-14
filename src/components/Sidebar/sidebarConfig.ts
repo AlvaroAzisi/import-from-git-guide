@@ -5,7 +5,6 @@ import {
   User, 
   Settings,
   LogOut,
-  Plus,
   MessageCircle
 } from 'lucide-react';
 

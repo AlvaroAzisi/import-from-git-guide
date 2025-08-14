@@ -30,7 +30,7 @@ export const signInWithGoogle = async (): Promise<{ data: unknown; error: string
 export const signInWithEmail = async (
   email: string,
   password: string
-): Promise<{ data: unknown; error: string | null }> => {
+): Promise<{ data: { user: User } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     console.log(`[Auth] Signing in with email: ${email}`);
@@ -39,7 +39,7 @@ export const signInWithEmail = async (
       password,
     });
     if (error) throw error;
-    return { data, error: null };
+    return { data: data.user ? { user: data.user } : null, error: null };
   } catch (error: any) {
     console.error('[Auth] Email sign-in failed:', error);
     return { data: null, error: error.message };
@@ -49,7 +49,7 @@ export const signInWithEmail = async (
 export const signUpWithEmail = async (
   email: string,
   password: string
-): Promise<{ data: unknown; error: string | null }> => {
+): Promise<{ data: { user: User } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     console.log(`[Auth] Signing up with email: ${email}`);
@@ -61,7 +61,7 @@ export const signUpWithEmail = async (
       },
     });
     if (error) throw error;
-    return { data, error: null };
+    return { data: data.user ? { user: data.user } : null, error: null };
   } catch (error: any) {
     console.error('[Auth] Email sign-up failed:', error);
     return { data: null, error: error.message };

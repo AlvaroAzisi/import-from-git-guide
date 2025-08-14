@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userProfile = await createOrUpdateProfile(currentUser);
       console.timeEnd('createOrUpdateProfile');
       if (userProfile) {
-        setProfile(userProfile);
+        setProfile(userProfile.data);
         setError(null);
       } else {
         throw new Error('Failed to create/update profile');
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) {
       try {
         const freshProfile = await getProfile(user.id);
-        setProfile(freshProfile);
+        setProfile(freshProfile.data);
         setError(null);
       } catch (err: any) {
         console.error('[AuthContext] Error refreshing profile:', err);

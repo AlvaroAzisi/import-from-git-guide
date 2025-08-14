@@ -217,10 +217,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-blue-500 font-medium">
-                    Level {Math.floor(profile.xp / 1000) + 1}
+                    Level {Math.floor((profile.xp || 0) / 1000) + 1}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {profile.xp} XP
+                    {profile.xp || 0} XP
                   </span>
                 </div>
               </div>
