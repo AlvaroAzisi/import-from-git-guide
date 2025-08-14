@@ -1,9 +1,10 @@
 import React from 'react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { BookOpen, Plus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigation } from '../../lib/navigation';
 import { SidebarItem } from './SidebarItem';
 import { MinimizeToggle } from './MinimizeToggle';
 import { sidebarMenuItems } from './sidebarConfig';
@@ -13,7 +14,6 @@ interface SidebarProps {
   onClose: () => void;
   onCreateRoom: () => void;
   minimized?: boolean;
-  onToggleMinimized?: () => void;
 }
 
 /**
@@ -31,11 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose, 
   onCreateRoom,
   minimized = false,
-  onToggleMinimized
 }) => {
   const location = useLocation();
   const { profile } = useAuth();
+  const { safeNavigate, isNavigating } = useNavigation();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [focusedItem, setFocusedItem] = useState<string | null>(null);
 
   // Handle outside click and ESC key
   useEffect(() => {
@@ -55,20 +56,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (isOpen) {
       document.addEventListener('mousedown', handleOutsideClick);
       document.addEventListener('keydown', handleEscapeKey);
+      // Focus trap
+      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen && !minimized) return null;
+  // Focus management
+  useEffect(() => {
+    if (isOpen && sidebarRef.current) {
+      const firstFocusable = sidebarRef.current.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+      firstFocusable?.focus();
+    }
+  }, [isOpen]);
 
+  const handleNavigation = (path: string) => {
+    safeNavigate(path);
+    onClose(); // Close sidebar after navigation on mobile
+  };
+
+  if (!isOpen) return null;
   return (
     <>
       {/* Mobile Backdrop */}
-      {isOpen && !minimized && (
+      {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -81,21 +97,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <motion.div
         ref={sidebarRef}
-        initial={{ x: minimized ? -72 : -320 }}
+        initial={{ x: -320 }}
         animate={{ 
           x: 0,
           width: minimized ? '72px' : '320px'
         }}
-        exit={{ x: minimized ? -72 : -320 }}
+        exit={{ x: -320 }}
         transition={{ 
           type: "spring", 
           damping: 25, 
           stiffness: 200,
           duration: 0.22
         }}
-        className={`fixed left-0 top-0 h-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col ${
-          minimized ? 'lg:translate-x-0' : ''
-        }`}
+        className="fixed left-0 top-0 h-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
+        role="navigation"
+        aria-expanded={isOpen}
+        aria-label="Main navigation"
       >
         {/* Header */}
         <div className="p-6 border-b border-white/10 dark:border-gray-700/10">
@@ -163,6 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {sidebarMenuItems.map((item) => {
               const isActive = location.pathname === item.path || 
                              (item.path === '/chat' && location.pathname.startsWith('/chat'));
+              const isLoading = isNavigating(item.path);
               
               return (
                 <SidebarItem
@@ -171,36 +189,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   label={item.label}
                   path={item.path}
                   isActive={isActive}
+                  isLoading={isLoading}
                   minimized={minimized}
-                  onClick={onClose}
+                  onClick={() => handleNavigation(item.path)}
                   variant={item.variant}
+                  onFocus={() => setFocusedItem(item.path)}
+                  onBlur={() => setFocusedItem(null)}
                 />
               );
             })}
-
-            {/* Create Room Button */}
-            {/* Create Room button moved to prevent duplication */}
           </div>
         </nav>
 
         {/* Footer with Minimize Toggle */}
         <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
-          {/* Create Room Button - Single location */}
-          <MinimizeToggle
+          <SidebarItem
+            icon={Plus}
+            label="Create Room"
+            onClick={() => {
+              onCreateRoom();
+              onClose();
+            }}
             minimized={minimized}
-            onToggle={onToggleMinimized}
-          >
-            <SidebarItem
-              icon={Plus}
-              label="Create Room"
-              onClick={() => {
-                onCreateRoom();
-                onClose();
-              }}
-              minimized={minimized}
-              variant="create"
-            />
-          </MinimizeToggle>
+            variant="create"
+          />
         </div>
       </motion.div>
     </>

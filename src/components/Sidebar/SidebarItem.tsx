@@ -10,8 +10,11 @@ interface SidebarItemProps {
   path?: string;
   onClick?: () => void;
   isActive?: boolean;
+  isLoading?: boolean;
   minimized?: boolean;
   variant?: 'default' | 'create' | 'danger';
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 export const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -20,17 +23,16 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
   path,
   onClick,
   isActive = false,
+  isLoading = false,
   minimized = false,
-  variant = 'default'
+  variant = 'default',
+  onFocus,
+  onBlur
 }) => {
-  const navigate = useNavigate();
 
   const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else if (path) {
-      navigate(path);
-    }
+    if (isLoading) return; // Prevent clicks while loading
+    onClick?.();
   };
 
   const getButtonStyles = () => {
@@ -51,9 +53,17 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={handleClick}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      disabled={isLoading}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${getButtonStyles()}`}
+      aria-current={isActive ? 'page' : undefined}
     >
-      <Icon className="w-5 h-5 flex-shrink-0" />
+      {isLoading ? (
+        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+      ) : (
+        <Icon className="w-5 h-5 flex-shrink-0" />
+      )}
       <AnimatePresence>
         {!minimized && (
           <motion.span
@@ -67,6 +77,9 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
           </motion.span>
         )}
       </AnimatePresence>
+      {isLoading && !minimized && (
+        <div className="ml-auto w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+      )}
     </motion.button>
   );
 

@@ -9,12 +9,15 @@ import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
 import { Button } from '../components/ui/button';
 import CreateRoomModal from '../components/CreateRoomModal';
+import { useNavigation } from '../lib/navigation';
+import { ROUTES } from '../constants/routes';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
 const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
+  const { navigateToRoom } = useNavigation();
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -64,7 +67,11 @@ const HomePage: React.FC = () => {
   }
 
   const handleRoomCreated = (room: Room) => {
-    setRooms(prev => [room, ...prev.slice(0, 5)]);
+    setCreateRoomOpen(false);
+    // Navigate to the new room
+    if (room?.id) {
+      navigateToRoom(room.id);
+    }
   };
 
   return (<>
@@ -197,7 +204,10 @@ const HomePage: React.FC = () => {
                 rooms.slice(0, 3).map((room) => (
                   <motion.a
                     key={room.id}
-                    href={`/room/${room.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigateToRoom(room.id);
+                    }}
                     whileHover={{ y: -5, scale: 1.02 }}
                     className="block p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/10 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 cursor-pointer"
                   >
@@ -320,7 +330,7 @@ const HomePage: React.FC = () => {
           </div>
 
           <button
-            onClick={() => window.location.href = '/temanku'}
+            onClick={() => navigateToRoom(ROUTES.FRIENDS)}
             className="p-6 backdrop-blur-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl border border-emerald-200/50 dark:border-emerald-700/50 hover:shadow-xl transition-all duration-300 text-left group"
           >
             <div className="flex items-center gap-4">

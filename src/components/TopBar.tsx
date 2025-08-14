@@ -7,16 +7,10 @@ import { NotificationBell } from './NotificationBell';
 
 interface TopBarProps {
   onMenuClick: () => void;
-  showMinimizeButton?: boolean;
-  onToggleMinimized?: () => void;
-  sidebarMinimized?: boolean;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ 
   onMenuClick,
-  showMinimizeButton = false,
-  onToggleMinimized,
-  sidebarMinimized = false
 }) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
@@ -35,21 +29,6 @@ const TopBar: React.FC<TopBarProps> = ({
             <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </motion.button>
           
-          {showMinimizeButton && onToggleMinimized && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onToggleMinimized}
-              className="p-2 rounded-xl backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300"
-              title={sidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
-            >
-              {sidebarMinimized ? (
-                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              )}
-            </motion.button>
-          )}
         </div>
 
         {/* Right side - Controls */}

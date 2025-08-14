@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, BookOpen, Lock, Globe } from 'lucide-react';
 import { createRoom } from '../lib/rooms';
+import { createRoomAndJoin } from '../lib/roomOperations';
 import { useToast } from '../hooks/useToast';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -51,15 +52,14 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
 
     setLoading(true);
     try {
-      const room = await createRoom(formData);
+      const result = await createRoomAndJoin(formData);
       
-      if (room) {
+      if (result.success && result.room) {
         toast({
           title: t('common.success'),
           description: 'Room created successfully!'
         });
-        onSuccess?.(room);
-        onClose();
+        onSuccess?.(result.room);
         // Reset form
         setFormData({
           name: '',
@@ -68,9 +68,8 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
           max_members: 10,
           is_public: true
         });
-
       } else {
-        throw new Error('Failed to create room');
+        throw new Error(result.error || 'Failed to create room');
       }
     } catch (error: any) {
       toast({

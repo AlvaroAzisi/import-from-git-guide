@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { createOrUpdateProfile } from '../lib/auth';
 import { useToast } from '../hooks/useToast';
+import { getPendingJoin, clearPendingJoin, getPendingCreate, clearPendingCreate } from '../lib/roomOperations';
+import { ROUTES, isPublicRoute } from '../constants/routes';
 
 /**
  * AuthRedirectHandler - Ensures profile exists after login and redirects to /home
@@ -24,17 +26,32 @@ export const AuthRedirectHandler: React.FC = () => {
       // Skip if still loading auth state
       if (loading) return;
 
+      // Handle pending operations after authentication
+      if (user && profile) {
+        // Check for pending room join
+        const pendingJoin = getPendingJoin();
+        if (pendingJoin) {
+          clearPendingJoin();
+          console.log('[AuthRedirectHandler] Completing pending room join:', pendingJoin);
+          navigate(ROUTES.ROOM(pendingJoin), { replace: true });
+          return;
+        }
+
+        // Check for pending room creation
+        const pendingCreate = getPendingCreate();
+        if (pendingCreate) {
+          clearPendingCreate();
+          console.log('[AuthRedirectHandler] Pending room creation detected, staying on current page');
+          // Don't redirect - let the user complete the creation flow
+          return;
+        }
+      }
+
       // Skip if no user
       if (!user) return;
 
-      // Skip if already on a protected route
-      const protectedRoutes = ['/home', '/profile', '/rooms', '/chat', '/temanku', '/settings'];
-      if (protectedRoutes.some(route => location.pathname.startsWith(route))) {
-        return;
-      }
-
-      // Skip if on public profile route
-      if (location.pathname.startsWith('/@')) {
+      // Skip if already on a protected route or public profile
+      if (!isPublicRoute(location.pathname) || location.pathname.startsWith('/@')) {
         return;
       }
 
@@ -55,8 +72,12 @@ export const AuthRedirectHandler: React.FC = () => {
         }
 
         // Only redirect after profile is confirmed to exist
-        console.log('[AuthRedirectHandler] Redirecting to /home');
-        navigate('/home', { replace: true });
+        // Only redirect from root paths
+        const rootPaths = ['/', '/login'];
+        if (rootPaths.includes(location.pathname)) {
+          console.log('[AuthRedirectHandler] Redirecting to /home');
+          navigate(ROUTES.HOME, { replace: true });
+        }
         
       } catch (error: any) {
         console.error('[AuthRedirectHandler] Profile creation failed:', error);

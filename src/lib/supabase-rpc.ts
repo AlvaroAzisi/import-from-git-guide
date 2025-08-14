@@ -225,7 +225,7 @@ export const softDeleteRoom = async (roomId: string): Promise<SoftDeleteRoomResp
  */
 export const getProfileDetails = async (userId: string): Promise<ProfileDetails> => {
   try {
-    // Fallback to direct profile query since RPC doesn't exist yet
+    // Use direct profile query with proper error handling
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -233,6 +233,7 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
       .single();
 
     if (profileError) throw profileError;
+    if (!profileData) throw new Error('Profile not found');
     
     // Get friendship status
     const currentUser = (await supabase.auth.getUser()).data.user;
@@ -243,21 +244,57 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
         .from('friends')
         .select('status')
         .or(`and(user_id.eq.${currentUser.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${currentUser.id})`)
-        .single();
+        .maybeSingle();
       
       friendshipStatus = friendData?.status || 'none';
+    }
+    
+    // Get mutual rooms (simplified query)
+    let mutualRooms: any[] = [];
+    if (currentUser && currentUser.id !== userId) {
+      const { data: mutualRoomsData } = await supabase
+        .from('room_members')
+        .select(`
+          room:rooms(id, name, subject)
+        `)
+        .eq('user_id', userId)
+        .in('room_id', 
+          // Subquery for current user's rooms
+          supabase
+            .from('room_members')
+            .select('room_id')
+            .eq('user_id', currentUser.id)
+        );
+      
+      mutualRooms = mutualRoomsData?.map(item => item.room).filter(Boolean) || [];
     }
     
     // Return profile with additional fields
     return {
       ...profileData,
       friendship_status: friendshipStatus,
-      mutual_rooms: [], // TODO: Implement mutual rooms query
+      mutual_rooms: mutualRooms,
       mutual_friends_count: 0 // TODO: Implement mutual friends count
     } as ProfileDetails;
   } catch (error: any) {
     console.error('Get profile details error:', error);
-    throw error;
+    // Return minimal profile data on error
+    const { data: basicProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (basicProfile) {
+      return {
+        ...basicProfile,
+        friendship_status: 'none',
+        mutual_rooms: [],
+        mutual_friends_count: 0
+      } as ProfileDetails;
+    }
+    
+    throw new Error('Profile not found');
   }
 };
 

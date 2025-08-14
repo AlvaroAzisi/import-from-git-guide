@@ -485,18 +485,12 @@ export const subscribeToConversation = (
 
   return () => {
     try {
-      // use whichever cleanup exists in your supabase client version
-      // @ts-ignore
-      if (supabase.removeChannel) {
-        // @ts-ignore
-        supabase.removeChannel(messagesChannel);
-        // @ts-ignore
-        supabase.removeChannel(typingChannel);
-      } else {
-        // @ts-ignore
-        messagesChannel.unsubscribe?.();
-        // @ts-ignore
-        typingChannel.unsubscribe?.();
+      // Graceful cleanup for Supabase channels
+      if (messagesChannel && typeof messagesChannel.unsubscribe === 'function') {
+        messagesChannel.unsubscribe();
+      }
+      if (typingChannel && typeof typingChannel.unsubscribe === 'function') {
+        typingChannel.unsubscribe();
       }
     } catch (e) {
       console.warn('[subscribeToConversation] cleanup error:', e);

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, ChevronRight } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 import TopBar from '../components/TopBar';
 import CreateRoomModal from '../components/CreateRoomModal';
-import { getSidebarMinimized, setSidebarMinimized } from '../utils/localStorage';
+import { useSidebar } from '../contexts/SidebarContext';
+import { useNavigation } from '../lib/navigation';
 
 /**
  * AppLayout - Global layout wrapper with persistent sidebar
@@ -16,59 +17,74 @@ import { getSidebarMinimized, setSidebarMinimized } from '../utils/localStorage'
  * 4. Click Messages - should navigate to /chat
  */
 export const AppLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarMinimized, setSidebarMinimizedState] = useState(() => getSidebarMinimized());
+  const { isOpen, isMinimized, openSidebar, closeSidebar, toggleSidebar } = useSidebar();
+  const { navigateToRoom } = useNavigation();
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
-
-  const handleToggleMinimized = () => {
-    const newState = !sidebarMinimized;
-    setSidebarMinimizedState(newState);
-    setSidebarMinimized(newState);
-  };
 
   const handleCreateRoom = () => {
     setCreateRoomOpen(true);
-    setSidebarOpen(false);
+    closeSidebar();
   };
 
-  const handleRoomCreated = (room: any) => {
+  const handleRoomCreated = async (room: any) => {
     setCreateRoomOpen(false);
-    // Navigate to the new room instead of staying on current page
-    window.location.href = `/room/${room.id}`;
+    // Navigate to the new room instead of redirecting to /home
+    if (room?.id) {
+      navigateToRoom(room.id);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex">
       {/* Sidebar Toggle - Only show when sidebar is closed */}
-      {!sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open sidebar"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 p-3 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-r-2xl shadow-lg hover:bg-white/40 dark:hover:bg-gray-900/40 transition-all duration-300"
-        >
-          <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
+      {!isOpen && (
+        <>
+          {/* Visible toggle button */}
+          <button
+            onClick={openSidebar}
+            aria-label="Open sidebar"
+            aria-disabled={isOpen}
+            disabled={isOpen}
+            className="fixed left-2 top-1/2 -translate-y-1/2 z-40 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-r-2xl shadow-lg hover:bg-white/90 dark:hover:bg-gray-900/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          
+          {/* Left-edge hot area for hover reveal */}
+          <div
+            className="fixed left-0 top-0 w-2 h-full z-30 hover:w-4 transition-all duration-200"
+            onMouseEnter={() => {
+              // Debounced open on hover
+              setTimeout(() => {
+                if (!isOpen) openSidebar();
+              }, 150);
+            }}
+            aria-hidden="true"
+          />
+        </>
       )}
       
       {/* Top Bar */}
       <TopBar 
-        onMenuClick={() => setSidebarOpen(true)}
-        showMinimizeButton={true}
-        onToggleMinimized={handleToggleMinimized}
-        sidebarMinimized={sidebarMinimized}
+        onMenuClick={openSidebar}
       />
       
       {/* Persistent Sidebar */}
       <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
+        isOpen={isOpen} 
+        onClose={closeSidebar}
         onCreateRoom={handleCreateRoom}
-        minimized={sidebarMinimized}
-        onToggleMinimized={handleToggleMinimized}
+        minimized={isMinimized}
       />
 
       {/* Main Content */}
-      <main className={`transition-all duration-300 ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-80'}`}>
+      <main className={`flex-1 transition-all duration-300 ${
+        isOpen 
+          ? isMinimized 
+            ? 'lg:ml-20' 
+            : 'lg:ml-80'
+          : 'ml-0 max-w-none mx-auto'
+      }`}>
         <Outlet />
       </main>
 
