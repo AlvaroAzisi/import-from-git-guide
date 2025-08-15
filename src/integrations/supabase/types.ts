@@ -7,34 +7,13 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
-      audit_logs: {
-        Row: {
-          action_type: string
-          created_at: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          action_type: string
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          action_type?: string
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       badges: {
         Row: {
           color: string
@@ -104,120 +83,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "chat_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "chat_messages_reply_to_id_fkey"
             columns: ["reply_to_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversation_members: {
-        Row: {
-          conversation_id: string | null
-          id: string
-          joined_at: string | null
-          last_read_at: string | null
-          role: string | null
-          user_id: string | null
-        }
-        Insert: {
-          conversation_id?: string | null
-          id?: string
-          joined_at?: string | null
-          last_read_at?: string | null
-          role?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          conversation_id?: string | null
-          id?: string
-          joined_at?: string | null
-          last_read_at?: string | null
-          role?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_members_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversation_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          id: string
-          last_message_at: string | null
-          name: string | null
-          room_id: string | null
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          last_message_at?: string | null
-          name?: string | null
-          room_id?: string | null
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          last_message_at?: string | null
-          name?: string | null
-          room_id?: string | null
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversations_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
         ]
@@ -244,22 +113,7 @@ export type Database = {
           status?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "friends_friend_id_fkey"
-            columns: ["friend_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "friends_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       join_codes: {
         Row: {
@@ -291,13 +145,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "join_codes_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "join_codes_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -305,144 +152,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      message_reads: {
-        Row: {
-          id: string
-          message_id: string | null
-          read_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          id?: string
-          message_id?: string | null
-          read_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          id?: string
-          message_id?: string | null
-          read_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_reads_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "chat_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_reads_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          content: string
-          created_at: string | null
-          id: string
-          message_type: string | null
-          recipient_id: string | null
-          room_id: string
-          sender_id: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          id?: string
-          message_type?: string | null
-          recipient_id?: string | null
-          room_id: string
-          sender_id?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          id?: string
-          message_type?: string | null
-          recipient_id?: string | null
-          room_id?: string
-          sender_id?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_messages_room_id"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_messages_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
-          email: string
-          full_name: string
-          id: string
-          interests: string[] | null
-          messages_sent: number | null
-          rooms_created: number | null
-          rooms_joined: number | null
-          streak: number | null
-          updated_at: string | null
-          username: string
-          xp: number | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          email: string
-          full_name?: string
-          id?: string
-          interests?: string[] | null
-          messages_sent?: number | null
-          rooms_created?: number | null
-          rooms_joined?: number | null
-          streak?: number | null
-          updated_at?: string | null
-          username: string
-          xp?: number | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          email?: string
-          full_name?: string
-          id?: string
-          interests?: string[] | null
-          messages_sent?: number | null
-          rooms_created?: number | null
-          rooms_joined?: number | null
-          streak?: number | null
-          updated_at?: string | null
-          username?: string
-          xp?: number | null
-        }
-        Relationships: []
       }
       profiles_badges: {
         Row: {
@@ -469,13 +178,6 @@ export type Database = {
             columns: ["badge_id"]
             isOneToOne: false
             referencedRelation: "badges"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_badges_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -508,13 +210,6 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_room_members_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -550,13 +245,6 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "room_requests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -604,15 +292,7 @@ export type Database = {
           subject?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_rooms_creator_id"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -651,9 +331,9 @@ export type Database = {
       }
       check_rate_limit: {
         Args: {
-          userid: string
           action: string
           max_requests: number
+          userid: string
           window_seconds: number
         }
         Returns: boolean
@@ -668,21 +348,21 @@ export type Database = {
       }
       create_room_and_join: {
         Args: {
-          p_name: string
           p_description?: string
-          p_subject?: string
           p_is_public?: boolean
           p_max_members?: number
+          p_name: string
+          p_subject?: string
         }
         Returns: {
-          room_id: string
+          membership: Json
           membership_id: string
           room: Json
-          membership: Json
+          room_id: string
         }[]
       }
       create_room_request: {
-        Args: { p_room_id: string; p_message?: string }
+        Args: { p_message?: string; p_room_id: string }
         Returns: {
           created_at: string
           id: string
