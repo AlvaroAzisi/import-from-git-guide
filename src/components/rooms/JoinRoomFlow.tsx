@@ -1,13 +1,13 @@
 // Enhanced room join/create flows with proper error handling and UX
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+
 import { Loader2, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '../../hooks/useToast';
 import { useNavigation } from '../../hooks/useNavigation';
 import { RoomManager } from '../../lib/roomManager';
-import { ROUTES } from '../../constants/routes';
+
 import type { CreateRoomPayload } from '../../types/room';
 
 interface JoinRoomFlowProps {

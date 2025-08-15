@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, BookOpen, Lock, Globe } from 'lucide-react';
-import { createRoom } from '../lib/rooms';
+
 import { createRoomAndJoin } from '../lib/roomOperations';
 import { useToast } from '../hooks/useToast';
 import { useLanguage } from '../hooks/useLanguage';

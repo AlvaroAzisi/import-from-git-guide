@@ -1,4 +1,4 @@
-import { ROUTES } from '../constants/routes';
+
 // Atomic room operations with proper error handling
 import { supabase } from './supabase';
 

@@ -258,13 +258,7 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
           room:rooms(id, name, subject)
         `)
         .eq('user_id', userId)
-        .in('room_id', 
-          // Subquery for current user's rooms
-          supabase
-            .from('room_members')
-            .select('room_id')
-            .eq('user_id', currentUser.id)
-        );
+;
       
       mutualRooms = mutualRoomsData?.map(item => item.room).filter(Boolean) || [];
     }

@@ -6,7 +6,7 @@ import { BookOpen, Plus } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigation } from '../../lib/navigation';
 import { SidebarItem } from './SidebarItem';
-import { MinimizeToggle } from './MinimizeToggle';
+
 import { sidebarMenuItems } from './sidebarConfig';
 
 interface SidebarProps {
@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { profile } = useAuth();
   const { safeNavigate, isNavigating } = useNavigation();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const [focusedItem, setFocusedItem] = useState<string | null>(null);
+  
 
   // Handle outside click and ESC key
   useEffect(() => {
