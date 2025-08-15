@@ -240,7 +240,7 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
     const userId = session.user.id;
 
     // Call leave RPC
-    const { data, error } = await supabase.rpc('leave_room', {
+    const { error } = await supabase.rpc('leave_room', {
       p_user_id: userId,
       p_room_id: roomId
     });
@@ -267,8 +267,10 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
       code: 'GENERAL_ERROR'
     };
   }
-import { useNavigation } from './navigation';
 };
+
+import { useNavigation } from './navigation';
+
 /**
  * Hook for room operations with navigation
  */
