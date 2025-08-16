@@ -347,6 +347,7 @@ export const getMessages = async (conversationId: string, limit: number = 50): P
   try {
       .from('messages')
       .select(
+      )
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
         profile:profiles(full_name, avatar_url)
@@ -398,3 +399,5 @@ export const isRoomMember = async (conversationId: string): Promise<boolean> => 
     return false;
   }
 };
+  }
+}
