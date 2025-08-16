@@ -14,6 +14,7 @@ import { ROUTES, isPublicRoute } from '../constants/routes';
  * 2. Verify profile is created/updated before redirect
  * 3. On page reload when signed in, should redirect to /home
  * 4. If profile creation fails, should show toast and not redirect
+ * 5. Complete pending room operations after authentication
  */
 export const AuthRedirectHandler: React.FC = () => {
   const { user, profile, loading } = useAuth();
@@ -50,8 +51,8 @@ export const AuthRedirectHandler: React.FC = () => {
       // Skip if no user
       if (!user) return;
 
-      // Skip if already on a protected route or public profile
-      if (!isPublicRoute(location.pathname) || location.pathname.startsWith('/@')) {
+      // Skip if already on a protected route (but not public profile)
+      if (!isPublicRoute(location.pathname) && !location.pathname.startsWith('/@')) {
         return;
       }
 
@@ -60,8 +61,6 @@ export const AuthRedirectHandler: React.FC = () => {
         if (!profile) {
           console.log('[AuthRedirectHandler] Profile not found, creating/updating...');
           
-          // TODO: DB/RLS: Varo will ensure profiles table has proper INSERT/UPDATE policies
-          // Expected: createOrUpdateProfile returns UserProfile object or throws error
           const profileResult = await createOrUpdateProfile(user);
           
           if (!profileResult.data) {

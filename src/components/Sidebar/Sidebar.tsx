@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRef, useEffect } from 'react';
 import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -9,8 +10,9 @@ import { SidebarItem } from './SidebarItem';
 
 import { sidebarMenuItems } from './sidebarConfig';
 
-interface SidebarProps {
-  isOpen: boolean;
+import { useNavigation } from '../../lib/navigation';
+import { SidebarItem } from './SidebarItem';
+import { sidebarMenuItems } from './sidebarConfig';
   onClose: () => void;
   onCreateRoom: () => void;
   minimized?: boolean;
@@ -34,53 +36,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const { profile } = useAuth();
-  const { safeNavigate, isNavigating } = useNavigation();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  
-
-  // Handle outside click and ESC key
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (!isOpen || !sidebarRef.current) return;
-      if (!sidebarRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-      document.addEventListener('keydown', handleEscapeKey);
-      // Focus trap
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      document.removeEventListener('keydown', handleEscapeKey);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
-
-  // Focus management
-  useEffect(() => {
-    if (isOpen && sidebarRef.current) {
-      const firstFocusable = sidebarRef.current.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') as HTMLElement;
-      firstFocusable?.focus();
-    }
-  }, [isOpen]);
-
-  const handleNavigation = (path: string) => {
-    safeNavigate(path);
-    onClose(); // Close sidebar after navigation on mobile
-  };
-
-  if (!isOpen) return null;
+  const { safeNavigate, isNavigating } = useNavigation();
   return (
     <>
       {/* Mobile Backdrop */}
@@ -97,6 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <motion.div
         ref={sidebarRef}
+        ref={sidebarRef}
         initial={{ x: -320 }}
         animate={{ 
           x: 0,
@@ -110,6 +68,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           duration: 0.22
         }}
         className="fixed left-0 top-0 h-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
+        role="navigation"
+        aria-expanded={isOpen}
+        aria-label="Main navigation"
         role="navigation"
         aria-expanded={isOpen}
         aria-label="Main navigation"
@@ -174,35 +135,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
+              const isLoading = isNavigating(item.path);
         {/* Navigation */}
-        <nav className="flex-1 p-4">
+                <SidebarItem
           <div className="space-y-2">
             {sidebarMenuItems.map((item) => {
               const isActive = location.pathname === item.path || 
                              (item.path === '/chat' && location.pathname.startsWith('/chat'));
               const isLoading = isNavigating(item.path);
+                  isLoading={isLoading}
+                  minimized={minimized}
+                  variant={item.variant}
               
               return (
                 <SidebarItem
-                  key={item.path}
-                  icon={item.icon}
-                  label={item.label}
-                  path={item.path}
-                  isActive={isActive}
-                  isLoading={isLoading}
-                  minimized={minimized}
-                  onClick={() => handleNavigation(item.path)}
-                  variant={item.variant}
-                  onFocus={() => setFocusedItem(item.path)}
                   onBlur={() => setFocusedItem(null)}
                 />
               );
             })}
           </div>
-        </nav>
-
-        {/* Footer with Minimize Toggle */}
-        <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
+          {/* Single Create Room Button */}
           <SidebarItem
             icon={Plus}
             label="Create Room"
@@ -216,5 +168,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </motion.div>
     </>
-  );
+            {sidebarMenuItems.filter(item => item.path !== '/create-room').map((item) => {
 };

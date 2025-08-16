@@ -22,9 +22,9 @@ export const sendFriendRequest = async (friendId: string): Promise<boolean> => {
 
     // Check if request already exists
     const { data: existing } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .select('id, status')
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`)
+      .or(`and(user_id.eq.${user.id},related_user_id.eq.${friendId}),and(user_id.eq.${friendId},related_user_id.eq.${user.id})`)
       .single();
 
     if (existing) {
@@ -36,10 +36,11 @@ export const sendFriendRequest = async (friendId: string): Promise<boolean> => {
     }
 
     const { error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .insert({
         user_id: user.id,
-        friend_id: friendId,
+        related_user_id: friendId,
+        relationship_type: 'friend',
         status: 'pending'
       });
 
@@ -54,7 +55,7 @@ export const sendFriendRequest = async (friendId: string): Promise<boolean> => {
 export const acceptFriendRequest = async (requestId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .update({ status: 'accepted' })
       .eq('id', requestId);
 
@@ -69,7 +70,7 @@ export const acceptFriendRequest = async (requestId: string): Promise<boolean> =
 export const rejectFriendRequest = async (requestId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .delete()
       .eq('id', requestId);
 
@@ -87,12 +88,13 @@ export const getFriends = async (): Promise<UserProfile[]> => {
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .select(`
-        friend_id,
-        friend_profile:profiles!friend_id(*)
+        related_user_id,
+        friend_profile:profiles!related_user_id(*)
       `)
       .eq('user_id', user.id)
+      .eq('relationship_type', 'friend')
       .eq('status', 'accepted');
 
     if (error) throw error;
@@ -110,13 +112,14 @@ export const getFriendRequests = async (): Promise<FriendRequest[]> => {
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .select(`
         *,
         user_profile:profiles!user_id(*),
-        friend_profile:profiles!friend_id(*)
+        friend_profile:profiles!related_user_id(*)
       `)
-      .eq('friend_id', user.id)
+      .eq('related_user_id', user.id)
+      .eq('relationship_type', 'friend')
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
@@ -134,9 +137,10 @@ export const removeFriend = async (friendId: string): Promise<boolean> => {
     if (!user) return false;
 
     const { error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .delete()
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
+      .or(`and(user_id.eq.${user.id},related_user_id.eq.${friendId}),and(user_id.eq.${friendId},related_user_id.eq.${user.id})`)
+      .eq('relationship_type', 'friend');
 
     if (error) throw error;
     return true;
@@ -152,9 +156,10 @@ export const getFriendshipStatus = async (userId: string): Promise<'none' | 'pen
     if (!user || user.id === userId) return 'none';
 
     const { data, error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .select('status')
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${user.id})`)
+      .or(`and(user_id.eq.${user.id},related_user_id.eq.${userId}),and(user_id.eq.${userId},related_user_id.eq.${user.id})`)
+      .eq('relationship_type', 'friend')
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;

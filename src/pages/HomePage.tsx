@@ -11,6 +11,7 @@ import { Button } from '../components/ui/button';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { useNavigation } from '../lib/navigation';
 import { ROUTES } from '../constants/routes';
+import { useRoomOperations } from '../lib/roomOperations';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
@@ -18,6 +19,7 @@ const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { navigateToRoom } = useNavigation();
+  const { createAndJoinRoom } = useRoomOperations();
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -32,7 +34,7 @@ const HomePage: React.FC = () => {
       try {
         const [roomsData, usersData] = await Promise.all([
           getRooms(6),
-          searchUsers('').then(result => result.data?.slice(0, 4) || []) // Get some random users
+          searchUsers('').then(result => (result.data || []).slice(0, 4)) // Get some random users
         ]);
         
         setRooms(roomsData);
@@ -66,9 +68,9 @@ const HomePage: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleRoomCreated = (room: Room) => {
+  const handleRoomCreated = async (room: Room) => {
     setCreateRoomOpen(false);
-    // Navigate to the new room
+    // Navigate to the new room using room operations
     if (room?.id) {
       navigateToRoom(room.id);
     }
@@ -273,7 +275,7 @@ const HomePage: React.FC = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-400">@{user.username}</p>
                       </div>
                       <div className="text-xs text-blue-500 font-medium">
-                        Level {Math.floor((user.xp ?? 0) / 1000) + 1}
+                        Level {Math.floor((user.xp || 0) / 1000) + 1}
                       </div>
                     </div>
                   </div>
@@ -330,7 +332,7 @@ const HomePage: React.FC = () => {
           </div>
 
           <button
-            onClick={() => navigateToRoom(ROUTES.FRIENDS)}
+            onClick={() => safeNavigate(ROUTES.FRIENDS)}
             className="p-6 backdrop-blur-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl border border-emerald-200/50 dark:border-emerald-700/50 hover:shadow-xl transition-all duration-300 text-left group"
           >
             <div className="flex items-center gap-4">
@@ -346,8 +348,7 @@ const HomePage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Join Room Modal */}
-      {/* Moved to global layout - no duplicate here */}
+      {/* Join Room Modal - Inline to prevent duplication */}
       {joinRoomOpen && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 max-w-md w-full">

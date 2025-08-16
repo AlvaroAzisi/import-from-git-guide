@@ -73,7 +73,6 @@ export const getConversations = async (): Promise<Conversation[]> => {
     }
     if (!user) throw new Error('Not authenticated');
 
-    // include conversation_members so we can filter
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -84,10 +83,14 @@ export const getConversations = async (): Promise<Conversation[]> => {
         created_by,
         created_at,
         updated_at,
-        last_message_at,
-        conversation_members!inner(user_id)
+        last_message_at
       `)
-      .eq('conversation_members.user_id', user.id)
+      .in('id', 
+        supabase
+          .from('conversation_members')
+          .select('conversation_id')
+          .eq('user_id', user.id)
+      )
       .order('last_message_at', { ascending: false });
 
     if (error) {
@@ -283,17 +286,24 @@ export const createGroupConversation = async (name: string, description?: string
 };
 
 // Get messages for a conversation
-export const getMessages = async (conversationId: string, limit: number = 50, offset: number = 0): Promise<ChatMessage[]> => {
+export const getMessages = async (conversationId: string, limit: number = 50, before?: string): Promise<ChatMessage[]> => {
   try {
-    const { data, error } = await supabase
-      .from('chat_messages')
+    let query = supabase
+      .from('messages')
       .select(`
         *,
         sender:profiles(full_name, avatar_url, username)
       `)
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .limit(limit);
+
+    // Cursor-based pagination
+    if (before) {
+      query = query.lt('created_at', before);
+    }
+
+    const { data, error } = await supabase
 
     if (error) {
       logSupabaseError('[getMessages] select error:', error);
@@ -310,8 +320,7 @@ export const getMessages = async (conversationId: string, limit: number = 50, of
 export const sendChatMessage = async (
   conversationId: string,
   content: string,
-  messageType: 'text' | 'image' | 'file' = 'text',
-  attachments: any[] = []
+  messageType: 'text' | 'image' | 'file' = 'text'
 ): Promise<ChatMessage | null> => {
   try {
     const userResult = await supabase.auth.getUser();
@@ -323,13 +332,13 @@ export const sendChatMessage = async (
     if (!user) throw new Error('Not authenticated');
 
     const { data, error } = await supabase
-      .from('chat_messages')
+      .from('messages')
       .insert({
         conversation_id: conversationId,
-        sender_id: user.id,
+        user_id: user.id,
         content,
-        message_type: messageType,
-        attachments
+        type: messageType,
+        created_at: new Date().toISOString()
       })
       .select(`
         *,
@@ -355,20 +364,80 @@ export const markMessagesAsRead = async (conversationId: string): Promise<boolea
     const user = userResult?.data?.user;
     if (!user) return false;
 
-    const rpcResult = await supabase.rpc('mark_messages_read', {
-      conversation_uuid: conversationId,
-      user_uuid: user.id
-    });
+    // Update last_read_at in conversation_members
+    const { error } = await supabase
+      .from('conversation_members')
+      .update({ 
+        last_read_at: new Date().toISOString() 
+      })
+      .eq('conversation_id', conversationId)
+      .eq('user_id', user.id);
 
-    if (rpcResult.error) {
-      logSupabaseError('[markMessagesAsRead] rpc error:', rpcResult.error);
+    if (error) {
+      logSupabaseError('[markMessagesAsRead] update error:', error);
       return false;
+    }
+
+    // Also insert into message_reads for detailed tracking
+    const { data: latestMessage } = await supabase
+      .from('messages')
+      .select('id, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latestMessage) {
+      await supabase
+        .from('message_reads')
+        .upsert({
+          message_id: latestMessage.id,
+          message_created_at: latestMessage.created_at,
+          user_id: user.id,
+          read_at: new Date().toISOString()
+        });
     }
 
     return true;
   } catch (error) {
     console.error('Mark messages read error:', error);
     return false;
+  }
+};
+
+// Get unread count for conversation
+export const getConversationUnreadCount = async (conversationId: string): Promise<number> => {
+  try {
+    const userResult = await supabase.auth.getUser();
+    const user = userResult?.data?.user;
+    if (!user) return 0;
+
+    // Get member's last read timestamp
+    const { data: member } = await supabase
+      .from('conversation_members')
+      .select('last_read_at')
+      .eq('conversation_id', conversationId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!member) return 0;
+
+    // Count messages after last read
+    const { count, error } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('conversation_id', conversationId)
+      .gt('created_at', member.last_read_at || '1970-01-01T00:00:00Z');
+
+    if (error) {
+      logSupabaseError('[getConversationUnreadCount] count error:', error);
+      return 0;
+    });
+
+    return count || 0;
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    return 0;
   }
 };
 
@@ -426,17 +495,17 @@ export const searchMessages = async (conversationId: string, query: string): Pro
 export const subscribeToConversation = (
   conversationId: string,
   onMessage: (message: ChatMessage) => void,
-  _onTyping?: (event: TypingEvent) => void
+  onTyping?: (event: TypingEvent) => void
 ) => {
   // Subscribe to new messages
   const messagesChannel = supabase
-    .channel(`chat-messages-${conversationId}`)
+    .channel(`messages-${conversationId}`)
     .on(
       'postgres_changes',
       {
         event: 'INSERT',
         schema: 'public',
-        table: 'chat_messages',
+        table: 'messages',
         filter: `conversation_id=eq.${conversationId}`
       },
       async (payload) => {
@@ -445,7 +514,7 @@ export const subscribeToConversation = (
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('full_name, avatar_url, username')
-          .eq('id', newMessage.sender_id)
+          .eq('id', newMessage.user_id)
           .limit(1)
           .maybeSingle();
 
@@ -459,7 +528,7 @@ export const subscribeToConversation = (
     )
     .subscribe();
 
-  // Subscribe to typing events (using presence)
+  // Subscribe to typing indicators
   const typingChannel = supabase
     .channel(`typing-${conversationId}`, {
       config: {
@@ -468,19 +537,26 @@ export const subscribeToConversation = (
         },
       },
     })
-    .on('presence', { event: 'sync' }, () => {
-      try {
-        // Graceful cleanup for Supabase channels
-        if (messagesChannel && typeof messagesChannel.unsubscribe === 'function') {
-          messagesChannel.unsubscribe();
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'typing_indicators',
+        filter: `conversation_id=eq.${conversationId}`
+      },
+      (payload) => {
+        if (onTyping) {
+          const indicator = payload.new || payload.old;
+          onTyping({
+            user_id: indicator.user_id,
+            conversation_id: indicator.conversation_id,
+            is_typing: payload.eventType === 'INSERT',
+            user_name: indicator.user_name
+          });
         }
-        if (typingChannel && typeof typingChannel.unsubscribe === 'function') {
-          typingChannel.unsubscribe();
-        }
-      } catch (e) {
-        console.warn('[subscribeToConversation] presence handling error:', e);
       }
-    })
+    )
     .subscribe();
 
   return () => {
@@ -505,20 +581,210 @@ export const sendTypingIndicator = async (conversationId: string, isTyping: bool
     const user = userResult?.data?.user;
     if (!user) return;
 
-    const channel = supabase.channel(`typing-${conversationId}`);
-
     if (isTyping) {
-      await channel.track({
-        user_id: user.id,
-        user_name: user.user_metadata?.full_name || 'User',
-        is_typing: true,
-        timestamp: Date.now()
-      });
+      // Insert typing indicator
+      await supabase
+        .from('typing_indicators')
+        .upsert({
+          conversation_id: conversationId,
+          user_id: user.id,
+          started_at: new Date().toISOString()
+        });
     } else {
-      await channel.untrack();
+      // Remove typing indicator
+      await supabase
+        .from('typing_indicators')
+        .delete()
+        .eq('conversation_id', conversationId)
+        .eq('user_id', user.id);
     }
   } catch (error) {
     console.error('Send typing indicator error:', error);
+  }
+};
+
+// Upload chat attachment using new schema
+export const uploadChatAttachment = async (
+  file: File,
+  conversationId: string
+): Promise<string | null> => {
+  try {
+    const userResult = await supabase.auth.getUser();
+    const user = userResult?.data?.user;
+    if (userResult?.error) {
+      logSupabaseError('[uploadChatAttachment] auth.getUser error:', userResult.error);
+      throw userResult.error;
+    }
+    if (!user) throw new Error('Not authenticated');
+
+    // Validate file
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('File size must be less than 10MB');
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+    const filePath = `${conversationId}/${user.id}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('chat_media')
+      .upload(filePath, file, {
+        cacheControl: '3600'
+      });
+
+    if (uploadError) {
+      logSupabaseError('[uploadChatAttachment] upload error:', uploadError);
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('chat_media')
+      .getPublicUrl(filePath);
+
+    return data?.publicUrl ?? null;
+  } catch (error) {
+    console.error('Upload chat attachment error:', error);
+    throw error;
+  }
+};
+
+// Create DM conversation using new schema
+export const createDMConversation = async (otherUserId: string): Promise<string | null> => {
+  try {
+    const userResult = await supabase.auth.getUser();
+    const user = userResult?.data?.user;
+    if (!user) throw new Error('Not authenticated');
+
+    // Check if DM already exists
+    const { data: existingConv } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('type', 'dm')
+      .in('id', 
+        supabase
+          .from('conversation_members')
+          .select('conversation_id')
+          .eq('user_id', user.id)
+      )
+      .in('id',
+        supabase
+          .from('conversation_members')
+          .select('conversation_id')
+          .eq('user_id', otherUserId)
+      )
+      .single();
+
+    if (existingConv) {
+      return existingConv.id;
+    }
+
+    // Create new DM conversation
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .insert({
+        type: 'dm',
+        created_by: user.id
+      })
+      .select()
+      .single();
+
+    if (convError) throw convError;
+
+    // Add both users as members
+    const { error: membersError } = await supabase
+      .from('conversation_members')
+      .insert([
+        {
+          conversation_id: conversation.id,
+          user_id: user.id,
+          role: 'member',
+          joined_at: new Date().toISOString()
+        },
+        {
+          conversation_id: conversation.id,
+          user_id: otherUserId,
+          role: 'member',
+          joined_at: new Date().toISOString()
+        }
+      ]);
+
+    if (membersError) {
+      // Cleanup orphaned conversation
+      await supabase.from('conversations').delete().eq('id', conversation.id);
+      throw membersError;
+    }
+
+    return conversation.id;
+  } catch (error) {
+    console.error('Create DM conversation error:', error);
+    return null;
+  }
+};
+
+// Create group conversation using new schema
+export const createGroupConversation = async (name: string, description?: string): Promise<string | null> => {
+  try {
+    const userResult = await supabase.auth.getUser();
+    const user = userResult?.data?.user;
+    if (userResult?.error) {
+      logSupabaseError('[createGroupConversation] auth.getUser error:', userResult.error);
+      throw userResult.error;
+    }
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: conversationData, error: conversationError } = await supabase
+      .from('conversations')
+      .insert({
+        type: 'group',
+        name,
+        description,
+        created_by: user.id
+      })
+      .select()
+      .single();
+
+    if (conversationError) {
+      logSupabaseError('[createGroupConversation] conversation insert error:', conversationError);
+      return null;
+    }
+
+    const conversationId = conversationData.id;
+    if (!conversationId) {
+      console.warn('[createGroupConversation] insert returned no id:', conversationData);
+      return null;
+    }
+
+    // Add creator as admin
+    const { error: addMemberError } = await supabase
+      .from('conversation_members')
+      .insert({
+        conversation_id: conversationId,
+        user_id: user.id,
+        role: 'admin',
+        joined_at: new Date().toISOString()
+      });
+
+    if (addMemberError) {
+      logSupabaseError('[createGroupConversation] add member error:', addMemberError);
+
+      // Cleanup orphaned conversation
+      const { error: cleanupError } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', conversationId);
+
+      if (cleanupError) {
+        logSupabaseError('[createGroupConversation] cleanup error:', cleanupError);
+      }
+
+      return null;
+    }
+
+    return conversationId;
+  } catch (error) {
+    const errMsg = (error as { message?: string })?.message || error;
+    console.error('Create group conversation error:', errMsg, error);
+    return null;
   }
 };
 

@@ -225,7 +225,7 @@ export const softDeleteRoom = async (roomId: string): Promise<SoftDeleteRoomResp
  */
 export const getProfileDetails = async (userId: string): Promise<ProfileDetails> => {
   try {
-    // Use direct profile query with proper error handling
+    // Use direct profile query instead of missing RPC
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -241,26 +241,31 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
     
     if (currentUser && currentUser.id !== userId) {
       const { data: friendData } = await supabase
-        .from('friends')
+        .from('user_relationships')
         .select('status')
-        .or(`and(user_id.eq.${currentUser.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${currentUser.id})`)
+        .or(`and(user_id.eq.${currentUser.id},related_user_id.eq.${userId}),and(user_id.eq.${userId},related_user_id.eq.${currentUser.id})`)
+        .eq('relationship_type', 'friend')
         .maybeSingle();
       
       friendshipStatus = friendData?.status || 'none';
     }
     
-    // Get mutual rooms (simplified query)
+    // Get mutual conversations (simplified query)
     let mutualRooms: any[] = [];
     if (currentUser && currentUser.id !== userId) {
       const { data: mutualRoomsData } = await supabase
-        .from('room_members')
+        .from('conversation_members')
         .select(`
-          room:rooms(id, name, subject)
+          conversation:conversations(id, name, description)
         `)
         .eq('user_id', userId)
 ;
       
-      mutualRooms = mutualRoomsData?.map(item => item.room).filter(Boolean) || [];
+      mutualRooms = mutualRoomsData?.map(item => ({
+        id: item.conversation?.id,
+        name: item.conversation?.name,
+        subject: item.conversation?.description
+      })).filter(Boolean) || [];
     }
     
     // Return profile with additional fields
@@ -297,18 +302,30 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
  */
 export const canStartDM = async (targetUserId: string): Promise<CanStartDMResponse> => {
   try {
-    // TODO: DB/RLS: Varo will paste SQL for can_start_dm RPC
-    // Expected params: { target_user_id: string }
-    // Expected response: { can_dm: boolean, reason?: string }
-    const { data, error } = await supabase.rpc('can_start_dm', {
-      target_user_id: targetUserId
-    });
-
-    if (error) {
-      return { can_dm: false, reason: error.message };
+    // Simple check - can always start DM for now
+    // TODO: Implement rate limiting and blocking checks
+    const currentUser = (await supabase.auth.getUser()).data.user;
+    if (!currentUser) {
+      return { can_dm: false, reason: 'Not authenticated' };
     }
-
-    return data || { can_dm: true };
+    
+    if (currentUser.id === targetUserId) {
+      return { can_dm: false, reason: 'Cannot DM yourself' };
+    }
+    
+    // Check if user is blocked
+    const { data: blockData } = await supabase
+      .from('user_relationships')
+      .select('status')
+      .or(`and(user_id.eq.${currentUser.id},related_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},related_user_id.eq.${currentUser.id})`)
+      .eq('relationship_type', 'block')
+      .maybeSingle();
+    
+    if (blockData) {
+      return { can_dm: false, reason: 'User is blocked' };
+    }
+    
+    return { can_dm: true };
   } catch (error: any) {
     console.error('Can start DM error:', error);
     return { can_dm: false, reason: 'Failed to check DM availability' };
@@ -320,13 +337,41 @@ export const canStartDM = async (targetUserId: string): Promise<CanStartDMRespon
  */
 export const sendFriendRequest = async (toUserId: string): Promise<FriendRequestResponse> => {
   try {
-    // TODO: DB/RLS: Varo will paste SQL for send_friend_request RPC
-    // Expected params: { to_user_id: string }
-    // Expected response: { success: boolean, status: string }
-    const { data, error } = await supabase.rpc('send_friend_request', {
-      to_user_id: toUserId
-    });
-
+    const currentUser = (await supabase.auth.getUser()).data.user;
+    if (!currentUser) {
+      return { 
+        success: false, 
+        status: 'none',
+        error: 'Not authenticated' 
+      };
+    }
+    
+    // Check if relationship already exists
+    const { data: existing } = await supabase
+      .from('user_relationships')
+      .select('status')
+      .or(`and(user_id.eq.${currentUser.id},related_user_id.eq.${toUserId}),and(user_id.eq.${toUserId},related_user_id.eq.${currentUser.id})`)
+      .eq('relationship_type', 'friend')
+      .maybeSingle();
+    
+    if (existing) {
+      return {
+        success: false,
+        status: existing.status,
+        error: existing.status === 'pending' ? 'Friend request already sent' : 'Already friends'
+      };
+    }
+    
+    // Create friend request
+    const { error } = await supabase
+      .from('user_relationships')
+      .insert({
+        user_id: currentUser.id,
+        related_user_id: toUserId,
+        relationship_type: 'friend',
+        status: 'pending'
+      });
+    
     if (error) {
       return { 
         success: false, 
@@ -334,10 +379,10 @@ export const sendFriendRequest = async (toUserId: string): Promise<FriendRequest
         error: error.message || 'Failed to send friend request' 
       };
     }
-
+    
     return {
       success: true,
-      status: data?.status || 'pending'
+      status: 'pending'
     };
   } catch (error: any) {
     console.error('Send friend request error:', error);
@@ -354,20 +399,27 @@ export const sendFriendRequest = async (toUserId: string): Promise<FriendRequest
  */
 export const removeFriend = async (friendId: string): Promise<RemoveFriendResponse> => {
   try {
-    // TODO: DB/RLS: Varo will paste SQL for remove_friend RPC
-    // Expected params: { friend_id: string }
-    // Expected response: { success: boolean }
-    const { data: _data, error } = await supabase.rpc('remove_friend', {
-      friend_id: friendId
-    });
-
+    const currentUser = (await supabase.auth.getUser()).data.user;
+    if (!currentUser) {
+      return { 
+        success: false, 
+        error: 'Not authenticated' 
+      };
+    }
+    
+    const { error } = await supabase
+      .from('user_relationships')
+      .delete()
+      .or(`and(user_id.eq.${currentUser.id},related_user_id.eq.${friendId}),and(user_id.eq.${friendId},related_user_id.eq.${currentUser.id})`)
+      .eq('relationship_type', 'friend');
+    
     if (error) {
       return { 
         success: false, 
         error: error.message || 'Failed to remove friend' 
       };
     }
-
+    
     return { success: true };
   } catch (error: any) {
     console.error('Remove friend error:', error);

@@ -59,7 +59,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
           title: t('common.success'),
           description: 'Room created successfully!'
         });
-        onSuccess?.(result.room);
+        
         // Reset form
         setFormData({
           name: '',
@@ -68,6 +68,9 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
           max_members: 10,
           is_public: true
         });
+        
+        // Call success callback with room data
+        onSuccess?.(result.room);
       } else {
         throw new Error(result.error || 'Failed to create room');
       }

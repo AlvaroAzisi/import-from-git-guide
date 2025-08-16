@@ -1,4 +1,3 @@
-
 // Atomic room operations with proper error handling
 import { supabase } from './supabase';
 
@@ -97,47 +96,47 @@ export const createRoomAndJoin = async (payload: CreateRoomPayload): Promise<Roo
 
     const userId = session.user.id;
 
-    // Call atomic RPC
-    const { data, error } = await supabase.rpc('create_room_and_join', {
-      p_user_id: userId,
-      p_name: payload.name,
-      p_description: payload.description || '',
-      p_subject: payload.subject || '',
-      p_is_public: payload.is_public ?? true,
-      p_max_members: payload.max_members || 10
-    });
+    // Create conversation (room) using new schema
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .insert({
+        type: 'group',
+        name: payload.name,
+        description: payload.description,
+        metadata: {
+          subject: payload.subject,
+          max_members: payload.max_members || 10,
+          is_public: payload.is_public ?? true
+        },
+        created_by: userId
+      })
+      .select()
+      .single();
 
-    if (error) {
-      console.error('Create room RPC error:', error);
-      return {
-        success: false,
-        error: error.message || 'Failed to create room',
-        code: 'GENERAL_ERROR'
-      };
+    if (convError) throw convError;
+
+    // Add creator as admin member
+    const { error: memberError } = await supabase
+      .from('conversation_members')
+      .insert({
+        conversation_id: conversation.id,
+        user_id: userId,
+        role: 'admin',
+        joined_at: new Date().toISOString()
+      });
+
+    if (memberError) {
+      // Cleanup orphaned conversation
+      await supabase.from('conversations').delete().eq('id', conversation.id);
+      throw memberError;
     }
 
-    if (data?.status === 'error') {
-      return {
-        success: false,
-        error: data.message || 'Room creation failed',
-        code: data.code || 'GENERAL_ERROR'
-      };
-    }
-
-    if (data?.status === 'ok' && data.room) {
-      clearPendingCreate();
-      return {
-        success: true,
-        room_id: data.room.id,
-        room: data.room,
-        membership: data.membership
-      };
-    }
-
+    clearPendingCreate();
     return {
-      success: false,
-      error: 'Unexpected response from server',
-      code: 'GENERAL_ERROR'
+      success: true,
+      room_id: conversation.id,
+      room: conversation,
+      membership: { role: 'admin' }
     };
 
   } catch (error: any) {
@@ -171,43 +170,89 @@ export const joinRoom = async (roomIdOrCode: string): Promise<RoomOperationResul
 
     const userId = session.user.id;
 
-    // Call join RPC
-    const { data, error } = await supabase.rpc('join_room', {
-      p_user_id: userId,
-      p_room_identifier: roomIdOrCode
-    });
+    // Find conversation by ID or code
+    let conversation;
+    if (roomIdOrCode.length > 10 && roomIdOrCode.includes('-')) {
+      // UUID format - direct lookup
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', roomIdOrCode)
+        .single();
+      
+      if (error) throw error;
+      conversation = data;
+    } else {
+      // Short code lookup
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('metadata->>invite_code', roomIdOrCode.toUpperCase())
+        .single();
+      
+      if (error) throw error;
+      conversation = data;
+    }
 
-    if (error) {
-      console.error('Join room RPC error:', error);
+    if (!conversation) {
       return {
         success: false,
-        error: error.message || 'Failed to join room',
-        code: 'GENERAL_ERROR'
+        error: 'Room not found',
+        code: 'ROOM_NOT_FOUND'
       };
     }
 
-    if (data?.status === 'error') {
-      return {
-        success: false,
-        error: data.message || 'Failed to join room',
-        code: data.code || 'GENERAL_ERROR'
-      };
-    }
+    // Check if already a member
+    const { data: existingMember } = await supabase
+      .from('conversation_members')
+      .select('id')
+      .eq('conversation_id', conversation.id)
+      .eq('user_id', userId)
+      .single();
 
-    if (data?.status === 'ok') {
+    if (existingMember) {
       clearPendingJoin();
       return {
         success: true,
-        room_id: data.room_id,
-        room: data.room,
-        membership: data.membership
+        room_id: conversation.id,
+        room: conversation,
+        code: 'ALREADY_MEMBER'
       };
     }
 
+    // Check capacity
+    const maxMembers = conversation.metadata?.max_members || 10;
+    const { count } = await supabase
+      .from('conversation_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('conversation_id', conversation.id);
+
+    if (count && count >= maxMembers) {
+      return {
+        success: false,
+        error: 'Room is full',
+        code: 'ROOM_FULL'
+      };
+    }
+
+    // Join the conversation
+    const { error: joinError } = await supabase
+      .from('conversation_members')
+      .insert({
+        conversation_id: conversation.id,
+        user_id: userId,
+        role: 'member',
+        joined_at: new Date().toISOString()
+      });
+
+    if (joinError) throw joinError;
+
+    clearPendingJoin();
     return {
-      success: false,
-      error: 'Unexpected response from server',
-      code: 'GENERAL_ERROR'
+      success: true,
+      room_id: conversation.id,
+      room: conversation,
+      membership: { role: 'member' }
     };
 
   } catch (error: any) {
@@ -239,20 +284,13 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
 
     const userId = session.user.id;
 
-    // Call leave RPC
-    const { error } = await supabase.rpc('leave_room', {
-      p_user_id: userId,
-      p_room_id: roomId
-    });
+    const { error } = await supabase
+      .from('conversation_members')
+      .delete()
+      .eq('conversation_id', roomId)
+      .eq('user_id', userId);
 
-    if (error) {
-      console.error('Leave room RPC error:', error);
-      return {
-        success: false,
-        error: error.message || 'Failed to leave room',
-        code: 'GENERAL_ERROR'
-      };
-    }
+    if (error) throw error;
 
     return {
       success: true,
@@ -269,11 +307,11 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
   }
 };
 
-import { useNavigation } from './navigation';
-
 /**
  * Hook for room operations with navigation
  */
+import { useNavigation } from './navigation';
+
 export const useRoomOperations = () => {
   const { navigateToRoom } = useNavigation();
   

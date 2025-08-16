@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import { signOut } from '../../lib/auth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import type { LucideIcon } from 'lucide-react';
 
@@ -30,8 +30,19 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
   onBlur
 }) => {
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isLoading) return; // Prevent clicks while loading
+    
+    // Handle special cases
+    if (path === '/signout') {
+      try {
+        await signOut();
+      } catch (error) {
+        console.error('Sign out error:', error);
+      }
+      return;
+    }
+    
     onClick?.();
   };
 

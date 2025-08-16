@@ -9,7 +9,21 @@ vi.mock('../../src/lib/supabase', () => ({
     auth: {
       getSession: vi.fn(),
     },
-    rpc: vi.fn(),
+    from: vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn()
+        }))
+      })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn()
+        }))
+      })),
+      delete: vi.fn(() => ({
+        eq: vi.fn()
+      }))
+    })),
   },
 }));
 
@@ -31,14 +45,17 @@ describe('Room Operations', () => {
         error: null
       });
 
-      vi.mocked(supabase.rpc).mockResolvedValue({
-        data: {
-          status: 'ok',
-          room: { id: 'room-123', name: 'Test Room' },
-          membership: { id: 'member-123' }
-        },
-        error: null
-      });
+      const mockConversation = { id: 'conv-123', name: 'Test Room' };
+      vi.mocked(supabase.from).mockReturnValue({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({
+              data: mockConversation,
+              error: null
+            })
+          }))
+        }))
+      } as any);
 
       const result = await createRoomAndJoin({
         name: 'Test Room',
@@ -47,15 +64,7 @@ describe('Room Operations', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.room_id).toBe('room-123');
-      expect(supabase.rpc).toHaveBeenCalledWith('create_room_and_join', {
-        p_user_id: 'user-123',
-        p_name: 'Test Room',
-        p_description: 'Test Description',
-        p_subject: 'Mathematics',
-        p_is_public: true,
-        p_max_members: 10
-      });
+      expect(result.room_id).toBe('conv-123');
     });
 
     it('should handle authentication failure', async () => {
@@ -85,20 +94,22 @@ describe('Room Operations', () => {
         error: null
       });
 
-      vi.mocked(supabase.rpc).mockResolvedValue({
-        data: {
-          status: 'ok',
-          code: 'JOINED',
-          room_id: 'room-123',
-          room: { id: 'room-123', name: 'Test Room' }
-        },
-        error: null
-      });
+      const mockConversation = { id: 'conv-123', name: 'Test Room' };
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({
+              data: mockConversation,
+              error: null
+            })
+          }))
+        }))
+      } as any);
 
-      const result = await joinRoom('room-123');
+      const result = await joinRoom('conv-123');
 
       expect(result.success).toBe(true);
-      expect(result.room_id).toBe('room-123');
+      expect(result.room_id).toBe('conv-123');
     });
 
     it('should handle already member case', async () => {
@@ -111,16 +122,19 @@ describe('Room Operations', () => {
         error: null
       });
 
-      vi.mocked(supabase.rpc).mockResolvedValue({
-        data: {
-          status: 'ok',
-          code: 'ALREADY_MEMBER',
-          room_id: 'room-123'
-        },
-        error: null
-      });
+      // Mock existing member check
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({
+              data: { id: 'member-123' },
+              error: null
+            })
+          }))
+        }))
+      } as any);
 
-      const result = await joinRoom('room-123');
+      const result = await joinRoom('conv-123');
 
       expect(result.success).toBe(true);
       expect(result.code).toBe('ALREADY_MEMBER');
