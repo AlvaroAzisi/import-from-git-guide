@@ -98,7 +98,6 @@ export const createRoom = async (roomData: {
   }
 };
 
-
 export const getRooms = async (limit: number = 10): Promise<Room[]> => {
   try {
     const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
@@ -195,7 +194,6 @@ export const getMyRooms = async (): Promise<Room[]> => {
   }
 };
 
-
 export const leaveRoomLegacy = async (roomId: string): Promise<boolean> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -287,6 +285,20 @@ export const getRoomByCode = async (inviteCode: string): Promise<Room | null> =>
   };
 };
 
+export const getRoomMemberCount = async (conversationId: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('conversation_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('conversation_id', conversationId);
+
+    if (error) throw error;
+    return count || 0;
+  } catch (error) {
+    console.error('Get room member count error:', error);
+    return 0;
+  }
+};
 
 export const getRoomMembers = async (conversationId: string): Promise<RoomMember[]> => {
   try {
@@ -345,46 +357,30 @@ export const sendMessage = async (conversationId: string, content: string): Prom
 
 export const getMessages = async (conversationId: string, limit: number = 50): Promise<Message[]> => {
   try {
+    const { data, error } = await supabase
       .from('messages')
-      .select(
-      )
-    const { data: conversations, error: conversationsError } = await supabase
-      .from('conversations')
+      .select(`
+        *,
         profile:profiles(full_name, avatar_url)
-      `
-      )
+      `)
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true })
-    const { count, error } = await supabase
-      .eq('type', 'group')
-      .eq('metadata->>is_public', 'true')
-      .eq('conversation_id', conversationId);
-    
+      .limit(limit);
+
     if (error) throw error;
-    if (conversationsError) throw conversationsError;
+    return data || [];
   } catch (error) {
-    console.error('Get conversation member count error:', error);
-      conversations.map(async (conv) => {
-        const count = await getRoomMemberCount(conv.id);
-        return { id: conv.id, member_count: count };
+    console.error('Get messages error:', error);
+    return [];
+  }
+};
 
 export const isRoomMember = async (conversationId: string): Promise<boolean> => {
   try {
-    const roomsWithCounts = conversations.map(conv => {
-      const countObj = memberCounts.find(c => c.id === conv.id);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
     if (!user) return false;
-        id: conv.id,
-        name: conv.name || 'Unnamed Room',
-        description: conv.description || '',
-        subject: conv.metadata?.subject || '',
-        max_members: conv.metadata?.max_members || 10,
-        is_public: conv.metadata?.is_public || false,
-        creator_id: conv.created_by,
-        is_active: true,
-        created_at: conv.created_at,
-        updated_at: conv.updated_at,
-        short_code: conv.metadata?.invite_code || '',
-        creator: conv.creator,
+
     const { data, error } = await supabase
       .from('conversation_members')
       .select('id')
@@ -399,5 +395,87 @@ export const isRoomMember = async (conversationId: string): Promise<boolean> => 
     return false;
   }
 };
+
+// Join room function
+export const joinRoom = async (conversationId: string): Promise<boolean> => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!user) throw new Error('You must be logged in');
+
+    // Check if already a member
+    const isMember = await isRoomMember(conversationId);
+    if (isMember) return true;
+
+    // Check room capacity
+    const room = await getRoom(conversationId);
+    if (!room) throw new Error('Room not found');
+
+    const currentMemberCount = await getRoomMemberCount(conversationId);
+    if (currentMemberCount >= room.max_members) {
+      throw new Error('Room is full');
+    }
+
+    const { error } = await supabase
+      .from('conversation_members')
+      .insert({
+        conversation_id: conversationId,
+        user_id: user.id,
+        joined_at: new Date().toISOString(),
+        role: 'member'
+      });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Join room error:', error);
+    return false;
   }
-}
+};
+
+// Leave room function
+export const leaveRoom = async (conversationId: string): Promise<boolean> => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!user) throw new Error('You must be logged in');
+
+    const { error } = await supabase
+      .from('conversation_members')
+      .delete()
+      .eq('conversation_id', conversationId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Leave room error:', error);
+    return false;
+  }
+};
+
+// Delete room function
+export const deleteRoom = async (conversationId: string): Promise<boolean> => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!user) throw new Error('You must be logged in');
+
+    // Check if user is the creator
+    const room = await getRoom(conversationId);
+    if (!room || room.creator_id !== user.id) {
+      throw new Error('You can only delete rooms you created');
+    }
+
+    const { error } = await supabase
+      .from('conversations')
+      .delete()
+      .eq('id', conversationId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Delete room error:', error);
+    return false;
+  }
+};
