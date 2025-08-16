@@ -308,13 +308,36 @@ export const validatePassword = (password: string): boolean => {
   return password.length >= 6;
 };
 
-export const validateForm = (email: string, password: string, confirmPassword?: string): string | null => {
-  if (!email) return 'Email is required';
-  if (!validateEmail(email)) return 'Please enter a valid email address';
-  if (!password) return 'Password is required';
-  if (!validatePassword(password)) return 'Password must be at least 6 characters long';
-  if (confirmPassword !== undefined && password !== confirmPassword) {
-    return 'Passwords do not match';
+interface ValidationResult {
+  isValid: boolean;
+  errors?: {
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  };
+}
+
+export const validateForm = (email: string, password: string, confirmPassword?: string): ValidationResult => {
+  const errors: ValidationResult['errors'] = {};
+  
+  if (!email) {
+    errors.email = 'Email is required';
+  } else if (!validateEmail(email)) {
+    errors.email = 'Please enter a valid email address';
   }
-  return null;
+
+  if (!password) {
+    errors.password = 'Password is required';
+  } else if (!validatePassword(password)) {
+    errors.password = 'Password must be at least 6 characters long';
+  }
+
+  if (confirmPassword !== undefined && password !== confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match';
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors: Object.keys(errors).length > 0 ? errors : undefined
+  };
 };

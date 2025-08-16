@@ -71,8 +71,15 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => 
       isLogin ? undefined : formData.confirmPassword
     );
 
+    // Handle case where validateForm returns null or undefined
+    if (!validation) {
+      setGeneralError('Validation failed. Please try again.');
+      setLoading(false);
+      return;
+    }
+
     if (!validation.isValid) {
-      setErrors(validation.errors);
+      setErrors(validation.errors || {});
       setLoading(false);
       return;
     }
