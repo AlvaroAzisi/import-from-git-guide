@@ -1,7 +1,7 @@
 // Enhanced sidebar with auto-minimize, responsive behavior, and proper routing
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -24,14 +24,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className = '' 
 }) => {
   const { user, profile } = useAuth();
-  const { safeNavigate, navigating, isNavigating } = useNavigation();
+  const { safeNavigate, isNavigating } = useNavigation();
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // Close sidebar when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: Event) => {
       if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
         onClose();
       }

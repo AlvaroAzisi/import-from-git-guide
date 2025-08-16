@@ -40,6 +40,7 @@ export interface ProfileDetails extends UserProfile {
     subject: string;
   }>;
   mutual_friends_count: number;
+  rooms_joined: number;
 }
 
 export interface CanStartDMResponse {
