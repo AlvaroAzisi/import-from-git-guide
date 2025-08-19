@@ -14,9 +14,15 @@ export interface ChatMessage {
   metadata?: any | null;
   is_edited: boolean;
   is_deleted: boolean;
+  is_read?: boolean;
   edited_at?: string | null;
   created_at: string;
   profile?: {
+    full_name: string;
+    avatar_url: string | null;
+    username: string;
+  };
+  sender?: {
     full_name: string;
     avatar_url: string | null;
     username: string;
@@ -38,6 +44,7 @@ export interface Conversation {
     content: string;
     sender_name: string;
     created_at: string;
+    message_type?: string;
   } | null;
   unread_count?: number;
   other_user?: {
@@ -45,6 +52,9 @@ export interface Conversation {
     username: string;
     full_name: string;
     avatar_url: string | null;
+    bio?: string | null;
+    interests?: string[] | null;
+    xp?: number;
   } | null;
 }
 
@@ -208,13 +218,17 @@ export const getConversations = async (): Promise<{ data: Conversation[]; error:
       last_message: conv.last_message_at ? {
         content: 'Recent message...',
         sender_name: 'Someone',
-        created_at: conv.last_message_at
+        created_at: conv.last_message_at,
+        message_type: 'text'
       } : null,
       other_user: conv.type === 'dm' ? {
         id: 'other-user-id',
         username: 'other_user',
         full_name: 'Other User',
-        avatar_url: null
+        avatar_url: null,
+        bio: null,
+        interests: null,
+        xp: 0
       } : null
     }));
 
@@ -242,13 +256,17 @@ export const getConversation = async (conversationId: string): Promise<{ data: C
       last_message: data.last_message_at ? {
         content: 'Recent message...',
         sender_name: 'Someone',
-        created_at: data.last_message_at
+        created_at: data.last_message_at,
+        message_type: 'text'
       } : null,
       other_user: data.type === 'dm' ? {
         id: 'other-user-id',
         username: 'other_user',
         full_name: 'Other User',
-        avatar_url: null
+        avatar_url: null,
+        bio: null,
+        interests: null,
+        xp: 0
       } : null
     };
 
@@ -289,7 +307,10 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
             id: otherUserId,
             username: 'other_user',
             full_name: 'Other User',
-            avatar_url: null
+            avatar_url: null,
+            bio: null,
+            interests: null,
+            xp: 0
           }
         };
         return { data: enrichedConv, error: null };
@@ -324,7 +345,10 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
         id: otherUserId,
         username: 'other_user',
         full_name: 'Other User',
-        avatar_url: null
+        avatar_url: null,
+        bio: null,
+        interests: null,
+        xp: 0
       }
     };
 
