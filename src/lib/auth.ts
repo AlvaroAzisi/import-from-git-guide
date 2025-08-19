@@ -4,27 +4,79 @@ import type { User } from '@supabase/supabase-js';
 
 
 /**
- * Generate a safe username that satisfies common DB check constraints.
- * Adjust the rules here if your `valid_username` constraint differs.
- * Current rules:
- * - lowercase
- * - allow letters, numbers, underscores and dots
- * - must start with a letter
- * - length between 3 and 32
+ * DB constraints:
+ * - username: /^[A-Za-z0-9_]+$/  AND length 3..30
+ * - level >= 1
+ * - xp >= 0
+ *
+ * This helper makes a DB-safe username candidate (alphanumeric + underscore only),
+ * length-limited to 3..30, and provides a uniqueness helper to avoid collisions.
  */
-const makeSafeUsername = (input: string | undefined, fallback: string) => {
-  const raw = (input || fallback || '').toString().toLowerCase();
-  // Keep letters, numbers, underscores and dots
-  let username = raw.replace(/[^a-z0-9_.]/g, '');
-  // Ensure starts with a letter; if not, prefix with 'u'
-  if (!/^[a-z]/.test(username)) {
-    username = 'u' + username;
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 30;
+const USERNAME_RE = /^[A-Za-z0-9_]+$/;
+
+const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
+  const raw = (input || fallback || '').toString();
+  // remove disallowed chars (keep letters, numbers, underscore)
+  let username = raw.replace(/[^A-Za-z0-9_]/g, '');
+
+  // normalize to lowercase for consistency (optional)
+  username = username.toLowerCase();
+
+  // trim/pad to length
+  if (username.length > USERNAME_MAX) username = username.slice(0, USERNAME_MAX);
+  if (username.length < USERNAME_MIN) {
+    username = (username + fallback).slice(0, USERNAME_MIN);
   }
-  // Trim length
-  if (username.length > 32) username = username.slice(0, 32);
-  // Ensure minimum length
-  if (username.length < 3) username = (username + 'user').slice(0, 3);
+
+  // final guard: if empty after sanitization
+  if (!username) username = `${fallback}${Math.random().toString(36).slice(2, 6)}`;
+
+  // ensure regex compliance — fallback to a safe base if somehow still invalid
+  username = username.replace(/^[^a-z0-9_]+/i, ''); // remove leading invalid if any
+  if (!USERNAME_RE.test(username)) {
+    username = username.replace(/[^a-z0-9_]/gi, '') || `user${Math.random().toString(36).slice(2,5)}`;
+  }
+
+  // re-enforce length bounds
+  if (username.length < USERNAME_MIN) username = `${username}user`.slice(0, USERNAME_MIN);
+  if (username.length > USERNAME_MAX) username = username.slice(0, USERNAME_MAX);
+
   return username;
+};
+
+/**
+ * Ensure username is unique (attempts a few candidates if collisions).
+ * - base: initial username candidate
+ * - userId: optional; if found owner is same user, it's OK
+ */
+const ensureUniqueUsername = async (base: string, userId?: string, attempts = 8): Promise<string> => {
+  let candidate = base;
+  for (let i = 0; i < attempts; i++) {
+    const { data: existing, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', candidate)
+      .maybeSingle();
+
+    if (error) {
+      // if the read fails, throw — caller will catch and handle
+      throw error;
+    }
+
+    // If no existing user with candidate OR it belongs to current userId -> OK
+    if (!existing || (userId && existing.id === userId)) return candidate;
+
+    // Collision: generate a new candidate by appending short suffix
+    const suffix = Math.random().toString(36).slice(2, 6);
+    // keep within max length
+    const trimmedBase = base.slice(0, Math.max(0, USERNAME_MAX - (suffix.length + 1)));
+    candidate = `${trimmedBase}_${suffix}`;
+  }
+
+  // last-resort uniqueization
+  return `${base.slice(0, USERNAME_MAX - 5)}_${Date.now().toString().slice(-4)}`;
 };
 
 // Use a temporary type until database is properly rebuilt
@@ -79,75 +131,150 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 /**
- * Creates or updates a user profile in the database
+ * Upsert (create or update) profile robustly:
+ * - ensures username meets DB constraints (3..30 + alnum/underscore)
+ * - ensures uniqueness (tries multiple candidates)
+ * - enforces level >= 1 and xp >= 0 defaults
+ * - if existing profile has an invalid username, it will normalize + try to fix it
  */
 export const createOrUpdateProfile = async (user: User): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
-    const existingProfile = await getProfile(user.id);
+    // 1) Try to find existing profile (safe read)
+    const { data: existingProfile, error: getErr } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    if (existingProfile.data) {
-      // Update existing profile
-      const { data, error } = await supabase
+    if (getErr) {
+      console.error('[Auth] createOrUpdateProfile: get existing profile error', getErr);
+      return { data: null, error: getErr.message || String(getErr) };
+    }
+
+    // Helper to compute base username candidate from user metadata/email
+    const emailBase = user.email?.split('@')[0] ?? '';
+    const metadataName = user.user_metadata?.full_name ?? '';
+    const fallbackBase = `user${user.id.slice(-6)}`;
+    const rawBase = (metadataName || emailBase || fallbackBase).toString().slice(0, USERNAME_MAX);
+
+    // If there is an existing profile, examine/repair username if invalid
+    if (existingProfile) {
+      let { username } = existingProfile as any;
+
+      // If username is null/empty or invalid per DB constraints, create a safe & unique replacement
+      if (!username || !USERNAME_RE.test(username) || username.length < USERNAME_MIN || username.length > USERNAME_MAX) {
+        const baseCandidate = makeSafeUsername(emailBase || metadataName || fallbackBase, fallbackBase);
+        try {
+          const unique = await ensureUniqueUsername(baseCandidate, user.id);
+          // update username + updated_at
+          const { data: updated, error: updErr } = await supabase
+            .from('profiles')
+            .update({ username: unique, updated_at: new Date().toISOString() })
+            .eq('id', user.id)
+            .select()
+            .maybeSingle();
+
+          if (updErr) {
+            console.error('[Auth] createOrUpdateProfile: failed to repair username', updErr);
+            // but continue: we'll still return existing profile to avoid blocking flow
+          } else {
+            username = unique;
+            existingProfile.username = unique;
+          }
+        } catch (err) {
+          console.error('[Auth] createOrUpdateProfile: ensureUniqueUsername failed', err);
+        }
+      }
+
+      // Update minimal fields (email / updated_at) and ensure constraints for xp/level
+      const updates: Partial<UserProfile> = {
+        email: user.email || existingProfile.email,
+        updated_at: new Date().toISOString(),
+        // defensive: ensure xp/level meet constraints if present
+        xp: (existingProfile.xp ?? 0) < 0 ? 0 : existingProfile.xp ?? 0,
+        level: (existingProfile.level ?? 1) < 1 ? 1 : existingProfile.level ?? 1,
+      };
+
+      const { data: finalProfile, error: finalErr } = await supabase
         .from('profiles')
-        .update({ 
-          email: user.email || existingProfile.data.email,
-          updated_at: new Date().toISOString() 
-        })
+        .update(updates)
         .eq('id', user.id)
         .select()
         .maybeSingle();
-      
-      if (error) throw error;
-      return { data, error: null };
-    } else {
-      // Create new profile
-      const username = makeSafeUsername(user.email?.split('@')[0] || undefined, `user_${user.id.slice(-6)}`);
-      const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'New User';
-      
-      const profileData = {
-        id: user.id,
-        email: user.email || '',
-        username,
-        full_name: displayName,
-        avatar_url: user.user_metadata?.avatar_url || null,
-        bio: null,
-        xp: 0,
-        level: 1,
-        streak: 0,
-        rooms_joined: 0,
-        rooms_created: 0,
-        messages_sent: 0,
-        friends_count: 0,
-        is_online_visible: true,
-        email_notifications: true,
-        push_notifications: true,
-        interests: null,
-        phone: null,
-        phone_verified: false,
-        status: 'online' as const,
-        is_verified: false,
-        is_deleted: false,
-        last_seen_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
 
-      // Use upsert with onConflict to avoid race conditions and to be idempotent
+      if (finalErr) {
+        console.error('[Auth] createOrUpdateProfile: update failed', finalErr);
+        return { data: null, error: finalErr.message || String(finalErr) };
+      }
+
+      return { data: finalProfile as UserProfile, error: null };
+    }
+
+    // No existing profile -> create new profile. Build safe/unique username first.
+    const baseCandidate = makeSafeUsername(emailBase || metadataName || fallbackBase, fallbackBase);
+    const uniqueUsername = await ensureUniqueUsername(baseCandidate, user.id);
+
+    const profileData = {
+      id: user.id,
+      email: user.email || '',
+      username: uniqueUsername,
+      full_name: user.user_metadata?.full_name || emailBase || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+      bio: null,
+      xp: 0, // ensure >= 0
+      level: 1, // ensure >= 1
+      streak: 0,
+      rooms_joined: 0,
+      rooms_created: 0,
+      messages_sent: 0,
+      friends_count: 0,
+      is_online_visible: true,
+      email_notifications: true,
+      push_notifications: true,
+      interests: null,
+      phone: null,
+      phone_verified: false,
+      status: 'online' as const,
+      is_verified: false,
+      is_deleted: false,
+      last_seen_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Try upsert once (idempotent). If unique-violation happens (rare due to ensureUniqueUsername race),
+    // attempt a few retries with a new unique username.
+    const maxRetries = 4;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const { data, error } = await supabase
         .from('profiles')
         .upsert(profileData, { onConflict: 'id' })
         .select()
         .maybeSingle();
 
-      if (error) {
-        console.error('[Auth] Create/update profile failed:', error);
-        return { data: null, error: error.message || String(error) };
+      if (!error) {
+        return { data, error: null };
       }
 
-      return { data, error: null };
+      // If it's a unique-violation on username or other transient uniqueness issue, retry with new username
+      const msg = (error && (error.message || '')).toString().toLowerCase();
+      if (msg.includes('duplicate') || msg.includes('unique') || msg.includes('23505') || attempt < maxRetries) {
+        // generate a new safe candidate and retry
+        const newBase = baseCandidate + Math.random().toString(36).slice(2, 5);
+        profileData.username = await ensureUniqueUsername(newBase, user.id);
+        // loop to retry
+        continue;
+      }
+
+      // otherwise return the error as-is
+      console.error('[Auth] Create/update profile failed (upsert):', error);
+      return { data: null, error: error.message || String(error) };
     }
+
+    // if we exhausted retries, signal back failure
+    return { data: null, error: 'Failed to create profile after retries' };
   } catch (error: any) {
-    console.error('[Auth] Create/update profile failed:', error);
+    console.error('[Auth] Create/update profile failed (catch):', error);
     return { data: null, error: error.message || String(error) };
   }
 };
