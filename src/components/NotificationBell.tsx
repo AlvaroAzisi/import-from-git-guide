@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
 import { Button } from './ui/button';
+import { FriendRequest, fetchFriendRequests, acceptFriendRequest, rejectFriendRequest } from '../lib/friendRequests';
 
 interface Notification {
   id: string;
@@ -20,16 +21,16 @@ interface Notification {
   read: boolean;
 }
 
-interface FriendRequest {
+interface LocalFriendRequest {
   id: string;
-  user_id: string;
-  friend_id: string;
+  from_user: string;
+  to_user: string;
   status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
-  sender_profile: {
-    full_name: string;
+  from_profile?: {
     username: string;
-    avatar_url: string | null;
+    full_name: string;
+    avatar_url?: string;
   };
 }
 
@@ -43,28 +44,20 @@ export const NotificationBell: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Fetch friend requests
-  const fetchFriendRequests = async () => {
+  const loadFriendRequests = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('friends')
-        .select(`
-          *,
-          sender_profile:profiles!friends_user_id_fkey(
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
-        .eq('friend_id', user.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
+      const { data, error } = await fetchFriendRequests();
       if (error) throw error;
       setFriendRequests(data || []);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch friend requests',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -74,10 +67,10 @@ export const NotificationBell: React.FC = () => {
       id: `friend_request_${request.id}`,
       type: 'friend_request' as const,
       title: 'Friend Request',
-      message: `${request.sender_profile.full_name} sent you a friend request`,
-      sender_id: request.user_id,
-      sender_name: request.sender_profile.full_name,
-      sender_avatar: request.sender_profile.avatar_url,
+      message: `${request.from_profile?.full_name || 'Someone'} sent you a friend request`,
+      sender_id: request.from_user,
+      sender_name: request.from_profile?.full_name || 'Unknown',
+      sender_avatar: request.from_profile?.avatar_url,
       created_at: request.created_at,
       read: false
     }));
@@ -92,10 +85,9 @@ export const NotificationBell: React.FC = () => {
     try {
       setLoading(true);
       
-      const { error } = await supabase
-        .from('friends')
-        .update({ status: action === 'accept' ? 'accepted' : 'rejected' })
-        .eq('id', requestId);
+      const { error } = await (action === 'accept' 
+        ? acceptFriendRequest(requestId)
+        : rejectFriendRequest(requestId));
 
       if (error) throw error;
 
@@ -124,7 +116,7 @@ export const NotificationBell: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
-    fetchFriendRequests();
+    loadFriendRequests();
 
     // Set up real-time subscription
     const channel = supabase
@@ -135,10 +127,10 @@ export const NotificationBell: React.FC = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'friends',
-          filter: `friend_id=eq.${user.id}`
+          filter: `to_user=eq.${user.id}`
         },
         () => {
-          fetchFriendRequests();
+          loadFriendRequests();
         }
       )
       .on(
@@ -147,10 +139,10 @@ export const NotificationBell: React.FC = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'friends',
-          filter: `friend_id=eq.${user.id}`
+          filter: `to_user=eq.${user.id}`
         },
         () => {
-          fetchFriendRequests();
+          loadFriendRequests();
         }
       )
       .subscribe();
