@@ -3,7 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { createOrUpdateProfile } from '../lib/auth';
 import { useToast } from '../hooks/useToast';
-import { getPendingJoin, clearPendingJoin, getPendingCreate, clearPendingCreate } from '../lib/roomOperations';
+import { 
+  getPendingJoin, 
+  clearPendingJoin, 
+  getPendingCreate, 
+  clearPendingCreate,
+  createRoomAndJoin,
+  joinRoom
+} from '../lib/roomOperations';
 import { ROUTES, isPublicRoute } from '../constants/routes';
 
 /**
@@ -34,7 +41,24 @@ export const AuthRedirectHandler: React.FC = () => {
         if (pendingJoin) {
           clearPendingJoin();
           console.log('[AuthRedirectHandler] Completing pending room join:', pendingJoin);
-          navigate(ROUTES.ROOM(pendingJoin), { replace: true });
+          // Complete the join operation
+          try {
+            const result = await joinRoom(pendingJoin);
+            if (result.success && result.room_id) {
+              navigate(ROUTES.ROOM(result.room_id), { replace: true });
+            } else {
+              console.error('[AuthRedirectHandler] Failed to complete pending join:', result.error);
+              toast({
+                title: 'Join Failed',
+                description: result.error || 'Failed to join room',
+                variant: 'destructive'
+              });
+              navigate(ROUTES.HOME, { replace: true });
+            }
+          } catch (error) {
+            console.error('[AuthRedirectHandler] Error completing pending join:', error);
+            navigate(ROUTES.HOME, { replace: true });
+          }
           return;
         }
 
@@ -43,7 +67,24 @@ export const AuthRedirectHandler: React.FC = () => {
         if (pendingCreate) {
           clearPendingCreate();
           console.log('[AuthRedirectHandler] Pending room creation detected, staying on current page');
-          // Don't redirect - let the user complete the creation flow
+          // Complete the creation operation
+          try {
+            const result = await createRoomAndJoin(pendingCreate);
+            if (result.success && result.room_id) {
+              navigate(ROUTES.ROOM(result.room_id), { replace: true });
+            } else {
+              console.error('[AuthRedirectHandler] Failed to complete pending creation:', result.error);
+              toast({
+                title: 'Creation Failed',
+                description: result.error || 'Failed to create room',
+                variant: 'destructive'
+              });
+              navigate(ROUTES.HOME, { replace: true });
+            }
+          } catch (error) {
+            console.error('[AuthRedirectHandler] Error completing pending creation:', error);
+            navigate(ROUTES.HOME, { replace: true });
+          }
           return;
         }
       }

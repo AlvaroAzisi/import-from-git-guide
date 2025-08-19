@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
@@ -15,6 +15,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
+import { useNavigation } from '../lib/navigation';
 import { signOut } from '../lib/auth';
 
 interface SidebarProps {
@@ -33,9 +34,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleMinimized
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { safeNavigate, isNavigating } = useNavigation();
   const { profile } = useAuth();
   const { t } = useLanguage();
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
 
   const menuItems = [
     { icon: Home, label: t('nav.home'), path: '/home' },
@@ -44,8 +46,32 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: User, label: t('nav.profile'), path: '/profile' },
   ];
 
+  // Handle outside click and ESC key
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, onClose]);
   const handleNavigation = (path: string) => {
-    navigate(path);
+    safeNavigate(path);
     onClose();
   };
 
@@ -67,8 +93,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     label: string;
     onClick: () => void;
     isActive?: boolean;
+    isLoading?: boolean;
     variant?: 'default' | 'create' | 'danger';
-  }> = ({ icon: Icon, label, onClick, isActive = false, variant = 'default' }) => {
+  }> = ({ icon: Icon, label, onClick, isActive = false, isLoading = false, variant = 'default' }) => {
     const getButtonStyles = () => {
       if (variant === 'create') {
         return 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg hover:shadow-xl';
@@ -87,9 +114,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
+        disabled={isLoading}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-all duration-300 ${getButtonStyles()}`}
       >
-        <Icon className="w-5 h-5 flex-shrink-0" />
+        {isLoading ? (
+          <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+        ) : (
+          <Icon className="w-5 h-5 flex-shrink-0" />
+        )}
         <AnimatePresence>
           {!minimized && (
             <motion.span
@@ -140,6 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <motion.div
+        ref={sidebarRef}
         initial={{ x: minimized ? -72 : -320 }}
         animate={{ 
           x: 0,
@@ -152,7 +185,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           stiffness: 200,
           duration: 0.22
         }}
-        className="fixed left-0 top-0 h-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
+        className="fixed left-0 top-0 h-full backdrop-blur-md bg-white/95 dark:bg-gray-900/95 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
+        role="navigation"
+        aria-expanded={isOpen}
       >
         {/* Header */}
         <div className="p-6 border-b border-white/10 dark:border-gray-700/10">
@@ -258,6 +293,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-2">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
+              const itemIsNavigating = isNavigating(item.path);
               return (
                 <SidebarButton
                   key={item.path}
@@ -265,25 +301,25 @@ const Sidebar: React.FC<SidebarProps> = ({
                   label={item.label}
                   onClick={() => handleNavigation(item.path)}
                   isActive={isActive}
+                  isLoading={itemIsNavigating}
                 />
               );
             })}
 
-            {/* Create Room Button */}
-            <div className="mt-4">
-              <SidebarButton
-                icon={Plus}
-                label={t('rooms.create')}
-                onClick={handleCreateRoom}
-                variant="create"
-              />
-            </div>
           </div>
         </nav>
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
           <div className="space-y-2">
+            {/* Create Room Button - Single location */}
+            <SidebarButton
+              icon={Plus}
+              label={t('rooms.create')}
+              onClick={handleCreateRoom}
+              variant="create"
+            />
+            
             <SidebarButton
               icon={Settings}
               label="Settings"

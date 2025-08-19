@@ -172,7 +172,7 @@ export const subscribeToMessages = (conversationId: string, onInsert: (message: 
           const { data: profileData } = await supabase
             .from('profiles')
             .select('full_name, avatar_url, username')
-            .eq('id', newMessage.sender_id)
+            .eq('id', newMessage.sender_id || newMessage.user_id)
             .single();
 
           onInsert({
@@ -190,7 +190,15 @@ export const subscribeToMessages = (conversationId: string, onInsert: (message: 
 
   // Return unsubscribe function
   return () => {
-    supabase.removeChannel(channel);
+    try {
+      if (channel && typeof channel.unsubscribe === 'function') {
+        channel.unsubscribe();
+      } else {
+        supabase.removeChannel(channel);
+      }
+    } catch (error) {
+      console.warn('Error unsubscribing from messages channel:', error);
+    }
   };
 };
 

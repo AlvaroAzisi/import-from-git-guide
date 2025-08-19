@@ -22,9 +22,9 @@ export const sendFriendRequest = async (friendId: string): Promise<boolean> => {
 
     // Check if request already exists
     const { data: existing } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select('id, status')
-      .or(`and(user_id.eq.${user.id},related_user_id.eq.${friendId}),and(user_id.eq.${friendId},related_user_id.eq.${user.id})`)
+      .or(`and(from_user.eq.${user.id},to_user.eq.${friendId}),and(from_user.eq.${friendId},to_user.eq.${user.id})`)
       .single();
 
     if (existing) {
@@ -36,11 +36,10 @@ export const sendFriendRequest = async (friendId: string): Promise<boolean> => {
     }
 
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .insert({
-        user_id: user.id,
-        related_user_id: friendId,
-        relationship_type: 'friend',
+        from_user: user.id,
+        to_user: friendId,
         status: 'pending'
       });
 
@@ -55,7 +54,7 @@ export const sendFriendRequest = async (friendId: string): Promise<boolean> => {
 export const acceptFriendRequest = async (requestId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .update({ status: 'accepted' })
       .eq('id', requestId);
 
@@ -70,7 +69,7 @@ export const acceptFriendRequest = async (requestId: string): Promise<boolean> =
 export const rejectFriendRequest = async (requestId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .delete()
       .eq('id', requestId);
 
@@ -88,13 +87,12 @@ export const getFriends = async (): Promise<UserProfile[]> => {
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select(`
-        related_user_id,
-        friend_profile:profiles!related_user_id(*)
+        to_user,
+        friend_profile:profiles!to_user(*)
       `)
-      .eq('user_id', user.id)
-      .eq('relationship_type', 'friend')
+      .eq('from_user', user.id)
       .eq('status', 'accepted');
 
     if (error) throw error;
@@ -112,14 +110,13 @@ export const getFriendRequests = async (): Promise<FriendRequest[]> => {
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select(`
         *,
-        user_profile:profiles!user_id(*),
-        friend_profile:profiles!related_user_id(*)
+        user_profile:profiles!from_user(*),
+        friend_profile:profiles!to_user(*)
       `)
-      .eq('related_user_id', user.id)
-      .eq('relationship_type', 'friend')
+      .eq('to_user', user.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
@@ -137,10 +134,9 @@ export const removeFriend = async (friendId: string): Promise<boolean> => {
     if (!user) return false;
 
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .delete()
-      .or(`and(user_id.eq.${user.id},related_user_id.eq.${friendId}),and(user_id.eq.${friendId},related_user_id.eq.${user.id})`)
-      .eq('relationship_type', 'friend');
+      .or(`and(from_user.eq.${user.id},to_user.eq.${friendId}),and(from_user.eq.${friendId},to_user.eq.${user.id})`);
 
     if (error) throw error;
     return true;
@@ -156,10 +152,9 @@ export const getFriendshipStatus = async (userId: string): Promise<'none' | 'pen
     if (!user || user.id === userId) return 'none';
 
     const { data, error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select('status')
-      .or(`and(user_id.eq.${user.id},related_user_id.eq.${userId}),and(user_id.eq.${userId},related_user_id.eq.${user.id})`)
-      .eq('relationship_type', 'friend')
+      .or(`and(from_user.eq.${user.id},to_user.eq.${userId}),and(from_user.eq.${userId},to_user.eq.${user.id})`)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;

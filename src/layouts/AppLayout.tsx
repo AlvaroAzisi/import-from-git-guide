@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
-import { Sidebar } from '../components/Sidebar/Sidebar';
+import { ChevronRight, Menu } from 'lucide-react';
 import TopBar from '../components/TopBar';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { useSidebar } from '../contexts/SidebarContext';
 import { useNavigation } from '../lib/navigation';
+import Sidebar from '../components/Sidebar';
 
 /**
  * AppLayout - Global layout wrapper with persistent sidebar
@@ -19,7 +19,7 @@ import { useNavigation } from '../lib/navigation';
  * 6. Left edge hover - should reveal sidebar after delay
  */
 export const AppLayout: React.FC = () => {
-  const { isOpen, isMinimized, openSidebar, closeSidebar } = useSidebar();
+  const { isOpen, isMinimized, openSidebar, closeSidebar, toggleSidebar } = useSidebar();
   const { navigateToRoom } = useNavigation();
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [leftEdgeHoverTimeout, setLeftEdgeHoverTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -28,8 +28,6 @@ export const AppLayout: React.FC = () => {
     setCreateRoomOpen(true);
   };
 
-  // Use the function to avoid unused warning
-  if (false) handleCreateRoom();
 
   const handleRoomCreated = (room: any) => {
     setCreateRoomOpen(false);
@@ -55,10 +53,11 @@ export const AppLayout: React.FC = () => {
       setLeftEdgeHoverTimeout(null);
     }
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Top Bar */}
-      <TopBar onMenuClick={openSidebar} />
+      <TopBar onMenuClick={toggleSidebar} />
       
       <div className="flex">
         {/* Sidebar Toggle - Only show when sidebar is closed */}
@@ -68,9 +67,9 @@ export const AppLayout: React.FC = () => {
             aria-label="Open sidebar"
             aria-disabled={isOpen}
             disabled={isOpen}
-            className="fixed left-2 top-1/2 -translate-y-1/2 z-40 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-r-2xl shadow-lg hover:bg-white/90 dark:hover:bg-gray-900/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-xl shadow-lg hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
           </button>
         )}
         
@@ -85,7 +84,13 @@ export const AppLayout: React.FC = () => {
         )}
         
         {/* Persistent Sidebar */}
-        <Sidebar />
+        <Sidebar 
+          isOpen={isOpen}
+          onClose={closeSidebar}
+          onCreateRoom={handleCreateRoom}
+          minimized={isMinimized}
+          onToggleMinimized={() => {}}
+        />
 
         {/* Main Content with smooth recentering */}
         <main className={`flex-1 transition-all duration-300 ease-in-out ${
@@ -100,7 +105,7 @@ export const AppLayout: React.FC = () => {
       </div>
 
       {/* Overlay for mobile when sidebar is open */}
-      {!isOpen && (
+      {isOpen && (
         <div 
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-35 lg:hidden"
           onClick={closeSidebar}

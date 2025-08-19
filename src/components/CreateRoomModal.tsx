@@ -69,8 +69,9 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
           is_public: true
         });
         
-        // Call success callback with room data
-        onSuccess?.(result.room);
+        // Don't call onSuccess to prevent navigation here
+        // Navigation is handled by the room operations hook
+        onClose();
       } else {
         throw new Error(result.error || 'Failed to create room');
       }

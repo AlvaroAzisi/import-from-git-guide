@@ -8,7 +8,6 @@ import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search, UserPlus } fr
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
 import { Button } from '../components/ui/button';
-import CreateRoomModal from '../components/CreateRoomModal';
 import { useNavigation } from '../lib/navigation';
 import { useRoomOperations } from '../lib/roomOperations';
 import type { Room } from '../lib/rooms';
@@ -18,9 +17,7 @@ const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { navigateToRoom } = useNavigation();
-  const { } = useRoomOperations();
-  const [joinRoomOpen, setJoinRoomOpen] = useState(false);
-  const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  const { createAndJoinRoom } = useRoomOperations();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [recommendedUsers, setRecommendedUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,7 +30,7 @@ const HomePage: React.FC = () => {
       try {
         const [roomsData, usersData] = await Promise.all([
           getRooms(6),
-          searchUsers('').then(result => (result.data || []).slice(0, 4)) // Get some random users
+          searchUsers('').then(result => result.data?.slice(0, 4) || []) // Get some random users
         ]);
         
         setRooms(roomsData);
@@ -67,12 +64,9 @@ const HomePage: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleRoomCreated = async (room: Room) => {
-    setCreateRoomOpen(false);
-    // Navigate to the new room using room operations
-    if (room?.id) {
-      navigateToRoom(room.id);
-    }
+  const handleCreateRoom = async () => {
+    // This will be handled by the sidebar's Create Room button
+    // No need for duplicate functionality here
   };
 
   return (<>
@@ -180,12 +174,6 @@ const HomePage: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Recent Study Rooms</h3>
-              <button
-                onClick={() => setCreateRoomOpen(true)}
-                className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:shadow-lg transition-all duration-300"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
             </div>
             
             <div className="space-y-3">
@@ -296,39 +284,7 @@ const HomePage: React.FC = () => {
           transition={{ duration: 0.8, delay: 1.2 }}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          <button
-            onClick={() => setCreateRoomOpen(true)}
-            className="p-6 backdrop-blur-md bg-gradient-to-r from-blue-500/20 to-cyan-500/20 dark:from-blue-500/10 dark:to-cyan-500/10 rounded-3xl border border-blue-200/50 dark:border-blue-700/50 hover:shadow-xl transition-all duration-300 text-left group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <Plus className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">Create Study Room</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Start a new collaborative learning session</p>
-              </div>
-            </div>
-          </button>
 
-          <div className="p-6 backdrop-blur-md bg-gradient-to-r from-purple-500/20 to-pink-500/20 dark:from-purple-500/10 dark:to-pink-500/10 rounded-3xl border border-purple-200/50 dark:border-purple-700/50 hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-                <Search className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">Join Study Room</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Enter a room code to join instantly</p>
-              </div>
-              <Button
-                onClick={() => setJoinRoomOpen(true)}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Join Room
-              </Button>
-            </div>
-          </div>
 
           <button
             onClick={() => navigateToRoom('')}
@@ -346,37 +302,6 @@ const HomePage: React.FC = () => {
           </button>
         </motion.div>
       </div>
-
-      {/* Join Room Modal - Inline to prevent duplication */}
-      {joinRoomOpen && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Join Room</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">Enter a room code to join instantly</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setJoinRoomOpen(false)}
-                className="flex-1 px-4 py-2 bg-white/20 dark:bg-gray-800/20 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-white/30 dark:hover:bg-gray-800/30 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setJoinRoomOpen(false)}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:shadow-lg transition-all duration-300"
-              >
-                Join
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Create Room Modal */}
-      <CreateRoomModal
-        isOpen={createRoomOpen}
-        onClose={() => setCreateRoomOpen(false)}
-        onSuccess={handleRoomCreated}
-      />
     </>
   );
 };

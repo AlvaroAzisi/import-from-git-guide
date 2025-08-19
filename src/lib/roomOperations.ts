@@ -94,50 +94,28 @@ export const createRoomAndJoin = async (payload: CreateRoomPayload): Promise<Roo
       };
     }
 
-    const userId = session.user.id;
+    const { data, error } = await supabase.rpc('create_room_and_join', {
+      p_name: payload.name,
+      p_description: payload.description || '',
+      p_subject: payload.subject || '',
+      p_is_public: payload.is_public ?? true,
+      p_max_members: payload.max_members || 10
+    });
 
-    // Create conversation (room) using new schema
-    const { data: conversation, error: convError } = await supabase
-      .from('conversations')
-      .insert({
-        type: 'group',
-        name: payload.name,
-        description: payload.description,
-        metadata: {
-          subject: payload.subject,
-          max_members: payload.max_members || 10,
-          is_public: payload.is_public ?? true
-        },
-        created_by: userId
-      })
-      .select()
-      .single();
+    if (error) throw error;
 
-    if (convError) throw convError;
-
-    // Add creator as admin member
-    const { error: memberError } = await supabase
-      .from('conversation_members')
-      .insert({
-        conversation_id: conversation.id,
-        user_id: userId,
-        role: 'admin',
-        joined_at: new Date().toISOString()
-      });
-
-    if (memberError) {
-      // Cleanup orphaned conversation
-      await supabase.from('conversations').delete().eq('id', conversation.id);
-      throw memberError;
+    if (data && data.length > 0) {
+      const result = data[0];
+      clearPendingCreate();
+      return {
+        success: true,
+        room_id: result.room.id,
+        room: result.room,
+        membership: result.membership
+      };
     }
 
-    clearPendingCreate();
-    return {
-      success: true,
-      room_id: conversation.id,
-      room: conversation,
-      membership: { role: 'admin' }
-    };
+    throw new Error('No data returned from room creation');
 
   } catch (error: any) {
     console.error('Create room error:', error);
@@ -168,92 +146,38 @@ export const joinRoom = async (roomIdOrCode: string): Promise<RoomOperationResul
       };
     }
 
-    const userId = session.user.id;
+    const { data, error } = await supabase.rpc('join_room_safe', {
+      p_room_identifier: roomIdOrCode
+    });
 
-    // Find conversation by ID or code
-    let conversation;
-    if (roomIdOrCode.length > 10 && roomIdOrCode.includes('-')) {
-      // UUID format - direct lookup
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', roomIdOrCode)
-        .single();
-      
-      if (error) throw error;
-      conversation = data;
-    } else {
-      // Short code lookup
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('metadata->>invite_code', roomIdOrCode.toUpperCase())
-        .single();
-      
-      if (error) throw error;
-      conversation = data;
+    if (error) throw error;
+
+    if (data) {
+      if (data.status === 'ok') {
+        clearPendingJoin();
+        return {
+          success: true,
+          room_id: roomIdOrCode,
+          membership: data.membership,
+          code: data.code === 'ALREADY_MEMBER' ? 'ALREADY_MEMBER' : undefined
+        };
+      } else {
+        // Handle error codes from RPC
+        const errorMessages = {
+          'ROOM_NOT_FOUND': 'Room not found or inactive',
+          'MAX_CAPACITY': 'Room is at maximum capacity',
+          'ROOM_PRIVATE': 'Room is private and requires invitation'
+        };
+        
+        return {
+          success: false,
+          error: errorMessages[data.code as keyof typeof errorMessages] || data.error || 'Failed to join room',
+          code: data.code
+        };
+      }
     }
 
-    if (!conversation) {
-      return {
-        success: false,
-        error: 'Room not found',
-        code: 'ROOM_NOT_FOUND'
-      };
-    }
-
-    // Check if already a member
-    const { data: existingMember } = await supabase
-      .from('conversation_members')
-      .select('id')
-      .eq('conversation_id', conversation.id)
-      .eq('user_id', userId)
-      .single();
-
-    if (existingMember) {
-      clearPendingJoin();
-      return {
-        success: true,
-        room_id: conversation.id,
-        room: conversation,
-        code: 'ALREADY_MEMBER'
-      };
-    }
-
-    // Check capacity
-    const maxMembers = conversation.metadata?.max_members || 10;
-    const { count } = await supabase
-      .from('conversation_members')
-      .select('*', { count: 'exact', head: true })
-      .eq('conversation_id', conversation.id);
-
-    if (count && count >= maxMembers) {
-      return {
-        success: false,
-        error: 'Room is full',
-        code: 'ROOM_FULL'
-      };
-    }
-
-    // Join the conversation
-    const { error: joinError } = await supabase
-      .from('conversation_members')
-      .insert({
-        conversation_id: conversation.id,
-        user_id: userId,
-        role: 'member',
-        joined_at: new Date().toISOString()
-      });
-
-    if (joinError) throw joinError;
-
-    clearPendingJoin();
-    return {
-      success: true,
-      room_id: conversation.id,
-      room: conversation,
-      membership: { role: 'member' }
-    };
+    throw new Error('No response from join room operation');
 
   } catch (error: any) {
     console.error('Join room error:', error);
@@ -285,9 +209,9 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
     const userId = session.user.id;
 
     const { error } = await supabase
-      .from('conversation_members')
+      .from('room_members')
       .delete()
-      .eq('conversation_id', roomId)
+      .eq('room_id', roomId)
       .eq('user_id', userId);
 
     if (error) throw error;
