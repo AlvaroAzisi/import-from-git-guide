@@ -11,9 +11,9 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ users }) => {
 
   const getTypingText = () => {
     if (users.length === 1) {
-      return `${users[0].user_name || 'Someone'} is typing...`;
+      return `${users[0].username || 'Someone'} is typing...`;
     } else if (users.length === 2) {
-      return `${users[0].user_name || 'Someone'} and ${users[1].user_name || 'someone'} are typing...`;
+      return `${users[0].username || 'Someone'} and ${users[1].username || 'someone'} are typing...`;
     } else {
       return `${users.length} people are typing...`;
     }

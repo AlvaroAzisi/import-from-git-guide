@@ -43,7 +43,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<TypingEvent[]>([]);
+  const [typingUsers] = useState<TypingEvent[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -85,15 +85,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         if (message.sender_id !== user?.id) {
           setTimeout(() => markMessagesAsRead(conversation.id), 100);
         }
-      },
-      (typingEvent) => {
-        setTypingUsers(prev => {
-          const filtered = prev.filter(t => t.user_id !== typingEvent.user_id);
-          if (typingEvent.is_typing && typingEvent.user_id !== user?.id) {
-            return [...filtered, typingEvent];
-          }
-          return filtered;
-        });
       }
     );
 
@@ -107,7 +98,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   // Handle typing indicator
   const handleTyping = () => {
-    sendTypingIndicator(conversation.id, true);
+    sendTypingIndicator(conversation.id);
     
     // Clear previous timeout
     if (typingTimeoutRef.current) {
@@ -116,7 +107,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     
     // Stop typing after 3 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
-      sendTypingIndicator(conversation.id, false);
+      sendTypingIndicator(conversation.id);
     }, 3000);
   };
 
@@ -129,7 +120,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const message = await sendChatMessage(conversation.id, newMessage.trim() ?? '');
       if (message) {
         setNewMessage('');
-        sendTypingIndicator(conversation.id, false);
+        sendTypingIndicator(conversation.id);
       }
     } catch (error: any) {
       toast({
@@ -148,17 +139,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     setUploading(true);
     try {
-      const fileUrl = await uploadChatAttachment(file, conversation.id);
+      const fileUrl = await uploadChatAttachment(file);
       if (fileUrl) {
         const isImage = file.type.startsWith('image/');
         const content = isImage ? '📷 Image' : `📎 ${file.name}`;
         
-        await sendChatMessage(
-          conversation.id, 
-          content, 
-          isImage ? 'image' : 'file',
-          [{ url: fileUrl, name: file.name, size: file.size, type: file.type }]
-        );
+        await sendChatMessage(conversation.id, content);
       }
     } catch (error: any) {
       toast({

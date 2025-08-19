@@ -22,7 +22,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   const renderContent = () => {
-    if (message.message_type === 'image' && message.attachments?.length > 0) {
+    if (message.message_type === 'image' && message.attachments && message.attachments.length > 0) {
       const attachment = message.attachments[0];
       return (
         <div className="space-y-2">
@@ -37,7 +37,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
         </div>
       );
-    } else if (message.message_type === 'file' && message.attachments?.length > 0) {
+    } else if (message.message_type === 'file' && message.attachments && message.attachments.length > 0) {
       const attachment = message.attachments[0];
       return (
         <div className="space-y-2">

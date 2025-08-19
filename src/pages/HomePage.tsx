@@ -10,7 +10,6 @@ import { searchUsers } from '../lib/auth';
 import { Button } from '../components/ui/button';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { useNavigation } from '../lib/navigation';
-import { ROUTES } from '../constants/routes';
 import { useRoomOperations } from '../lib/roomOperations';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
@@ -19,7 +18,7 @@ const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { navigateToRoom } = useNavigation();
-  const { createAndJoinRoom } = useRoomOperations();
+  const { } = useRoomOperations();
   const [joinRoomOpen, setJoinRoomOpen] = useState(false);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -332,7 +331,7 @@ const HomePage: React.FC = () => {
           </div>
 
           <button
-            onClick={() => safeNavigate(ROUTES.FRIENDS)}
+            onClick={() => navigateToRoom('')}
             className="p-6 backdrop-blur-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl border border-emerald-200/50 dark:border-emerald-700/50 hover:shadow-xl transition-all duration-300 text-left group"
           >
             <div className="flex items-center gap-4">

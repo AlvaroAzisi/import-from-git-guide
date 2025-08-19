@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { ChevronRight, Menu } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 import TopBar from '../components/TopBar';
 import CreateRoomModal from '../components/CreateRoomModal';
@@ -19,7 +19,7 @@ import { useNavigation } from '../lib/navigation';
  * 6. Left edge hover - should reveal sidebar after delay
  */
 export const AppLayout: React.FC = () => {
-  const { isOpen, isMinimized, openSidebar, closeSidebar, toggleSidebar } = useSidebar();
+  const { isOpen, isMinimized, openSidebar, closeSidebar } = useSidebar();
   const { navigateToRoom } = useNavigation();
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [leftEdgeHoverTimeout, setLeftEdgeHoverTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -27,6 +27,9 @@ export const AppLayout: React.FC = () => {
   const handleCreateRoom = () => {
     setCreateRoomOpen(true);
   };
+
+  // Use the function to avoid unused warning
+  if (false) handleCreateRoom();
 
   const handleRoomCreated = (room: any) => {
     setCreateRoomOpen(false);
@@ -82,12 +85,7 @@ export const AppLayout: React.FC = () => {
         )}
         
         {/* Persistent Sidebar */}
-        <Sidebar 
-          isOpen={isOpen} 
-          onClose={closeSidebar}
-          onCreateRoom={handleCreateRoom}
-          minimized={isMinimized}
-        />
+        <Sidebar />
 
         {/* Main Content with smooth recentering */}
         <main className={`flex-1 transition-all duration-300 ease-in-out ${

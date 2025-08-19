@@ -93,7 +93,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             {getDisplayName()}
           </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-            {formatTime(conversation.last_message_at)}
+            {conversation.last_message_at ? formatTime(conversation.last_message_at) : 'Unknown'}
           </span>
         </div>
         

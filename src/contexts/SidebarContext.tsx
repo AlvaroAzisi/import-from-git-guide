@@ -68,7 +68,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev: boolean) => !prev);
   }, []);
 
   const minimizeSidebar = useCallback(() => {
@@ -80,7 +80,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const toggleMinimized = useCallback(() => {
-    setIsMinimized(prev => !prev);
+    setIsMinimized((prev: boolean) => !prev);
   }, []);
 
   const value = {

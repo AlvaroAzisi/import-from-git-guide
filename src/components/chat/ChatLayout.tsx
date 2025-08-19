@@ -30,17 +30,17 @@ export const ChatLayout: React.FC = () => {
         if (username) {
           // DM conversation
           const otherUser = await getProfileByUsername(username);
-          if (otherUser) {
-            const conversationId = await createDMConversation(otherUser.id);
+          if (otherUser.data) {
+            const conversationId = await createDMConversation(otherUser.data.id);
             if (conversationId) {
-              const conversation = await getConversation(conversationId);
-              setActiveConversation(conversation);
+              const conversation = await getConversation(conversationId.toString());
+              setActiveConversation(conversation.data);
             }
           }
         } else if (groupId) {
           // Group conversation
           const conversation = await getConversation(groupId);
-          setActiveConversation(conversation);
+          setActiveConversation(conversation.data);
         } else {
           // No conversation selected
           setActiveConversation(null);

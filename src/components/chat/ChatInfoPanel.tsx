@@ -253,7 +253,7 @@ export const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({
             
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
               <MessageCircle className="w-4 h-4" />
-              <span>Last active {new Date(conversation.last_message_at).toLocaleDateString()}</span>
+              <span>Last active {conversation.last_message_at ? new Date(conversation.last_message_at).toLocaleDateString() : 'Unknown'}</span>
             </div>
           </div>
         </div>

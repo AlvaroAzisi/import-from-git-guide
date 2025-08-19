@@ -262,10 +262,10 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
         .eq('user_id', userId)
 ;
       
-      mutualRooms = mutualRoomsData?.map(item => ({
+      mutualRooms = mutualRoomsData?.map((item: any) => ({
         id: item.conversation?.id,
         name: item.conversation?.name,
-        subject: item.conversation?.description
+        description: item.conversation?.description
       })).filter(Boolean) || [];
     }
     

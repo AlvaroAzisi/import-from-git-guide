@@ -25,12 +25,39 @@ const ChatLayout: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
         <aside className="col-span-12 md:col-span-4 lg:col-span-3">
-          <ChatSidebar activeChat={activeChat} onSelectChat={(chat) => setActiveChat(chat)} />
+          <ChatSidebar 
+            activeConversation={activeChat ? { 
+              id: activeChat.id, 
+              type: activeChat.type === 'friend' ? 'dm' : 'group',
+              name: activeChat.name,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            } : null}
+            onConversationSelect={(chat: any) => setActiveChat({
+              id: chat.id,
+              type: chat.type === 'dm' ? 'friend' : 'group',
+              name: chat.name || chat.other_user?.full_name || 'Unknown'
+            })} 
+            minimized={false}
+            onToggleMinimized={() => {}}
+          />
         </aside>
 
         <main className="col-span-12 md:col-span-8 lg:col-span-9">
           {activeChat ? (
-            <ChatWindow chatId={activeChat.id} type={activeChat.type} name={activeChat.name} />
+            <ChatWindow 
+              conversation={{ 
+                id: activeChat.id, 
+                type: activeChat.type === 'friend' ? 'dm' : 'group',
+                name: activeChat.name,
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }}
+              onBack={() => setActiveChat(null)}
+              onToggleInfo={() => {}}
+            />
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
               Select a conversation to start messaging

@@ -54,7 +54,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     const loadConversations = async () => {
       try {
         const data = await getConversations();
-        setConversations(data);
+        setConversations(data.data || []);
       } catch (error) {
         console.error('Error loading conversations:', error);
       } finally {
@@ -103,7 +103,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   // removed setSearching(true) as searching state was removed
       try {
         const results = await searchUsers(searchQuery);
-        setSearchResults(results);
+        setSearchResults(results.data || []);
       } catch (error) {
         console.error('Search error:', error);
       } finally {
@@ -126,10 +126,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         
         // Reload conversations
         const data = await getConversations();
-        setConversations(data);
+        setConversations(data.data || []);
         
         // Select the new group
-        const newConversation = data.find(c => c.id === conversationId);
+        const newConversation = (data.data || []).find((c: any) => c.id === conversationId);
         if (newConversation) {
           onConversationSelect(newConversation);
         }
@@ -337,8 +337,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       : 'bg-white/20 dark:bg-gray-800/20 hover:bg-white/30 dark:hover:bg-gray-800/30'
                   }`}
                   title={conversation.type === 'dm' 
-                    ? conversation.other_user?.full_name 
-                    : conversation.name
+                    ? conversation.other_user?.full_name || undefined 
+                    : conversation.name || undefined
                   }
                 >
                   {conversation.type === 'dm' ? (
