@@ -58,7 +58,6 @@ if (result.success) {
 ### `create_room_and_join`
 
 **Parameters:**
-- `p_user_id` (uuid) - User creating the room
 - `p_name` (text) - Room name
 - `p_description` (text) - Room description
 - `p_subject` (text) - Subject/topic
@@ -68,17 +67,14 @@ if (result.success) {
 **Returns:**
 ```json
 {
-  "status": "ok",
-  "code": "CREATED",
   "room": { ... },
   "membership": { ... }
 }
 ```
 
-### `join_room`
+### `join_room_safe`
 
 **Parameters:**
-- `p_user_id` (uuid) - User joining
 - `p_room_identifier` (text) - Room ID or short code
 
 **Returns:**
@@ -86,8 +82,6 @@ if (result.success) {
 {
   "status": "ok",
   "code": "JOINED",
-  "room_id": "...",
-  "room": { ... },
   "membership": { ... }
 }
 ```
@@ -95,9 +89,8 @@ if (result.success) {
 **Error Codes:**
 - `ROOM_NOT_FOUND` - Room doesn't exist or is inactive
 - `ALREADY_MEMBER` - User is already a member
-- `ROOM_FULL` - Room is at capacity
+- `MAX_CAPACITY` - Room is at capacity
 - `ROOM_PRIVATE` - Room requires invitation
-- `UNAUTHORIZED` - Authentication failed
 
 ## Authentication Recovery
 
