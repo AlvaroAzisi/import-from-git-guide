@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
-import { signInWithGoogle, signInWithEmail, signUpWithEmail, validateForm } from '../lib/auth';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, validateSignUpForm as validateForm } from '../lib/auth';
 
 interface AuthPanelProps {
   isOpen: boolean;

@@ -280,9 +280,58 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
 };
 
 /**
+ * Signs up with email and password
+ */
+export const signUpWithEmail = async (email: string, password: string): Promise<{ data: { user: any } | null; error: string | null }> => {
+  if (!supabase) throw new Error('Supabase client is not initialized');
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/home`
+      }
+    });
+
+    if (error) {
+      console.error('[Auth] Email sign-up failed:', error);
+      return { data: null, error: error.message || String(error) };
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('[Auth] Email sign-up error:', error);
+    return { data: null, error: error.message || String(error) };
+  }
+};
+
+/**
+ * Signs in with email and password
+ */
+export const signInWithEmail = async (email: string, password: string): Promise<{ data: { user: any } | null; error: string | null }> => {
+  if (!supabase) throw new Error('Supabase client is not initialized');
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      console.error('[Auth] Email sign-in failed:', error);
+      return { data: null, error: error.message || String(error) };
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('[Auth] Email sign-in error:', error);
+    return { data: null, error: error.message || String(error) };
+  }
+};
+
+/**
  * Signs in with Google (redirect)
  */
-export const signInWithGoogle = async (): Promise<{ data: unknown; error: string | null }> => {
+export const signInWithGoogle = async (): Promise<{ data: any; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     const redirectTo = `${window.location.origin}/home`;
@@ -301,6 +350,26 @@ export const signInWithGoogle = async (): Promise<{ data: unknown; error: string
   } catch (error: any) {
     console.error('[Auth] Google sign-in error:', error);
     return { data: null, error: error.message || String(error) };
+  }
+};
+
+/**
+ * Signs out the current user
+ */
+export const signOut = async (): Promise<{ error: string | null }> => {
+  try {
+    if (!supabase) throw new Error('Supabase client is not initialized');
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('[Auth] Sign out failed:', error);
+      return { error: error.message || String(error) };
+    }
+
+    return { error: null };
+  } catch (error: any) {
+    console.error('[Auth] Sign out error:', error);
+    return { error: error.message || String(error) };
   }
 };
 
