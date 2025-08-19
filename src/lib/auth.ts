@@ -1,6 +1,32 @@
 import { supabase } from './supabase';
 import type { User } from '@supabase/supabase-js';
 
+
+
+/**
+ * Generate a safe username that satisfies common DB check constraints.
+ * Adjust the rules here if your `valid_username` constraint differs.
+ * Current rules:
+ * - lowercase
+ * - allow letters, numbers, underscores and dots
+ * - must start with a letter
+ * - length between 3 and 32
+ */
+const makeSafeUsername = (input: string | undefined, fallback: string) => {
+  const raw = (input || fallback || '').toString().toLowerCase();
+  // Keep letters, numbers, underscores and dots
+  let username = raw.replace(/[^a-z0-9_.]/g, '');
+  // Ensure starts with a letter; if not, prefix with 'u'
+  if (!/^[a-z]/.test(username)) {
+    username = 'u' + username;
+  }
+  // Trim length
+  if (username.length > 32) username = username.slice(0, 32);
+  // Ensure minimum length
+  if (username.length < 3) username = (username + 'user').slice(0, 3);
+  return username;
+};
+
 // Use a temporary type until database is properly rebuilt
 export interface UserProfile {
   id: string;
@@ -32,89 +58,20 @@ export interface UserProfile {
   updated_at: string;
 }
 
-export const signInWithGoogle = async (): Promise<{ data: unknown; error: string | null }> => {
-  if (!supabase) throw new Error('Supabase client is not initialized');
-  try {
-    const redirectTo = `${window.location.origin}/home`;
-    console.log(`[Auth] Signing in with Google, redirect: ${redirectTo}`);
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
-      },
-    });
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error: any) {
-    console.error('[Auth] Google sign-in failed:', error);
-    return { data: null, error: error.message };
-  }
-};
-
-export const signInWithEmail = async (
-  email: string,
-  password: string
-): Promise<{ data: { user: User } | null; error: string | null }> => {
-  if (!supabase) throw new Error('Supabase client is not initialized');
-  try {
-    console.log(`[Auth] Signing in with email: ${email}`);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    return { data: data.user ? { user: data.user } : null, error: null };
-  } catch (error: any) {
-    console.error('[Auth] Email sign-in failed:', error);
-    return { data: null, error: error.message };
-  }
-};
-
-export const signUpWithEmail = async (
-  email: string,
-  password: string
-): Promise<{ data: { user: User } | null; error: string | null }> => {
-  if (!supabase) throw new Error('Supabase client is not initialized');
-  try {
-    console.log(`[Auth] Signing up with email: ${email}`);
-    const redirectTo = `${window.location.origin}/home`;
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectTo,
-      },
-    });
-    if (error) throw error;
-    return { data: data.user ? { user: data.user } : null, error: null };
-  } catch (error: any) {
-    console.error('[Auth] Email sign-up failed:', error);
-    return { data: null, error: error.message };
-  }
-};
-
-export const signOut = async (): Promise<void> => {
-  if (!supabase) throw new Error('Supabase client is not initialized');
-  try {
-    console.log('[Auth] Signing out...');
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  } catch (error: any) {
-    console.error('[Auth] Sign out failed:', error);
-    throw error;
-  }
-};
-
 export const getCurrentUser = async (): Promise<User | null> => {
-  if (!supabase) throw new Error('Supabase client is not initialized');
   try {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return data?.user ?? null;
+    if (!supabase) throw new Error('Supabase client is not initialized');
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error('[Auth] Get current user failed:', error);
+      return null;
+    }
+
+    return user ?? null;
   } catch (error: any) {
     console.error('[Auth] Get current user failed:', error);
     return null;
@@ -127,7 +84,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 export const createOrUpdateProfile = async (user: User): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
     const existingProfile = await getProfile(user.id);
-    
+
     if (existingProfile.data) {
       // Update existing profile
       const { data, error } = await supabase
@@ -138,13 +95,13 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
         })
         .eq('id', user.id)
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return { data, error: null };
     } else {
       // Create new profile
-      const username = user.email?.split('@')[0] || `user_${user.id.slice(-6)}`;
+      const username = makeSafeUsername(user.email?.split('@')[0] || undefined, `user_${user.id.slice(-6)}`);
       const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'New User';
       
       const profileData = {
@@ -171,24 +128,52 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
         is_verified: false,
         is_deleted: false,
         last_seen_at: new Date().toISOString(),
-        location: null,
-        website: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
+      // Use upsert with onConflict to avoid race conditions and to be idempotent
       const { data, error } = await supabase
         .from('profiles')
-        .insert(profileData)
+        .upsert(profileData, { onConflict: 'id' })
         .select()
-        .single();
-      
-      if (error) throw error;
+        .maybeSingle();
+
+      if (error) {
+        console.error('[Auth] Create/update profile failed:', error);
+        return { data: null, error: error.message || String(error) };
+      }
+
       return { data, error: null };
     }
   } catch (error: any) {
     console.error('[Auth] Create/update profile failed:', error);
-    return { data: null, error: error.message };
+    return { data: null, error: error.message || String(error) };
+  }
+};
+
+/**
+ * Signs in with Google (redirect)
+ */
+export const signInWithGoogle = async (): Promise<{ data: unknown; error: string | null }> => {
+  if (!supabase) throw new Error('Supabase client is not initialized');
+  try {
+    const redirectTo = `${window.location.origin}/home`;
+    console.log(`[Auth] Signing in with Google, redirect: ${redirectTo}`);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    });
+
+    if (error) {
+      console.error('[Auth] Google sign-in failed:', error);
+      return { data: null, error: error.message || String(error) };
+    }
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('[Auth] Google sign-in error:', error);
+    return { data: null, error: error.message || String(error) };
   }
 };
 
@@ -201,7 +186,7 @@ export const getProfile = async (userId: string): Promise<{ data: UserProfile | 
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return { data, error: null };
@@ -220,7 +205,7 @@ export const getProfileByUsername = async (username: string): Promise<{ data: Us
       .from('profiles')
       .select('*')
       .eq('username', username)
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return { data, error: null };
@@ -248,7 +233,7 @@ export const updateProfile = async (
       .update(updateData)
       .eq('id', userId)
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return { data, error: null };
@@ -283,11 +268,19 @@ export const searchUsers = async (query: string): Promise<{ data: UserProfile[];
  */
 export const incrementUserXP = async (userId: string, xpAmount: number = 1): Promise<void> => {
   try {
-    // For now, just update directly. In the future, use RPC function
+    // Consider using an RPC (Postgres function) for atomic increments at scale
+    const { data: profile, error: getErr } = await getProfile(userId);
+    if (getErr) throw getErr;
+    if (!profile) {
+      console.warn('[Auth] incrementUserXP: profile not found for', userId);
+      return;
+    }
+
+    const newXP = profile.xp + xpAmount;
     const { error } = await supabase
       .from('profiles')
       .update({ 
-        xp: xpAmount, // Simplified for now
+        xp: newXP,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId);
@@ -317,13 +310,13 @@ interface ValidationResult {
   };
 }
 
-export const validateForm = (email: string, password: string, confirmPassword?: string): ValidationResult => {
-  const errors: ValidationResult['errors'] = {};
-  
+export const validateSignUpForm = (email: string, password: string, confirmPassword?: string): ValidationResult => {
+  const errors: { email?: string; password?: string; confirmPassword?: string } = {};
+
   if (!email) {
     errors.email = 'Email is required';
   } else if (!validateEmail(email)) {
-    errors.email = 'Please enter a valid email address';
+    errors.email = 'Invalid email address';
   }
 
   if (!password) {
