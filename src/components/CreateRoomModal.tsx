@@ -9,10 +9,9 @@ import { useLanguage } from '../hooks/useLanguage';
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (room: any) => void;
 }
 
-const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);

@@ -237,12 +237,13 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
 import { useNavigation } from './navigation';
 
 export const useRoomOperations = () => {
-  const { navigateToRoom } = useNavigation();
+  const { navigateToRuangku } = useNavigation();
   
   const createAndJoinRoom = async (payload: CreateRoomPayload) => {
     const result = await createRoomAndJoin(payload);
     if (result.success && result.room_id) {
-      navigateToRoom(result.room_id);
+      // Auto-navigate to the newly created room
+      navigateToRuangku(result.room_id);
     }
     return result;
   };
@@ -250,7 +251,8 @@ export const useRoomOperations = () => {
   const joinExistingRoom = async (roomIdOrCode: string) => {
     const result = await joinRoom(roomIdOrCode);
     if (result.success && result.room_id) {
-      navigateToRoom(result.room_id);
+      // Auto-navigate to the joined room
+      navigateToRuangku(result.room_id);
     }
     return result;
   };

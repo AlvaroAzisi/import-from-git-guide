@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { ChevronRight, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import TopBar from '../components/TopBar';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { useSidebar } from '../contexts/SidebarContext';
-import { useNavigation } from '../lib/navigation';
+// Navigation is handled by child components and hooks
 import Sidebar from '../components/Sidebar';
 
 /**
@@ -20,7 +20,7 @@ import Sidebar from '../components/Sidebar';
  */
 export const AppLayout: React.FC = () => {
   const { isOpen, isMinimized, openSidebar, closeSidebar, toggleSidebar } = useSidebar();
-  const { navigateToRoom } = useNavigation();
+  // Navigation is handled by child components
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [leftEdgeHoverTimeout, setLeftEdgeHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -29,13 +29,7 @@ export const AppLayout: React.FC = () => {
   };
 
 
-  const handleRoomCreated = (room: any) => {
-    setCreateRoomOpen(false);
-    // Navigate to the new room instead of redirecting to /home
-    if (room?.id) {
-      navigateToRoom(room.id);
-    }
-  };
+  // Room creation navigation is handled by useRoomOperations hook automatically
 
   const handleLeftEdgeEnter = () => {
     if (isOpen) return; // Don't trigger if already open
@@ -116,7 +110,6 @@ export const AppLayout: React.FC = () => {
       <CreateRoomModal
         isOpen={createRoomOpen}
         onClose={() => setCreateRoomOpen(false)}
-        onSuccess={handleRoomCreated}
       />
     </div>
   );

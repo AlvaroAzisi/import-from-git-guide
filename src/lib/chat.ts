@@ -172,7 +172,7 @@ export const subscribeToMessages = (conversationId: string, onInsert: (message: 
           const { data: profileData } = await supabase
             .from('profiles')
             .select('full_name, avatar_url, username')
-            .eq('id', newMessage.sender_id || newMessage.user_id)
+            .eq('id', newMessage.sender_id)
             .single();
 
           onInsert({

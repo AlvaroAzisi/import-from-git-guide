@@ -4,12 +4,10 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 
 import { Navigate } from 'react-router-dom';
-import { BookOpen, Users, MessageCircle, TrendingUp, Plus, Search, UserPlus } from 'lucide-react';
+import { BookOpen, Users, MessageCircle, TrendingUp, Search } from 'lucide-react';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
-import { Button } from '../components/ui/button';
 import { useNavigation } from '../lib/navigation';
-import { useRoomOperations } from '../lib/roomOperations';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
@@ -17,7 +15,6 @@ const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { navigateToRoom } = useNavigation();
-  const { createAndJoinRoom } = useRoomOperations();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [recommendedUsers, setRecommendedUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,10 +61,6 @@ const HomePage: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleCreateRoom = async () => {
-    // This will be handled by the sidebar's Create Room button
-    // No need for duplicate functionality here
-  };
 
   return (<>
     <div className="max-w-6xl mx-auto px-4 py-8">

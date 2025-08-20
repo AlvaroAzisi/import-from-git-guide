@@ -21,18 +21,7 @@ interface Notification {
   read: boolean;
 }
 
-interface LocalFriendRequest {
-  id: string;
-  from_user: string;
-  to_user: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  created_at: string;
-  from_profile?: {
-    username: string;
-    full_name: string;
-    avatar_url?: string;
-  };
-}
+// Using FriendRequest from friendRequests.ts instead of local interface
 
 export const NotificationBell: React.FC = () => {
   const { user } = useAuth();

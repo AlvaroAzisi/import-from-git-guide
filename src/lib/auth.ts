@@ -155,7 +155,6 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
     const emailBase = user.email?.split('@')[0] ?? '';
     const metadataName = user.user_metadata?.full_name ?? '';
     const fallbackBase = `user${user.id.slice(-6)}`;
-    const rawBase = (metadataName || emailBase || fallbackBase).toString().slice(0, USERNAME_MAX);
 
     // If there is an existing profile, examine/repair username if invalid
     if (existingProfile) {
@@ -167,7 +166,7 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
         try {
           const unique = await ensureUniqueUsername(baseCandidate, user.id);
           // update username + updated_at
-          const { data: updated, error: updErr } = await supabase
+          const { error: updErr } = await supabase
             .from('profiles')
             .update({ username: unique, updated_at: new Date().toISOString() })
             .eq('id', user.id)
@@ -354,7 +353,7 @@ export const signInWithGoogle = async (): Promise<{ data: any; error: string | n
 };
 
 /**
- * Signs out the current user
+ * Signs out the current user and redirects to home
  */
 export const signOut = async (): Promise<{ error: string | null }> => {
   try {
@@ -366,6 +365,8 @@ export const signOut = async (): Promise<{ error: string | null }> => {
       return { error: error.message || String(error) };
     }
 
+    // Force redirect to landing page after successful sign out
+    window.location.href = '/';
     return { error: null };
   } catch (error: any) {
     console.error('[Auth] Sign out error:', error);

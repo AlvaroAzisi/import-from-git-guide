@@ -367,6 +367,45 @@ export type Database = {
           },
         ]
       }
+      friends: {
+        Row: {
+          created_at: string | null
+          from_user: string | null
+          id: string
+          status: string | null
+          to_user: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_user?: string | null
+          id?: string
+          status?: string | null
+          to_user?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_user?: string | null
+          id?: string
+          status?: string | null
+          to_user?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_from_user_fkey"
+            columns: ["from_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friends_to_user_fkey"
+            columns: ["to_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_attachments: {
         Row: {
           created_at: string | null
@@ -1592,6 +1631,8 @@ export type Database = {
           phone: string | null
           phone_verified: boolean | null
           push_notifications: boolean | null
+          rooms_created: number | null
+          rooms_joined: number | null
           status: Database["public"]["Enums"]["user_status"] | null
           streak: number | null
           updated_at: string | null
@@ -1619,6 +1660,8 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean | null
           push_notifications?: boolean | null
+          rooms_created?: number | null
+          rooms_joined?: number | null
           status?: Database["public"]["Enums"]["user_status"] | null
           streak?: number | null
           updated_at?: string | null
@@ -1646,6 +1689,8 @@ export type Database = {
           phone?: string | null
           phone_verified?: boolean | null
           push_notifications?: boolean | null
+          rooms_created?: number | null
+          rooms_joined?: number | null
           status?: Database["public"]["Enums"]["user_status"] | null
           streak?: number | null
           updated_at?: string | null
@@ -1769,6 +1814,115 @@ export type Database = {
           {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: string | null
+          room_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          room_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          room_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "popular_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          creator_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_public: boolean | null
+          join_code: string | null
+          max_members: number | null
+          name: string
+          short_code: string | null
+          subject: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_public?: boolean | null
+          join_code?: string | null
+          max_members?: number | null
+          name: string
+          short_code?: string | null
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_public?: boolean | null
+          join_code?: string | null
+          max_members?: number | null
+          name?: string
+          short_code?: string | null
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_creator_id_fkey"
+            columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1945,7 +2099,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      popular_rooms: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          creator_avatar: string | null
+          creator_id: string | null
+          creator_name: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          is_public: boolean | null
+          join_code: string | null
+          max_members: number | null
+          member_count: number | null
+          name: string | null
+          short_code: string | null
+          subject: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_rate_limit: {
@@ -1972,6 +2161,19 @@ export type Database = {
       create_monthly_partitions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      create_room_and_join: {
+        Args: {
+          p_description?: string
+          p_is_public?: boolean
+          p_max_members?: number
+          p_name: string
+          p_subject?: string
+        }
+        Returns: {
+          membership: Json
+          room: Json
+        }[]
       }
       create_thread_reply: {
         Args: {
@@ -2006,6 +2208,14 @@ export type Database = {
           sender_username: string
         }[]
       }
+      get_room_member_count: {
+        Args: { p_room_id: string }
+        Returns: number
+      }
+      join_room_safe: {
+        Args: { p_room_identifier: string }
+        Returns: Json
+      }
       queue_push_notification: {
         Args: {
           p_body: string
@@ -2013,6 +2223,10 @@ export type Database = {
           p_title: string
           p_user_id: string
         }
+        Returns: undefined
+      }
+      refresh_popular_rooms: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       send_message: {
@@ -2027,6 +2241,15 @@ export type Database = {
       track_user_activity: {
         Args: { p_action: string; p_details?: Json; p_user_id: string }
         Returns: undefined
+      }
+      validate_join_code: {
+        Args: { p_code: string }
+        Returns: {
+          creator_id: string
+          room_id: string
+          room_name: string
+          valid: boolean
+        }[]
       }
     }
     Enums: {

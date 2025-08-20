@@ -468,11 +468,11 @@ export const deleteRoom = async (roomId: string): Promise<boolean> => {
 
     // Check if user is the creator
     const room = await getRoom(roomId);
-    if (!room || (room.creator_id !== user.id && room.created_by !== user.id)) {
+    if (!room || room.creator_id !== user.id) {
       throw new Error('You can only delete rooms you created');
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('rooms')
       .update({ is_active: false })
       .eq('id', roomId);
