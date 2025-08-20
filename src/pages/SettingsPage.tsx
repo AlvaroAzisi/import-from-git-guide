@@ -55,8 +55,8 @@ const SettingsPage: React.FC = () => {
       allowFriendRequests: true,
     },
     account: {
-      email: profile?.email ?? '',
-      username: profile?.username ?? '',
+      email: profile?.email || '',
+      username: profile?.username || '',
     }
   });
 
@@ -65,8 +65,8 @@ const SettingsPage: React.FC = () => {
       setSettings(prev => ({
         ...prev,
         account: {
-          email: profile.email ?? '',
-          username: profile.username ?? '',
+          email: profile.email || '',
+          username: profile.username || '',
         }
       }));
     }

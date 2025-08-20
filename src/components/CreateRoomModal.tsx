@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, BookOpen, Lock, Globe } from 'lucide-react';
-
-import { createRoomAndJoin } from '../lib/roomOperations';
+import { useRoomOperations } from '../lib/roomOperations';
 import { useToast } from '../hooks/useToast';
 import { useLanguage } from '../hooks/useLanguage';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: (roomData: any) => void;
 }
 
-const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose }) => {
+const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { createAndJoinRoom } = useRoomOperations();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -51,9 +52,9 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose }) =>
 
     setLoading(true);
     try {
-      const result = await createRoomAndJoin(formData);
+      const result = await createAndJoinRoom(formData);
       
-      if (result.success && result.room) {
+      if (result.success) {
         toast({
           title: t('common.success'),
           description: 'Room created successfully!'
@@ -68,8 +69,11 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose }) =>
           is_public: true
         });
         
-        // Don't call onSuccess to prevent navigation here
-        // Navigation is handled by the room operations hook
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess(formData);
+        }
+        
         onClose();
       } else {
         throw new Error(result.error || 'Failed to create room');

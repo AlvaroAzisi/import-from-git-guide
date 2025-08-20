@@ -70,7 +70,7 @@ test.describe('Sidebar Navigation', () => {
     await expect(page).toHaveURL('/temanku');
   });
 
-  test('should close sidebar on outside click', async ({ page }) => {
+  test('should close sidebar on outside click and recenter content', async ({ page }) => {
     // Ensure sidebar is open
     await expect(page.locator('[role="navigation"]')).toBeVisible();
     
@@ -81,7 +81,7 @@ test.describe('Sidebar Navigation', () => {
     await expect(page.locator('[role="navigation"]')).not.toBeVisible();
     
     // Main content should recenter
-    await expect(page.locator('main')).toHaveClass(/ml-0/);
+    await expect(page.locator('main')).toHaveClass(/mx-auto/);
   });
 
   test('should open sidebar with toggle button', async ({ page }) => {
@@ -108,5 +108,30 @@ test.describe('Sidebar Navigation', () => {
     
     // Sidebar should open
     await expect(page.locator('[role="navigation"]')).toBeVisible();
+  });
+
+  test('should disable toggle when sidebar is open', async ({ page }) => {
+    // Ensure sidebar is open
+    await expect(page.locator('[role="navigation"]')).toBeVisible();
+    
+    // Toggle button should not be visible when sidebar is open
+    await expect(page.locator('[aria-label="Open sidebar"]')).not.toBeVisible();
+  });
+
+  test('should handle ESC key to close sidebar', async ({ page }) => {
+    // Ensure sidebar is open
+    await expect(page.locator('[role="navigation"]')).toBeVisible();
+    
+    // Press ESC
+    await page.keyboard.press('Escape');
+    
+    // Sidebar should close
+    await expect(page.locator('[role="navigation"]')).not.toBeVisible();
+  });
+
+  test('should show only one Create Room button', async ({ page }) => {
+    // Count Create Room buttons
+    const createButtons = page.locator('text="Create Room"');
+    await expect(createButtons).toHaveCount(1);
   });
 });

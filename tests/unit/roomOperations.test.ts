@@ -10,6 +10,7 @@ vi.mock('../../src/lib/supabase', () => ({
       getSession: vi.fn(),
     },
     rpc: vi.fn(),
+    from: vi.fn(),
   },
 }));
 
@@ -31,10 +32,11 @@ describe('Room Operations', () => {
         error: null
       });
 
-      const mockResult = [{
+      const mockResult = {
+        success: true,
         room: { id: 'room-123', name: 'Test Room' },
         membership: { role: 'admin' }
-      }];
+      };
       
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockResult,
@@ -109,9 +111,9 @@ describe('Room Operations', () => {
       });
 
       const mockResult = {
-        status: 'ok',
+        success: true,
         code: 'JOINED',
-        membership: { role: 'member' }
+        room_id: 'room-123'
       };
       
       vi.mocked(supabase.rpc).mockResolvedValue({
@@ -139,8 +141,9 @@ describe('Room Operations', () => {
       });
 
       const mockResult = {
-        status: 'ok',
-        code: 'ALREADY_MEMBER'
+        success: true,
+        code: 'ALREADY_MEMBER',
+        room_id: 'room-123'
       };
       
       vi.mocked(supabase.rpc).mockResolvedValue({
@@ -165,7 +168,7 @@ describe('Room Operations', () => {
       });
 
       const mockResult = {
-        status: 'error',
+        success: false,
         code: 'ROOM_NOT_FOUND',
         error: 'Room not found or inactive'
       };
@@ -198,13 +201,13 @@ describe('Room Operations', () => {
       const mockDelete = vi.fn().mockResolvedValue({ error: null });
       const mockEq = vi.fn().mockReturnValue({ error: null });
       
-      vi.mocked(supabase).from = vi.fn().mockReturnValue({
+      vi.mocked(supabase.from).mockReturnValue({
         delete: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             eq: mockEq
           })
         })
-      });
+      } as any);
 
       const result = await leaveRoom('room-123');
 

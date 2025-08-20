@@ -109,13 +109,13 @@ export const NotificationBell: React.FC = () => {
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('friend_requests')
+      .channel('friend-requests')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'friends',
+          table: 'user_relationships',
           filter: `to_user=eq.${user.id}`
         },
         () => {
@@ -127,17 +127,27 @@ export const NotificationBell: React.FC = () => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'friends',
+          table: 'user_relationships',
           filter: `to_user=eq.${user.id}`
         },
         () => {
           loadFriendRequests();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Connected to friend requests channel');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Friend requests channel error');
+        }
+      });
 
     return () => {
-      supabase.removeChannel(channel);
+      try {
+        supabase.removeChannel(channel);
+      } catch (error) {
+        console.warn('Error removing channel:', error);
+      }
     };
   }, [user]);
 
