@@ -155,6 +155,10 @@ export const getMessages = async (conversationId: string, limit: number = 50): P
  * @returns Unsubscribe function
  */
 export const subscribeToMessages = (conversationId: string, onInsert: (message: Message) => void) => {
+  // Use current month's partitioned table
+  const currentMonth = new Date().toISOString().slice(0, 7).replace('-', '_');
+  const messagesTable = `messages_${currentMonth}`;
+
   const channel = supabase
     .channel(`messages-${conversationId}`)
     .on(
@@ -162,7 +166,7 @@ export const subscribeToMessages = (conversationId: string, onInsert: (message: 
       {
         event: 'INSERT',
         schema: 'public',
-        table: 'messages',
+        table: messagesTable,
         filter: `conversation_id=eq.${conversationId}`
       },
       async (payload) => {
@@ -191,11 +195,7 @@ export const subscribeToMessages = (conversationId: string, onInsert: (message: 
   // Return unsubscribe function
   return () => {
     try {
-      if (channel && typeof channel.unsubscribe === 'function') {
-        channel.unsubscribe();
-      } else {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     } catch (error) {
       console.warn('Error unsubscribing from messages channel:', error);
     }
@@ -212,32 +212,51 @@ export const getConversations = async (): Promise<{ data: Conversation[]; error:
       .from('conversations')
       .select(`
         *,
-        conversation_members!inner(user_id)
+        conversation_members!inner(user_id),
+        created_by_profile:profiles!created_by(full_name, avatar_url, username)
       `)
       .eq('conversation_members.user_id', user.id)
       .order('last_message_at', { ascending: false });
 
     if (error) throw error;
 
-    // Add mock data for missing fields
-    const enrichedData = (data || []).map(conv => ({
-      ...conv,
-      unread_count: 0,
-      last_message: conv.last_message_at ? {
-        content: 'Recent message...',
-        sender_name: 'Someone',
-        created_at: conv.last_message_at,
-        message_type: 'text'
-      } : null,
-      other_user: conv.type === 'dm' ? {
-        id: 'other-user-id',
-        username: 'other_user',
-        full_name: 'Other User',
-        avatar_url: null,
-        bio: null,
-        interests: null,
-        xp: 0
-      } : null
+    // Enrich conversations with additional data
+    const enrichedData = await Promise.all((data || []).map(async (conv) => {
+      let other_user = null;
+      
+      // For DMs, get the other user's profile
+      if (conv.type === 'dm') {
+        const { data: members } = await supabase
+          .from('conversation_members')
+          .select('user_id, profile:profiles!user_id(*)')
+          .eq('conversation_id', conv.id)
+          .neq('user_id', user.id)
+          .single();
+        
+        if (members?.profile) {
+          other_user = {
+            id: members.user_id,
+            username: members.profile.username,
+            full_name: members.profile.full_name,
+            avatar_url: members.profile.avatar_url,
+            bio: members.profile.bio,
+            interests: members.profile.interests,
+            xp: members.profile.xp
+          };
+        }
+      }
+
+      return {
+        ...conv,
+        unread_count: 0, // TODO: Calculate actual unread count
+        last_message: conv.last_message_at ? {
+          content: 'Recent message...',
+          sender_name: 'Someone',
+          created_at: conv.last_message_at,
+          message_type: 'text'
+        } : null,
+        other_user
+      };
     }));
 
     return { data: enrichedData, error: null };
@@ -249,35 +268,55 @@ export const getConversations = async (): Promise<{ data: Conversation[]; error:
 
 export const getConversation = async (conversationId: string): Promise<{ data: Conversation | null; error: string | null }> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('conversations')
-      .select('*')
+      .select(`
+        *,
+        created_by_profile:profiles!created_by(full_name, avatar_url, username)
+      `)
       .eq('id', conversationId)
       .single();
 
     if (error) throw error;
 
-    // Add mock data for missing fields
+    let other_user = null;
+    
+    // For DMs, get the other user's profile
+    if (data.type === 'dm') {
+      const { data: members } = await supabase
+        .from('conversation_members')
+        .select('user_id, profile:profiles!user_id(*)')
+        .eq('conversation_id', data.id)
+        .neq('user_id', user.id)
+        .single();
+      
+      if (members?.profile) {
+        other_user = {
+          id: members.user_id,
+          username: members.profile.username,
+          full_name: members.profile.full_name,
+          avatar_url: members.profile.avatar_url,
+          bio: members.profile.bio,
+          interests: members.profile.interests,
+          xp: members.profile.xp
+        };
+      }
+    }
+
     const enrichedData = {
       ...data,
-      unread_count: 0,
+      unread_count: 0, // TODO: Calculate actual unread count
       last_message: data.last_message_at ? {
         content: 'Recent message...',
         sender_name: 'Someone',
         created_at: data.last_message_at,
         message_type: 'text'
       } : null,
-      other_user: data.type === 'dm' ? {
-        id: 'other-user-id',
-        username: 'other_user',
-        full_name: 'Other User',
-        avatar_url: null,
-        bio: null,
-        interests: null,
-        xp: 0
-      } : null
+      other_user
     };
-
     return { data: enrichedData, error: null };
   } catch (error: any) {
     console.error('Get conversation error:', error);
@@ -291,17 +330,16 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
     if (!user) throw new Error('User not authenticated');
 
     // Check if DM already exists
-    const { data: existingDM } = await supabase
+    const { data: existingDMs } = await supabase
       .from('conversations')
       .select(`
         *,
-        conversation_members!inner(user_id)
+        conversation_members(user_id)
       `)
       .eq('type', 'dm')
-      .eq('conversation_members.user_id', user.id);
 
-    // Find DM with other user
-    for (const conv of existingDM || []) {
+    // Find DM with other user by checking members
+    for (const conv of existingDMs || []) {
       const { data: members } = await supabase
         .from('conversation_members')
         .select('user_id')
@@ -309,17 +347,24 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
       
       if (members && members.length === 2 && 
           members.some(m => m.user_id === otherUserId)) {
+        // Get other user's profile
+        const { data: otherUserProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', otherUserId)
+          .single();
+
         const enrichedConv = {
           ...conv,
-          other_user: {
+          other_user: otherUserProfile ? {
             id: otherUserId,
-            username: 'other_user',
-            full_name: 'Other User',
-            avatar_url: null,
-            bio: null,
-            interests: null,
-            xp: 0
-          }
+            username: otherUserProfile.username,
+            full_name: otherUserProfile.full_name,
+            avatar_url: otherUserProfile.avatar_url,
+            bio: otherUserProfile.bio,
+            interests: otherUserProfile.interests,
+            xp: otherUserProfile.xp
+          } : null
         };
         return { data: enrichedConv, error: null };
       }
@@ -347,19 +392,25 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
 
     if (memberError) throw memberError;
 
+    // Get other user's profile
+    const { data: otherUserProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', otherUserId)
+      .single();
+
     const enrichedConv = {
       ...newConv,
-      other_user: {
+      other_user: otherUserProfile ? {
         id: otherUserId,
-        username: 'other_user',
-        full_name: 'Other User',
-        avatar_url: null,
-        bio: null,
-        interests: null,
-        xp: 0
-      }
+        username: otherUserProfile.username,
+        full_name: otherUserProfile.full_name,
+        avatar_url: otherUserProfile.avatar_url,
+        bio: otherUserProfile.bio,
+        interests: otherUserProfile.interests,
+        xp: otherUserProfile.xp
+      } : null
     };
-
     return { data: enrichedConv, error: null };
   } catch (error: any) {
     console.error('Create DM conversation error:', error);

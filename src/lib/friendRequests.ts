@@ -25,11 +25,11 @@ export const fetchFriendRequests = async (): Promise<{ data: FriendRequest[]; er
 
     console.log('[NotificationBell] Fetching friend requests for user:', user.id);
 
-    // First, get pending friend requests
+    // Get pending friend requests from user_relationships
     const { data: friendRequests, error: friendsError } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .select('*')
-      .eq('to_user', user.id)
+      .eq('target_user_id', user.id)
       .eq('status', 'pending');
 
     if (friendsError) {
@@ -42,8 +42,8 @@ export const fetchFriendRequests = async (): Promise<{ data: FriendRequest[]; er
       return { data: [], error: null };
     }
 
-    // Then, get profile information for each from_user
-    const fromUserIds = friendRequests.map(req => req.from_user);
+    // Then, get profile information for each user_id
+    const fromUserIds = friendRequests.map(req => req.user_id);
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, username, full_name, avatar_url')
@@ -57,7 +57,7 @@ export const fetchFriendRequests = async (): Promise<{ data: FriendRequest[]; er
     // Combine the data
     const requestsWithProfiles = friendRequests.map(request => ({
       ...request,
-      from_profile: profiles?.find(profile => profile.id === request.from_user)
+      from_profile: profiles?.find(profile => profile.id === request.user_id)
     }));
 
     console.log('[NotificationBell] Found', requestsWithProfiles.length, 'friend requests');
@@ -80,10 +80,10 @@ export const acceptFriendRequest = async (requestId: string): Promise<{ error: s
     }
 
     const { error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .update({ status: 'accepted' })
       .eq('id', requestId)
-      .eq('to_user', user.id); // Ensure user can only accept requests sent to them
+      .eq('target_user_id', user.id); // Ensure user can only accept requests sent to them
 
     if (error) throw error;
     
@@ -107,10 +107,10 @@ export const rejectFriendRequest = async (requestId: string): Promise<{ error: s
     }
 
     const { error } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .update({ status: 'rejected' })
       .eq('id', requestId)
-      .eq('to_user', user.id); // Ensure user can only reject requests sent to them
+      .eq('target_user_id', user.id); // Ensure user can only reject requests sent to them
 
     if (error) throw error;
     
@@ -133,11 +133,11 @@ export const getFriends = async (): Promise<{ data: any[]; error: string | null 
       return { data: [], error: 'Not authenticated' };
     }
 
-    // Get accepted friendships where user is either from_user or to_user
+    // Get accepted friendships where user is either user_id or target_user_id
     const { data: friendships, error: friendsError } = await supabase
-      .from('friends')
+      .from('user_relationships')
       .select('*')
-      .or(`and(from_user.eq.${user.id},status.eq.accepted),and(to_user.eq.${user.id},status.eq.accepted)`);
+      .or(`and(user_id.eq.${user.id},status.eq.accepted),and(target_user_id.eq.${user.id},status.eq.accepted)`);
 
     if (friendsError) throw friendsError;
 
@@ -147,7 +147,7 @@ export const getFriends = async (): Promise<{ data: any[]; error: string | null 
 
     // Get the friend user IDs (the other user in each friendship)
     const friendIds = friendships.map(friendship => 
-      friendship.from_user === user.id ? friendship.to_user : friendship.from_user
+      friendship.user_id === user.id ? friendship.target_user_id : friendship.user_id
     );
 
     // Get profile information for friends

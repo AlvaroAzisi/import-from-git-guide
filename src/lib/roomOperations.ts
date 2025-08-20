@@ -1,5 +1,6 @@
-// Atomic room operations with proper error handling
+// Atomic room operations with proper error handling and auth recovery
 import { supabase } from './supabase';
+import { ROUTES } from '../constants/routes';
 
 export interface CreateRoomPayload {
   name: string;
@@ -102,20 +103,30 @@ export const createRoomAndJoin = async (payload: CreateRoomPayload): Promise<Roo
       p_max_members: payload.max_members || 10
     });
 
-    if (error) throw error;
-
-    if (data && data.length > 0) {
-      const result = data[0];
-      clearPendingCreate();
+    if (error) {
+      console.error('Create room RPC error:', error);
       return {
-        success: true,
-        room_id: result.room.id,
-        room: result.room,
-        membership: result.membership
+        success: false,
+        error: error.message,
+        code: 'GENERAL_ERROR'
       };
     }
 
-    throw new Error('No data returned from room creation');
+    if (data && data.success) {
+      clearPendingCreate();
+      return {
+        success: true,
+        room_id: data.room.id,
+        room: data.room,
+        membership: data.membership
+      };
+    }
+
+    return {
+      success: false,
+      error: data?.error || 'No data returned from room creation',
+      code: 'GENERAL_ERROR'
+    };
 
   } catch (error: any) {
     console.error('Create room error:', error);
@@ -150,34 +161,36 @@ export const joinRoom = async (roomIdOrCode: string): Promise<RoomOperationResul
       p_room_identifier: roomIdOrCode
     });
 
-    if (error) throw error;
-
-    if (data) {
-      if (data.status === 'ok') {
-        clearPendingJoin();
-        return {
-          success: true,
-          room_id: roomIdOrCode,
-          membership: data.membership,
-          code: data.code === 'ALREADY_MEMBER' ? 'ALREADY_MEMBER' : undefined
-        };
-      } else {
-        // Handle error codes from RPC
-        const errorMessages = {
-          'ROOM_NOT_FOUND': 'Room not found or inactive',
-          'MAX_CAPACITY': 'Room is at maximum capacity',
-          'ROOM_PRIVATE': 'Room is private and requires invitation'
-        };
-        
-        return {
-          success: false,
-          error: errorMessages[data.code as keyof typeof errorMessages] || data.error || 'Failed to join room',
-          code: data.code
-        };
-      }
+    if (error) {
+      console.error('Join room RPC error:', error);
+      return {
+        success: false,
+        error: error.message,
+        code: 'GENERAL_ERROR'
+      };
     }
 
-    throw new Error('No response from join room operation');
+    if (data && data.success) {
+      clearPendingJoin();
+      return {
+        success: true,
+        room_id: data.room_id,
+        code: data.code === 'ALREADY_MEMBER' ? 'ALREADY_MEMBER' : undefined
+      };
+    }
+
+    // Handle error codes from RPC
+    const errorMessages = {
+      'ROOM_NOT_FOUND': 'Room not found or inactive',
+      'MAX_CAPACITY': 'Room is at maximum capacity',
+      'ROOM_PRIVATE': 'Room is private and requires invitation'
+    };
+    
+    return {
+      success: false,
+      error: errorMessages[data?.code as keyof typeof errorMessages] || data?.error || 'Failed to join room',
+      code: data?.code
+    };
 
   } catch (error: any) {
     console.error('Join room error:', error);
@@ -209,9 +222,9 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
     const userId = session.user.id;
 
     const { error } = await supabase
-      .from('room_members')
+      .from('conversation_members')
       .delete()
-      .eq('room_id', roomId)
+      .eq('conversation_id', roomId)
       .eq('user_id', userId);
 
     if (error) throw error;
@@ -237,13 +250,13 @@ export const leaveRoom = async (roomId: string): Promise<RoomOperationResult> =>
 import { useNavigation } from './navigation';
 
 export const useRoomOperations = () => {
-  const { navigateToRuangku } = useNavigation();
+  const { navigateToRoom } = useNavigation();
   
   const createAndJoinRoom = async (payload: CreateRoomPayload) => {
     const result = await createRoomAndJoin(payload);
     if (result.success && result.room_id) {
       // Auto-navigate to the newly created room
-      navigateToRuangku(result.room_id);
+      navigateToRoom(result.room_id);
     }
     return result;
   };
@@ -252,7 +265,7 @@ export const useRoomOperations = () => {
     const result = await joinRoom(roomIdOrCode);
     if (result.success && result.room_id) {
       // Auto-navigate to the joined room
-      navigateToRuangku(result.room_id);
+      navigateToRoom(result.room_id);
     }
     return result;
   };

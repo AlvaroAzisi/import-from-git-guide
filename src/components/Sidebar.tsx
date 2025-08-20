@@ -10,7 +10,8 @@ import {
   LogOut,
   Plus,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageCircle
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import { useAuth } from '../hooks/useAuth';
@@ -42,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { icon: Home, label: t('nav.home'), path: '/home' },
     { icon: BookOpen, label: t('nav.rooms'), path: '/rooms' },
+    { icon: MessageCircle, label: 'Messages', path: '/chat' },
     { icon: Users, label: t('nav.friends'), path: '/temanku' },
     { icon: User, label: t('nav.profile'), path: '/profile' },
   ];
@@ -70,9 +72,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen, onClose]);
+
   const handleNavigation = (path: string) => {
     safeNavigate(path);
-    onClose();
+    // Don't auto-close on desktop
+    if (window.innerWidth < 1024) {
+      onClose();
+    }
   };
 
   const handleSignOut = async () => {
@@ -312,7 +318,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer */}
         <div className="p-4 border-t border-white/10 dark:border-gray-700/10">
           <div className="space-y-2">
-            {/* Create Room Button - Single location */}
+            {/* Create Room Button - Only location */}
             <SidebarButton
               icon={Plus}
               label={t('rooms.create')}
@@ -332,6 +338,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={handleSignOut}
               variant="danger"
             />
+
+            {/* Minimize Toggle */}
+            {onToggleMinimized && (
+              <SidebarButton
+                icon={minimized ? ChevronRight : ChevronLeft}
+                label={minimized ? "Expand" : "Minimize"}
+                onClick={onToggleMinimized}
+              />
+            )}
           </div>
         </div>
       </motion.div>

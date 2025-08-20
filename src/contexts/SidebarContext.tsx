@@ -17,27 +17,12 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (!context) {
-    console.error('useSidebar hook called outside of SidebarProvider');
-    console.error('Current context value:', context);
-    console.error('SidebarContext:', SidebarContext);
-    
-    // Return a fallback object to prevent the app from crashing
-    return {
-      isOpen: false,
-      isMinimized: false,
-      openSidebar: () => console.warn('useSidebar: openSidebar called outside provider'),
-      closeSidebar: () => console.warn('useSidebar: closeSidebar called outside provider'),
-      toggleSidebar: () => console.warn('useSidebar: toggleSidebar called outside provider'),
-      minimizeSidebar: () => console.warn('useSidebar: minimizeSidebar called outside provider'),
-      expandSidebar: () => console.warn('useSidebar: expandSidebar called outside provider'),
-      toggleMinimized: () => console.warn('useSidebar: toggleMinimized called outside provider'),
-    };
+    throw new Error('useSidebar must be used within a SidebarProvider');
   }
   return context;
 };
 
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  console.log('SidebarProvider rendering...');
   // Start visible by default, but respect stored preference
   const [isOpen, setIsOpen] = useState(() => {
     try {
@@ -83,7 +68,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    setIsOpen((prev: boolean) => !prev);
+    setIsOpen(prev => !prev);
   }, []);
 
   const minimizeSidebar = useCallback(() => {
@@ -95,7 +80,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const toggleMinimized = useCallback(() => {
-    setIsMinimized((prev: boolean) => !prev);
+    setIsMinimized(prev => !prev);
   }, []);
 
   const value = {
@@ -108,8 +93,6 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     expandSidebar,
     toggleMinimized,
   };
-
-  console.log('SidebarProvider value:', value);
 
   return (
     <SidebarContext.Provider value={value}>

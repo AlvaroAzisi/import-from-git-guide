@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, ChevronRight } from 'lucide-react';
 import TopBar from '../components/TopBar';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { useSidebar } from '../contexts/SidebarContext';
-// Navigation is handled by child components and hooks
+import { useRoomOperations } from '../lib/roomOperations';
+import { useToast } from '../hooks/useToast';
 import Sidebar from '../components/Sidebar';
 
 /**
@@ -20,7 +21,8 @@ import Sidebar from '../components/Sidebar';
  */
 export const AppLayout: React.FC = () => {
   const { isOpen, isMinimized, openSidebar, closeSidebar, toggleSidebar } = useSidebar();
-  // Navigation is handled by child components
+  const { createAndJoinRoom } = useRoomOperations();
+  const { toast } = useToast();
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
   const [leftEdgeHoverTimeout, setLeftEdgeHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -28,8 +30,22 @@ export const AppLayout: React.FC = () => {
     setCreateRoomOpen(true);
   };
 
+  const handleRoomCreated = async (roomData: any) => {
+    try {
+      const result = await createAndJoinRoom(roomData);
+      if (result.success) {
+        toast({
+          title: 'Room Created!',
+          description: `Welcome to ${roomData.name}!`
+        });
+        setCreateRoomOpen(false);
+        // Navigation is handled by useRoomOperations hook
+      }
+    } catch (error) {
+      console.error('Room creation error:', error);
+    }
+  };
 
-  // Room creation navigation is handled by useRoomOperations hook automatically
 
   const handleLeftEdgeEnter = () => {
     if (isOpen) return; // Don't trigger if already open
@@ -59,11 +75,9 @@ export const AppLayout: React.FC = () => {
           <button
             onClick={openSidebar}
             aria-label="Open sidebar"
-            aria-disabled={isOpen}
-            disabled={isOpen}
-            className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 dark:border-gray-700/20 rounded-xl shadow-lg hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group"
+            className="fixed left-0 top-1/2 -translate-y-1/2 z-40 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-r border-t border-b border-white/20 dark:border-gray-700/20 rounded-r-xl shadow-lg hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 group"
           >
-            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
           </button>
         )}
         
@@ -83,7 +97,7 @@ export const AppLayout: React.FC = () => {
           onClose={closeSidebar}
           onCreateRoom={handleCreateRoom}
           minimized={isMinimized}
-          onToggleMinimized={() => {}}
+          onToggleMinimized={toggleSidebar}
         />
 
         {/* Main Content with smooth recentering */}
@@ -92,7 +106,7 @@ export const AppLayout: React.FC = () => {
             ? isMinimized 
               ? 'lg:ml-20' 
               : 'lg:ml-80'
-            : 'ml-0 max-w-none mx-auto'
+            : 'ml-0 max-w-7xl mx-auto'
         }`}>
           <Outlet />
         </main>
@@ -110,6 +124,7 @@ export const AppLayout: React.FC = () => {
       <CreateRoomModal
         isOpen={createRoomOpen}
         onClose={() => setCreateRoomOpen(false)}
+        onSuccess={handleRoomCreated}
       />
     </div>
   );

@@ -1,13 +1,13 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-
 import { Navigate } from 'react-router-dom';
 import { BookOpen, Users, MessageCircle, TrendingUp, Search } from 'lucide-react';
 import { getRooms } from '../lib/rooms';
 import { searchUsers } from '../lib/auth';
 import { useNavigation } from '../lib/navigation';
+import { useToast } from '../hooks/useToast';
 import type { Room } from '../lib/rooms';
 import type { UserProfile } from '../lib/auth';
 
@@ -15,6 +15,7 @@ const HomePage: React.FC = () => {
   // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { navigateToRoom } = useNavigation();
+  const { toast } = useToast();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [recommendedUsers, setRecommendedUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,18 +23,23 @@ const HomePage: React.FC = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
 
   // Load initial data
-  React.useEffect(() => {
+  useEffect(() => {
     const loadData = async () => {
       try {
         const [roomsData, usersData] = await Promise.all([
           getRooms(6),
-          searchUsers('').then(result => result.data?.slice(0, 4) || []) // Get some random users
+          searchUsers('').then(result => (result.data || []).slice(0, 4)) // Get some random users
         ]);
         
         setRooms(roomsData);
         setRecommendedUsers(usersData);
       } catch (error) {
         console.error('Error loading data:', error);
+        toast({
+          title: 'Error loading data',
+          description: 'Failed to load rooms and users',
+          variant: 'destructive'
+        });
       } finally {
         setLoadingRooms(false);
         setLoadingUsers(false);
@@ -43,7 +49,7 @@ const HomePage: React.FC = () => {
     if (user) {
       loadData();
     }
-  }, [user]);
+  }, [user, toast]);
 
   // ✅ Early returns AFTER all hooks
   if (loading) {
@@ -186,12 +192,11 @@ const HomePage: React.FC = () => {
                 rooms.slice(0, 3).map((room) => (
                   <motion.a
                     key={room.id}
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       navigateToRoom(room.id);
                     }}
                     whileHover={{ y: -5, scale: 1.02 }}
-                    className="block p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/10 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 cursor-pointer"
+                    className="w-full text-left p-4 bg-white/20 dark:bg-gray-800/20 rounded-2xl border border-white/10 dark:border-gray-700/10 hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300 cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -205,7 +210,7 @@ const HomePage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                  </motion.a>
+                  </motion.button>
                 ))
               ) : (
                 <div className="text-center py-8">
@@ -277,10 +282,8 @@ const HomePage: React.FC = () => {
           transition={{ duration: 0.8, delay: 1.2 }}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-
-
           <button
-            onClick={() => navigateToRoom('')}
+            onClick={() => safeNavigate('/temanku')}
             className="p-6 backdrop-blur-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 dark:from-emerald-500/10 dark:to-teal-500/10 rounded-3xl border border-emerald-200/50 dark:border-emerald-700/50 hover:shadow-xl transition-all duration-300 text-left group"
           >
             <div className="flex items-center gap-4">
@@ -293,9 +296,38 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           </button>
+
+          <button
+            onClick={() => safeNavigate('/rooms')}
+            className="p-6 backdrop-blur-md bg-gradient-to-r from-blue-500/20 to-purple-500/20 dark:from-blue-500/10 dark:to-purple-500/10 rounded-3xl border border-blue-200/50 dark:border-blue-700/50 hover:shadow-xl transition-all duration-300 text-left group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">Browse Study Rooms</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Join active study sessions</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => safeNavigate('/chat')}
+            className="p-6 backdrop-blur-md bg-gradient-to-r from-amber-500/20 to-orange-500/20 dark:from-amber-500/10 dark:to-orange-500/10 rounded-3xl border border-amber-200/50 dark:border-amber-700/50 hover:shadow-xl transition-all duration-300 text-left group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">Messages</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Chat with your study partners</p>
+              </div>
+            </div>
+          </button>
         </motion.div>
       </div>
-    </>
   );
 };
 
