@@ -1,6 +1,5 @@
-// App.tsx
-
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { LoadingError } from './components/LoadingError';
 import { AuthRedirectHandler } from './components/AuthRedirectHandler';
 import { AppLayout } from './layouts/AppLayout';
 import LandingPage from './pages/LandingPage';
@@ -21,9 +20,18 @@ import { Toaster } from './components/Toaster';
 function App() {
   const { user, loading } = useAuth();
 
-  // While we’re checking session, render nothing (or a spinner)
+  // Show loading state
   if (loading) {
-    return <div className="h-screen flex items-center justify-center">Loading…</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <LoadingError
+          isLoading={loading}
+          error={null}
+          loadingMessage="Initializing application..."
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    );
   }
 
   return (
@@ -32,7 +40,7 @@ function App() {
       <Toaster />
 
       <Routes>
-        {/* 1) Landing: if already signed in, send to /home */}
+        {/* Landing: if already signed in, send to /home */}
         <Route
           path="/"
           element={
@@ -51,7 +59,7 @@ function App() {
           }
         />
 
-        {/* 2) Protected screens */}
+        {/* Protected screens */}
         <Route
           path="/*"
           element={
@@ -73,13 +81,13 @@ function App() {
           <Route path="join/:code" element={<RoomPage />} />
         </Route>
 
-        {/* 3) Public profile pages */}
+        {/* Public profile pages */}
         <Route
           path="/@:username"
           element={<PublicProfilePage />}
         />
 
-        {/* 4) Catch-all: if signed in, go home; otherwise go landing */}
+        {/* Catch-all: if signed in, go home; otherwise go landing */}
         <Route
           path="*"
           element={

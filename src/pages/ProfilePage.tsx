@@ -30,6 +30,22 @@ const ProfilePage: React.FC = () => {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
 
+  // Process interests safely first
+  const safeInterests = React.useMemo(() => {
+    const interests = profile?.interests;
+    if (!interests) return [];
+    if (Array.isArray(interests)) return interests;
+    if (typeof interests === 'string') {
+      try {
+        const parsed = JSON.parse(interests);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [interests];
+      }
+    }
+    return [];
+  }, [profile]); // Only depend on profile
+
   // Local loading state for fetch-or-create
   const [localLoading, setLocalLoading] = useState(true);
 
@@ -232,23 +248,6 @@ const ProfilePage: React.FC = () => {
     setEditForm((p) => ({ ...p, interests: p.interests.filter((i) => i !== item) }));
   };
 
-  // This is now correctly placed at top level with other hooks
-  const safeInterests = React.useMemo(() => {
-    const interests = profile?.interests;
-    if (!interests) return [];
-    if (Array.isArray(interests)) return interests;
-    if (typeof interests === 'string') {
-      try {
-        const parsed = JSON.parse(interests);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [interests];
-      }
-    }
-    return [];
-  }, [profile]); // Only depend on profile, not nested property
-
-  // Log after the hook declaration
   console.log('[ProfilePage] Safe interests:', safeInterests);
 
   // JSX

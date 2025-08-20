@@ -13,19 +13,25 @@ import { useAuth } from '../hooks/useAuth';
 import { getRooms, joinRoom, isRoomMember } from '../lib/rooms';
 import { useToast } from '../hooks/useToast';
 import { JoinRoomModal } from '../components/modals/JoinRoomModal';
+import { AsyncContent } from '../components/AsyncContent';
+import { useDataFetching } from '../hooks/useDataFetching';
 import type { Room } from '../lib/rooms';
 
 const RoomsPage: React.FC = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
-  // Remove unused state variables
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const {
+    data: rooms,
+    error,
+    isLoading,
+    execute: fetchRooms
+  } = useDataFetching<Room[]>();
+
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
   const [isMemberMap, setIsMemberMap] = useState<{ [key: string]: boolean }>({});
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -40,42 +46,43 @@ const RoomsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    filterRooms();
+    if (rooms) {
+      filterRooms();
+    }
   }, [searchQuery, selectedFilters, rooms]);
 
   const loadRooms = async () => {
-    try {
-      const data = await getRooms(50);
-      setRooms(data);
-      
-      // Check membership status for each room
-      if (user && data.length > 0) {
-        const membershipStatus = await Promise.all(
-          data.map(async (room) => {
-            try {
-              const isMember = await isRoomMember(room.id);
-              return { [room.id]: isMember || false };
-            } catch (error) {
-              console.error(`Error checking membership for room ${room.id}:`, error);
-              return { [room.id]: false };
-            }
-          })
-        );
-        setIsMemberMap(Object.assign({}, ...membershipStatus));
+    await fetchRooms(
+      async () => {
+        const data = await getRooms(50);
+        
+        // Check membership status for each room
+        if (user && data.length > 0) {
+          const membershipStatus = await Promise.all(
+            data.map(async (room) => {
+              try {
+                const isMember = await isRoomMember(room.id);
+                return { [room.id]: isMember || false };
+              } catch (error) {
+                console.error(`Error checking membership for room ${room.id}:`, error);
+                return { [room.id]: false };
+              }
+            })
+          );
+          setIsMemberMap(Object.assign({}, ...membershipStatus));
+        }
+        return data;
+      },
+      {
+        loadingMessage: 'Loading rooms...',
+        errorMessage: 'Failed to load rooms',
       }
-    } catch (error) {
-      console.error('Error loading rooms:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load rooms',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const filterRooms = () => {
+    if (!rooms) return;
+    
     let filtered = rooms;
 
     if (searchQuery.trim()) {
@@ -267,24 +274,50 @@ const RoomsPage: React.FC = () => {
         </div>
 
         {/* Room Grid */}
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 p-6 animate-pulse">
-                <div className="h-4 bg-white/40 dark:bg-gray-700/40 rounded w-3/4 mb-4"></div>
-                <div className="h-3 bg-white/30 dark:bg-gray-700/30 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-white/20 dark:bg-gray-700/20 rounded w-2/3 mb-4"></div>
-                <div className="flex justify-between items-center">
-                  <div className="h-3 bg-white/20 dark:bg-gray-700/20 rounded w-1/4"></div>
-                  <div className="h-8 bg-white/30 dark:bg-gray-700/30 rounded w-16"></div>
-                </div>
+        <AsyncContent
+          data={rooms}
+          isLoading={isLoading}
+          error={error}
+          onRetry={loadRooms}
+          loadingMessage="Loading rooms..."
+          fallback={
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-center py-16"
+            >
+              <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-12 max-w-md mx-auto">
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="text-6xl mb-6"
+                >
+                  🔍
+                </motion.div>
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+                  No rooms found
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Try adjusting your search or filters, or create a new room!
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setJoinModalOpen(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                >
+                  Join Room
+                </motion.button>
               </div>
-            ))}
-          </div>
-        ) : filteredRooms.length > 0 ? (
-          <AnimatePresence>
-            <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredRooms.map((room, index) => (
+            </motion.div>
+          }
+        >
+          {(_) =>
+            filteredRooms.length > 0 ? (
+              <AnimatePresence>
+                <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredRooms.map((room, index) => (
                 <motion.div
                   key={room.id}
                   initial={{ opacity: 0, y: 30 }}
@@ -347,40 +380,41 @@ const RoomsPage: React.FC = () => {
                   )}
                 </motion.div>
               ))}
-            </motion.div>
-          </AnimatePresence>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-center py-16"
-          >
-            <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-12 max-w-md mx-auto">
+                </motion.div>
+              </AnimatePresence>
+            ) : (
               <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="text-6xl mb-6"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="text-center py-16"
               >
-                🔍
+                <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-12 max-w-md mx-auto">
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="text-6xl mb-6"
+                  >
+                    🔍
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+                    No rooms found
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Try adjusting your search or filters, or create a new room!
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setJoinModalOpen(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                  >
+                    Join Room
+                  </motion.button>
+                </div>
               </motion.div>
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-                No rooms found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Try adjusting your search or filters, or create a new room!
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setJoinModalOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
-              >
-                Join Room
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
+            )}
+        </AsyncContent>
       </div>
 
       {/* Join Room Modal */}

@@ -135,7 +135,13 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       .order('created_at', { ascending: false })
       .limit(safeLimit);
 
-    if (conversationsError) throw conversationsError;
+    if (conversationsError) {
+      if (conversationsError.code === 'PGRST116') {
+        // No conversations found is not an error
+        return [];
+      }
+      throw conversationsError;
+    }
 
     // Map conversations to Room interface
     const rooms = (conversations || []).map(conv => ({
@@ -149,23 +155,33 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       is_active: conv.is_active,
       created_at: conv.created_at,
       updated_at: conv.updated_at,
-      creator: conv.created_by_profile
+      creator: conv.created_by_profile ? {
+        full_name: conv.created_by_profile.full_name || '',
+        avatar_url: conv.created_by_profile.avatar_url || null,
+        id: conv.created_by || ''
+      } : undefined
     }));
 
-    const memberCounts = await Promise.all(
-      rooms.map(async (room) => {
-        const count = await getRoomMemberCount(room.id);
-        return { id: room.id, member_count: count };
-      })
-    );
+    let roomsWithCounts = rooms;
+    try {
+      const memberCounts = await Promise.all(
+        rooms.map(async (room) => {
+          const count = await getRoomMemberCount(room.id);
+          return { id: room.id, member_count: count };
+        })
+      );
 
-    const roomsWithCounts = rooms.map(room => {
-      const countObj = memberCounts.find(c => c.id === room.id);
-      return {
-        ...room,
-        member_count: countObj ? countObj.member_count : 0
-      };
-    });
+      roomsWithCounts = rooms.map(room => {
+        const countObj = memberCounts.find(c => c.id === room.id);
+        return {
+          ...room,
+          member_count: countObj ? countObj.member_count : 0
+        };
+      });
+    } catch (err) {
+      console.warn('Failed to get member counts:', err);
+      // Continue without member counts
+    }
 
     return roomsWithCounts;
   } catch (error) {

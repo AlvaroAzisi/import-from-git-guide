@@ -7,7 +7,6 @@ export interface ChatMessage {
   sender_id: string;
   content: string;
   message_type: 'text' | 'image' | 'file' | 'system';
-  reply_to_id?: string | null;
   thread_id?: string | null;
   mentions?: string[] | null;
   attachments?: any[] | null;
@@ -29,6 +28,16 @@ export interface ChatMessage {
   };
 }
 
+export interface Profile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string | null;
+  bio?: string | null;
+  interests?: string[] | null;
+  xp?: number;
+}
+
 export interface Conversation {
   id: string;
   type: 'dm' | 'group' | 'channel';
@@ -47,15 +56,10 @@ export interface Conversation {
     message_type?: string;
   } | null;
   unread_count?: number;
-  other_user?: {
-    id: string;
-    username: string;
-    full_name: string;
-    avatar_url: string | null;
-    bio?: string | null;
-    interests?: string[] | null;
-    xp?: number;
-  } | null;
+  other_user?: Profile | null;
+  created_by_profile?: Profile;
+  error?: string | null;
+  isLoading?: boolean;
 }
 
 export interface ConversationMember {
@@ -203,22 +207,75 @@ export const subscribeToMessages = (conversationId: string, onInsert: (message: 
 };
 
 // Additional chat functions for complete implementation
+interface RetryableOperation<T> {
+  execute: () => Promise<{
+    data: T | null;
+    error: any;
+  }>;
+}
+
+// Maximum number of retries for API calls
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 second
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const retryOperation = async <T>(
+  operation: RetryableOperation<T>,
+  retries: number = MAX_RETRIES,
+  delay: number = INITIAL_RETRY_DELAY
+): Promise<{
+  data: T | null;
+  error: any;
+}> => {
+  try {
+    const result = await operation.execute();
+    if (result.error) {
+      if (retries === 0) return result;
+      await wait(delay);
+      return retryOperation(operation, retries - 1, delay * 2);
+    }
+    return result;
+  } catch (error) {
+    if (retries === 0) return { data: null, error };
+    await wait(delay);
+    return retryOperation(operation, retries - 1, delay * 2);
+  }
+};
+
 export const getConversations = async (): Promise<{ data: Conversation[]; error: string | null }> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase
-      .from('conversations')
-      .select(`
-        *,
-        conversation_members!inner(user_id),
-        created_by_profile:profiles!created_by(full_name, avatar_url, username)
-      `)
-      .eq('conversation_members.user_id', user.id)
-      .order('last_message_at', { ascending: false });
+    const operation: RetryableOperation<Conversation[]> = {
+      execute: async () => {
+        const result = await supabase
+          .from('conversations')
+          .select(`
+            *,
+            conversation_members!inner(user_id),
+            created_by_profile:profiles!created_by(full_name, avatar_url, username)
+          `)
+          .eq('conversation_members.user_id', user.id)
+          .order('last_message_at', { ascending: false });
+        
+        return {
+          data: result.data as Conversation[] | null,
+          error: result.error
+        };
+      }
+    };
 
-    if (error) throw error;
+    const { data, error } = await retryOperation(operation);
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No conversations found is not an error
+        return { data: [], error: null };
+      }
+      throw error;
+    }
 
     // Enrich conversations with additional data
     const enrichedData = await Promise.all((data || []).map(async (conv) => {
@@ -226,23 +283,27 @@ export const getConversations = async (): Promise<{ data: Conversation[]; error:
       
       // For DMs, get the other user's profile
       if (conv.type === 'dm') {
-        const { data: members } = await supabase
-          .from('conversation_members')
-          .select('user_id, profile:profiles!user_id(*)')
-          .eq('conversation_id', conv.id)
-          .neq('user_id', user.id)
-          .single();
-        
-        if (members?.profile) {
-          other_user = {
-            id: members.user_id,
-            username: members.profile.username,
-            full_name: members.profile.full_name,
-            avatar_url: members.profile.avatar_url,
-            bio: members.profile.bio,
-            interests: members.profile.interests,
-            xp: members.profile.xp
-          };
+        try {
+          const { data: memberData } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url, bio, interests, xp')
+            .eq('id', conv.created_by)
+            .single() as { data: Profile | null };
+          
+          if (memberData) {
+            other_user = {
+              id: memberData.id,
+              username: memberData.username || '',
+              full_name: memberData.full_name || '',
+              avatar_url: memberData.avatar_url || null,
+              bio: memberData.bio || null,
+              interests: memberData.interests || [],
+              xp: memberData.xp || 0
+            };
+          }
+        } catch (err) {
+          console.warn('Failed to get other user profile:', err);
+          // Continue without other user profile
         }
       }
 
@@ -294,14 +355,15 @@ export const getConversation = async (conversationId: string): Promise<{ data: C
         .single();
       
       if (members?.profile) {
+        const profileData = members.profile as unknown as Profile;
         other_user = {
           id: members.user_id,
-          username: members.profile.username,
-          full_name: members.profile.full_name,
-          avatar_url: members.profile.avatar_url,
-          bio: members.profile.bio,
-          interests: members.profile.interests,
-          xp: members.profile.xp
+          username: profileData.username,
+          full_name: profileData.full_name,
+          avatar_url: profileData.avatar_url,
+          bio: profileData.bio,
+          interests: profileData.interests || [],
+          xp: profileData.xp || 0
         };
       }
     }
@@ -348,29 +410,34 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
       if (members && members.length === 2 && 
           members.some(m => m.user_id === otherUserId)) {
         // Get other user's profile
-        const { data: otherUserProfile } = await supabase
+        const { data: otherUserData } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', otherUserId)
           .single();
 
-        const enrichedConv = {
-          ...conv,
-          other_user: otherUserProfile ? {
-            id: otherUserId,
-            username: otherUserProfile.username,
-            full_name: otherUserProfile.full_name,
-            avatar_url: otherUserProfile.avatar_url,
-            bio: otherUserProfile.bio,
-            interests: otherUserProfile.interests,
-            xp: otherUserProfile.xp
-          } : null
-        };
-        return { data: enrichedConv, error: null };
+        if (otherUserData) {
+          const typedProfile = otherUserData as Profile;
+          return {
+            data: {
+              ...conv,
+              other_user: {
+                id: otherUserId,
+                username: typedProfile.username || '',
+                full_name: typedProfile.full_name || '',
+                avatar_url: typedProfile.avatar_url || null,
+                bio: typedProfile.bio || null,
+                interests: typedProfile.interests || [],
+                xp: typedProfile.xp || 0
+              }
+            },
+            error: null
+          };
+        }
       }
     }
 
-    // Create new DM conversation
+    // Create new DM conversation if none exists
     const { data: newConv, error: convError } = await supabase
       .from('conversations')
       .insert({
@@ -393,25 +460,35 @@ export const createDMConversation = async (otherUserId: string): Promise<{ data:
     if (memberError) throw memberError;
 
     // Get other user's profile
-    const { data: otherUserProfile } = await supabase
+    const { data: otherUserData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', otherUserId)
       .single();
 
-    const enrichedConv = {
-      ...newConv,
-      other_user: otherUserProfile ? {
-        id: otherUserId,
-        username: otherUserProfile.username,
-        full_name: otherUserProfile.full_name,
-        avatar_url: otherUserProfile.avatar_url,
-        bio: otherUserProfile.bio,
-        interests: otherUserProfile.interests,
-        xp: otherUserProfile.xp
-      } : null
+    if (otherUserData) {
+      const typedProfile = otherUserData as Profile;
+      return {
+        data: {
+          ...newConv,
+          other_user: {
+            id: otherUserId,
+            username: typedProfile.username || '',
+            full_name: typedProfile.full_name || '',
+            avatar_url: typedProfile.avatar_url || null,
+            bio: typedProfile.bio || null,
+            interests: typedProfile.interests || [],
+            xp: typedProfile.xp || 0
+          }
+        },
+        error: null
+      };
+    }
+
+    return {
+      data: newConv,
+      error: null
     };
-    return { data: enrichedConv, error: null };
   } catch (error: any) {
     console.error('Create DM conversation error:', error);
     return { data: null, error: error.message };
