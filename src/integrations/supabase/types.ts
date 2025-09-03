@@ -14,76 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_assignments: {
-        Row: {
-          assigned_at: string | null
-          assigned_by: string
-          expires_at: string | null
-          id: string
-          role_id: string
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          assigned_by: string
-          expires_at?: string | null
-          id?: string
-          role_id: string
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          assigned_by?: string
-          expires_at?: string | null
-          id?: string
-          role_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_assignments_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_assignments_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "admin_roles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_assignments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      admin_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          permissions: string[]
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-          permissions: string[]
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          permissions?: string[]
-        }
-        Relationships: []
-      }
       audit_logs: {
         Row: {
           action: string
@@ -281,45 +211,6 @@ export type Database = {
           },
         ]
       }
-      conversation_presence: {
-        Row: {
-          conversation_id: string
-          id: string
-          is_active: boolean | null
-          last_seen: string | null
-          user_id: string
-        }
-        Insert: {
-          conversation_id: string
-          id?: string
-          is_active?: boolean | null
-          last_seen?: string | null
-          user_id: string
-        }
-        Update: {
-          conversation_id?: string
-          id?: string
-          is_active?: boolean | null
-          last_seen?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_presence_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversation_presence_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       conversations: {
         Row: {
           avatar_url: string | null
@@ -453,48 +344,6 @@ export type Database = {
           },
         ]
       }
-      message_delivery_status: {
-        Row: {
-          delivered_at: string | null
-          id: string
-          message_created_at: string
-          message_id: string
-          status: string | null
-          user_id: string
-        }
-        Insert: {
-          delivered_at?: string | null
-          id?: string
-          message_created_at: string
-          message_id: string
-          status?: string | null
-          user_id: string
-        }
-        Update: {
-          delivered_at?: string | null
-          id?: string
-          message_created_at?: string
-          message_id?: string
-          status?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_delivery_status_message_id_message_created_at_fkey"
-            columns: ["message_id", "message_created_at"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id", "created_at"]
-          },
-          {
-            foreignKeyName: "message_delivery_status_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       message_reactions: {
         Row: {
           created_at: string | null
@@ -576,32 +425,6 @@ export type Database = {
           },
         ]
       }
-      message_search_vectors: {
-        Row: {
-          message_created_at: string
-          message_id: string
-          search_vector: unknown
-        }
-        Insert: {
-          message_created_at: string
-          message_id: string
-          search_vector: unknown
-        }
-        Update: {
-          message_created_at?: string
-          message_id?: string
-          search_vector?: unknown
-        }
-        Relationships: [
-          {
-            foreignKeyName: "message_search_vectors_message_id_message_created_at_fkey"
-            columns: ["message_id", "message_created_at"]
-            isOneToOne: true
-            referencedRelation: "messages"
-            referencedColumns: ["id", "created_at"]
-          },
-        ]
-      }
       messages: {
         Row: {
           attachments: Json | null
@@ -652,20 +475,6 @@ export type Database = {
           thread_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_messages_reply_to"
-            columns: ["reply_to_id", "created_at"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id", "created_at"]
-          },
-          {
-            foreignKeyName: "fk_messages_thread"
-            columns: ["thread_id", "created_at"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id", "created_at"]
-          },
           {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]
@@ -987,372 +796,6 @@ export type Database = {
           thread_id?: string | null
         }
         Relationships: []
-      }
-      messages_2025_07: {
-        Row: {
-          attachments: Json | null
-          content: string
-          conversation_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean | null
-          mentions: string[] | null
-          message_type: Database["public"]["Enums"]["message_type"] | null
-          metadata: Json | null
-          reply_to_id: string | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: []
-      }
-      messages_2025_08: {
-        Row: {
-          attachments: Json | null
-          content: string
-          conversation_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean | null
-          mentions: string[] | null
-          message_type: Database["public"]["Enums"]["message_type"] | null
-          metadata: Json | null
-          reply_to_id: string | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: []
-      }
-      messages_2025_09: {
-        Row: {
-          attachments: Json | null
-          content: string
-          conversation_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean | null
-          mentions: string[] | null
-          message_type: Database["public"]["Enums"]["message_type"] | null
-          metadata: Json | null
-          reply_to_id: string | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: []
-      }
-      messages_2025_10: {
-        Row: {
-          attachments: Json | null
-          content: string
-          conversation_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean | null
-          mentions: string[] | null
-          message_type: Database["public"]["Enums"]["message_type"] | null
-          metadata: Json | null
-          reply_to_id: string | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: []
-      }
-      messages_2025_11: {
-        Row: {
-          attachments: Json | null
-          content: string
-          conversation_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean | null
-          mentions: string[] | null
-          message_type: Database["public"]["Enums"]["message_type"] | null
-          metadata: Json | null
-          reply_to_id: string | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: []
-      }
-      messages_2025_12: {
-        Row: {
-          attachments: Json | null
-          content: string
-          conversation_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_deleted: boolean | null
-          is_edited: boolean | null
-          mentions: string[] | null
-          message_type: Database["public"]["Enums"]["message_type"] | null
-          metadata: Json | null
-          reply_to_id: string | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          attachments?: Json | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          attachments?: Json | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_deleted?: boolean | null
-          is_edited?: boolean | null
-          mentions?: string[] | null
-          message_type?: Database["public"]["Enums"]["message_type"] | null
-          metadata?: Json | null
-          reply_to_id?: string | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: []
-      }
-      moderation_flags: {
-        Row: {
-          confidence_score: number | null
-          content_id: string
-          content_type: string
-          created_at: string | null
-          flag_type: string
-          flagged_by: string | null
-          flagged_by_user_id: string | null
-          id: string
-          is_approved: boolean | null
-          is_reviewed: boolean | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-        }
-        Insert: {
-          confidence_score?: number | null
-          content_id: string
-          content_type: string
-          created_at?: string | null
-          flag_type: string
-          flagged_by?: string | null
-          flagged_by_user_id?: string | null
-          id?: string
-          is_approved?: boolean | null
-          is_reviewed?: boolean | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-        }
-        Update: {
-          confidence_score?: number | null
-          content_id?: string
-          content_type?: string
-          created_at?: string | null
-          flag_type?: string
-          flagged_by?: string | null
-          flagged_by_user_id?: string | null
-          id?: string
-          is_approved?: boolean | null
-          is_reviewed?: boolean | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "moderation_flags_flagged_by_user_id_fkey"
-            columns: ["flagged_by_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "moderation_flags_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       notifications: {
         Row: {
@@ -1700,85 +1143,6 @@ export type Database = {
         }
         Relationships: []
       }
-      push_tokens: {
-        Row: {
-          created_at: string | null
-          device_info: Json | null
-          device_type: string
-          id: string
-          is_active: boolean | null
-          token: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          device_info?: Json | null
-          device_type: string
-          id?: string
-          is_active?: boolean | null
-          token: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          device_info?: Json | null
-          device_type?: string
-          id?: string
-          is_active?: boolean | null
-          token?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_tokens_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rate_limits: {
-        Row: {
-          action_type: string
-          count: number | null
-          expires_at: string | null
-          id: string
-          ip_address: unknown | null
-          user_id: string | null
-          window_start: string | null
-        }
-        Insert: {
-          action_type: string
-          count?: number | null
-          expires_at?: string | null
-          id?: string
-          ip_address?: unknown | null
-          user_id?: string | null
-          window_start?: string | null
-        }
-        Update: {
-          action_type?: string
-          count?: number | null
-          expires_at?: string | null
-          id?: string
-          ip_address?: unknown | null
-          user_id?: string | null
-          window_start?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rate_limits_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       reports: {
         Row: {
           created_at: string | null
@@ -1965,45 +1329,6 @@ export type Database = {
           },
         ]
       }
-      user_blocks: {
-        Row: {
-          blocked_id: string
-          blocker_id: string
-          created_at: string | null
-          id: string
-          reason: string | null
-        }
-        Insert: {
-          blocked_id: string
-          blocker_id: string
-          created_at?: string | null
-          id?: string
-          reason?: string | null
-        }
-        Update: {
-          blocked_id?: string
-          blocker_id?: string
-          created_at?: string | null
-          id?: string
-          reason?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_blocks_blocked_id_fkey"
-            columns: ["blocked_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_blocks_blocker_id_fkey"
-            columns: ["blocker_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_relationships: {
         Row: {
           created_at: string | null
@@ -2137,31 +1462,6 @@ export type Database = {
       }
     }
     Functions: {
-      check_rate_limit: {
-        Args: {
-          p_action_type: string
-          p_limit: number
-          p_user_id: string
-          p_window_minutes?: number
-        }
-        Returns: boolean
-      }
-      clean_expired_typing_indicators: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_expired_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      create_dm_conversation: {
-        Args: { other_user_id: string }
-        Returns: string
-      }
-      create_monthly_partitions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       create_room_and_join: {
         Args: {
           p_description?: string
@@ -2175,39 +1475,6 @@ export type Database = {
           room: Json
         }[]
       }
-      create_thread_reply: {
-        Args: {
-          p_content: string
-          p_message_type?: Database["public"]["Enums"]["message_type"]
-          p_parent_created_at: string
-          p_parent_message_id: string
-        }
-        Returns: string
-      }
-      enhanced_cleanup_expired_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_conversation_messages: {
-        Args: {
-          p_conversation_id: string
-          p_cursor?: string
-          p_direction?: string
-          p_limit?: number
-        }
-        Returns: {
-          content: string
-          created_at: string
-          id: string
-          is_edited: boolean
-          message_type: Database["public"]["Enums"]["message_type"]
-          reactions: Json
-          reply_to_id: string
-          sender_avatar_url: string
-          sender_id: string
-          sender_username: string
-        }[]
-      }
       get_room_member_count: {
         Args: { p_room_id: string }
         Returns: number
@@ -2216,30 +1483,8 @@ export type Database = {
         Args: { p_room_identifier: string }
         Returns: Json
       }
-      queue_push_notification: {
-        Args: {
-          p_body: string
-          p_data?: Json
-          p_title: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       refresh_popular_rooms: {
         Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      send_message: {
-        Args: {
-          p_content: string
-          p_conversation_id: string
-          p_message_type?: Database["public"]["Enums"]["message_type"]
-          p_reply_to_id?: string
-        }
-        Returns: string
-      }
-      track_user_activity: {
-        Args: { p_action: string; p_details?: Json; p_user_id: string }
         Returns: undefined
       }
       validate_join_code: {
@@ -2254,18 +1499,18 @@ export type Database = {
     }
     Enums: {
       conversation_type: "dm" | "group" | "channel"
-      message_type: "text" | "image" | "file" | "audio" | "video" | "system"
-      notification_type: "message" | "friend_request" | "mention" | "system"
+      message_type: "text" | "image" | "file" | "system"
+      notification_type: "message" | "friend_request" | "room_invite" | "system"
       reaction_type:
         | "like"
         | "love"
         | "laugh"
-        | "sad"
         | "angry"
+        | "sad"
         | "thumbs_up"
         | "thumbs_down"
-      relationship_status: "pending" | "accepted" | "blocked" | "declined"
-      user_status: "online" | "away" | "busy" | "offline"
+      relationship_status: "pending" | "accepted" | "blocked"
+      user_status: "online" | "offline" | "away" | "busy"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2394,19 +1639,19 @@ export const Constants = {
   public: {
     Enums: {
       conversation_type: ["dm", "group", "channel"],
-      message_type: ["text", "image", "file", "audio", "video", "system"],
-      notification_type: ["message", "friend_request", "mention", "system"],
+      message_type: ["text", "image", "file", "system"],
+      notification_type: ["message", "friend_request", "room_invite", "system"],
       reaction_type: [
         "like",
         "love",
         "laugh",
-        "sad",
         "angry",
+        "sad",
         "thumbs_up",
         "thumbs_down",
       ],
-      relationship_status: ["pending", "accepted", "blocked", "declined"],
-      user_status: ["online", "away", "busy", "offline"],
+      relationship_status: ["pending", "accepted", "blocked"],
+      user_status: ["online", "offline", "away", "busy"],
     },
   },
 } as const
