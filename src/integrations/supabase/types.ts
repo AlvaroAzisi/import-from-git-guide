@@ -1479,6 +1479,10 @@ export type Database = {
         Args: { p_room_id: string }
         Returns: number
       }
+      is_room_member_secure: {
+        Args: { room_id: string; user_id: string }
+        Returns: boolean
+      }
       join_room_safe: {
         Args: { p_room_identifier: string }
         Returns: Json

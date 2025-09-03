@@ -18,11 +18,9 @@ export function useDataFetching<T>() {
   const execute = useCallback(async (
     fetchFn: () => Promise<T>,
     {
-      loadingMessage = 'Loading...',
       errorMessage = 'An error occurred',
       successMessage,
     }: {
-      loadingMessage?: string;
       errorMessage?: string;
       successMessage?: string;
     } = {}

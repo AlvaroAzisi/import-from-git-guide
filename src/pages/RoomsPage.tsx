@@ -74,7 +74,6 @@ const RoomsPage: React.FC = () => {
         return data;
       },
       {
-        loadingMessage: 'Loading rooms...',
         errorMessage: 'Failed to load rooms',
       }
     );
