@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
-import { AlertCircle, CheckCircle2, Info, XCircle } from 'lucide-react';
-import { toast, type Toast } from '../hooks/useToast';
+import { toast } from '../hooks/useToast';
 
 interface NotifyOptions {
   title?: string;

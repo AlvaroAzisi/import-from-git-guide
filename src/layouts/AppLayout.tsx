@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import TopBar from '../components/TopBar';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { useSidebar } from '../contexts/SidebarContext';

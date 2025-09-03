@@ -1,6 +1,5 @@
 // Atomic room operations with proper error handling and auth recovery
 import { supabase } from './supabase';
-import { ROUTES } from '../constants/routes';
 
 export interface CreateRoomPayload {
   name: string;
