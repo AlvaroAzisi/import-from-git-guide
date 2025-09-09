@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 
 export const uploadAvatar = async (file: File, userId: string): Promise<string | null> => {
   try {

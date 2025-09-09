@@ -5,7 +5,7 @@ import { MessageCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatWindow } from './ChatWindow';
-import { ChatInfoPanel } from './ChatInfoPanel';
+import ChatInfoPanel from './ChatInfoPanel';
 import { getConversation, createDMConversation } from '../../lib/chat';
 import { getProfileByUsername } from '../../lib/auth';
 import type { Conversation } from '../../lib/chat';

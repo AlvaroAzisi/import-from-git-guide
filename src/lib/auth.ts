@@ -475,7 +475,7 @@ export const incrementUserXP = async (userId: string, xpAmount: number = 1): Pro
       return;
     }
 
-    const newXP = profile.xp + xpAmount;
+    const newXP = (profile.xp || 0) + xpAmount;
     const { error } = await supabase
       .from('profiles')
       .update({ 

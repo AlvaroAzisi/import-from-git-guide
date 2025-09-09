@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, Settings } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 
 interface UserProfileProps {
   user: any;

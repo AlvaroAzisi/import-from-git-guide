@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import type { UserProfile } from './auth';
 
 // Type definitions for RPC responses

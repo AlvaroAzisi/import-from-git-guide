@@ -1,5 +1,6 @@
 // Atomic room operations with proper error handling and auth recovery
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 
 export interface CreateRoomPayload {
   name: string;

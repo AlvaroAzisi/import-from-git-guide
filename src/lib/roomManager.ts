@@ -1,5 +1,6 @@
 // Centralized room management with atomic operations
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import type { Room, CreateRoomPayload, JoinRoomResponse } from '../types/room';
 
 export class RoomManager {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Check, X, Users, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
 import { Button } from './ui/button';

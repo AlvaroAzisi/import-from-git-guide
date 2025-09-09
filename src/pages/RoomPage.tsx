@@ -5,7 +5,8 @@ import { Send, Users, Copy, Crown, ArrowLeft, Paperclip, Settings as SettingsIco
 import { useAuth } from '../hooks/useAuth';
 import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, getRoomByCode, isValidUUID, type Room, type RoomMember, type Message } from '../lib/rooms';
 import { uploadChatMedia } from '../lib/storage';
-import { supabase } from '../lib/supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/useToast';
 import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
 import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
