@@ -1,0 +1,145 @@
+| table_name    | column_name         | data_type                |
+| ------------- | ------------------- | ------------------------ |
+| friends       | id                  | uuid                     |
+| friends       | from_user           | uuid                     |
+| friends       | to_user             | uuid                     |
+| friends       | status              | text                     |
+| friends       | created_at          | timestamp with time zone |
+| messages      | id                  | uuid                     |
+| messages      | conversation_id     | uuid                     |
+| messages      | sender_id           | uuid                     |
+| messages      | content             | text                     |
+| messages      | message_type        | USER-DEFINED             |
+| messages      | reply_to_id         | uuid                     |
+| messages      | thread_id           | uuid                     |
+| messages      | mentions            | ARRAY                    |
+| messages      | attachments         | jsonb                    |
+| messages      | metadata            | jsonb                    |
+| messages      | is_edited           | boolean                  |
+| messages      | is_deleted          | boolean                  |
+| messages      | edited_at           | timestamp with time zone |
+| messages      | created_at          | timestamp with time zone |
+| notifications | id                  | uuid                     |
+| notifications | user_id             | uuid                     |
+| notifications | type                | USER-DEFINED             |
+| notifications | title               | text                     |
+| notifications | content             | text                     |
+| notifications | data                | jsonb                    |
+| notifications | is_read             | boolean                  |
+| notifications | created_at          | timestamp with time zone |
+| profiles      | id                  | uuid                     |
+| profiles      | username            | character varying        |
+| profiles      | full_name           | text                     |
+| profiles      | email               | text                     |
+| profiles      | avatar_url          | text                     |
+| profiles      | bio                 | text                     |
+| profiles      | xp                  | integer                  |
+| profiles      | level               | integer                  |
+| profiles      | streak              | integer                  |
+| profiles      | rooms_joined        | integer                  |
+| profiles      | rooms_created       | integer                  |
+| profiles      | messages_sent       | integer                  |
+| profiles      | friends_count       | integer                  |
+| profiles      | is_online_visible   | boolean                  |
+| profiles      | email_notifications | boolean                  |
+| profiles      | push_notifications  | boolean                  |
+| profiles      | interests           | ARRAY                    |
+| profiles      | phone               | character varying        |
+| profiles      | phone_verified      | boolean                  |
+| profiles      | status              | USER-DEFINED             |
+| profiles      | is_verified         | boolean                  |
+| profiles      | is_deleted          | boolean                  |
+| profiles      | last_seen_at        | timestamp with time zone |
+| profiles      | location            | text                     |
+| profiles      | website             | text                     |
+| profiles      | created_at          | timestamp with time zone |
+| profiles      | updated_at          | timestamp with time zone |
+| room_members  | id                  | uuid                     |
+| room_members  | room_id             | uuid                     |
+| room_members  | user_id             | uuid                     |
+| room_members  | role                | text                     |
+| room_members  | joined_at           | timestamp with time zone |
+| rooms         | id                  | uuid                     |
+| rooms         | name                | text                     |
+| rooms         | description         | text                     |
+| rooms         | subject             | text                     |
+| rooms         | creator_id          | uuid                     |
+| rooms         | created_by          | uuid                     |
+| rooms         | join_code           | text                     |
+| rooms         | short_code          | text                     |
+| rooms         | is_public           | boolean                  |
+| rooms         | is_active           | boolean                  |
+| rooms         | max_members         | integer                  |
+| rooms         | created_at          | timestamp with time zone |
+| rooms         | updated_at          | timestamp with time zone |
+
+
+--------------------
+
+| table_name    | constraint_name                  | definition                                                         |
+| ------------- | -------------------------------- | ------------------------------------------------------------------ |
+| profiles      | profiles_pkey                    | PRIMARY KEY (id)                                                   |
+| profiles      | profiles_username_key            | UNIQUE (username)                                                  |
+| profiles      | profiles_id_fkey                 | FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE       |
+| messages      | messages_pkey                    | PRIMARY KEY (id, created_at)                                       |
+| messages      | messages_sender_id_fkey          | FOREIGN KEY (sender_id) REFERENCES profiles(id) ON DELETE SET NULL |
+| notifications | notifications_pkey               | PRIMARY KEY (id, user_id)                                          |
+| notifications | notifications_user_id_fkey       | FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE    |
+| rooms         | rooms_pkey                       | PRIMARY KEY (id)                                                   |
+| rooms         | rooms_join_code_key              | UNIQUE (join_code)                                                 |
+| rooms         | rooms_short_code_key             | UNIQUE (short_code)                                                |
+| rooms         | rooms_creator_id_fkey            | FOREIGN KEY (creator_id) REFERENCES profiles(id) ON DELETE CASCADE |
+| rooms         | rooms_created_by_fkey            | FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE CASCADE |
+| room_members  | room_members_pkey                | PRIMARY KEY (id)                                                   |
+| room_members  | room_members_room_id_user_id_key | UNIQUE (room_id, user_id)                                          |
+| room_members  | room_members_room_id_fkey        | FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE       |
+| room_members  | room_members_user_id_fkey        | FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE    |
+| friends       | friends_pkey                     | PRIMARY KEY (id)                                                   |
+| friends       | friends_from_user_to_user_key    | UNIQUE (from_user, to_user)                                        |
+| friends       | friends_from_user_fkey           | FOREIGN KEY (from_user) REFERENCES profiles(id) ON DELETE CASCADE  |
+| friends       | friends_to_user_fkey             | FOREIGN KEY (to_user) REFERENCES profiles(id) ON DELETE CASCADE    |
+
+
+--------------------
+
+
+| schemaname | tablename     | policyname                           | permissive | roles           | cmd    | qual                                                                                                                                                                                                                                                                                                                                           | with_check                                               |
+| ---------- | ------------- | ------------------------------------ | ---------- | --------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| public     | profiles      | Users can read own profile           | PERMISSIVE | {authenticated} | SELECT | (auth.uid() = id)                                                                                                                                                                                                                                                                                                                              | null                                                     |
+| public     | profiles      | Users can view public profile data   | PERMISSIVE | {authenticated} | SELECT | (NOT is_deleted)                                                                                                                                                                                                                                                                                                                               | null                                                     |
+| public     | profiles      | Users can view own profile           | PERMISSIVE | {public}        | SELECT | (auth.uid() = id)                                                                                                                                                                                                                                                                                                                              | null                                                     |
+| public     | profiles      | Users can update own profile         | PERMISSIVE | {public}        | UPDATE | (auth.uid() = id)                                                                                                                                                                                                                                                                                                                              | null                                                     |
+| public     | profiles      | Users can insert own profile         | PERMISSIVE | {public}        | INSERT | null                                                                                                                                                                                                                                                                                                                                           | (auth.uid() = id)                                        |
+| public     | rooms         | Anyone can view public rooms         | PERMISSIVE | {public}        | SELECT | true                                                                                                                                                                                                                                                                                                                                           | null                                                     |
+| public     | rooms         | Users can create rooms               | PERMISSIVE | {public}        | INSERT | null                                                                                                                                                                                                                                                                                                                                           | (auth.uid() = created_by)                                |
+| public     | rooms         | Creators can update own rooms        | PERMISSIVE | {public}        | UPDATE | (auth.uid() = created_by)                                                                                                                                                                                                                                                                                                                      | null                                                     |
+| public     | rooms         | Creators can delete own rooms        | PERMISSIVE | {public}        | DELETE | (auth.uid() = created_by)                                                                                                                                                                                                                                                                                                                      | null                                                     |
+| public     | room_members  | Users can join rooms                 | PERMISSIVE | {public}        | INSERT | null                                                                                                                                                                                                                                                                                                                                           | (auth.uid() = user_id)                                   |
+| public     | room_members  | Users can leave rooms                | PERMISSIVE | {public}        | DELETE | (auth.uid() = user_id)                                                                                                                                                                                                                                                                                                                         | null                                                     |
+| public     | rooms         | Users can read accessible rooms      | PERMISSIVE | {authenticated} | SELECT | ((is_public = true) OR (auth.uid() = creator_id) OR (auth.uid() = created_by) OR (EXISTS ( SELECT 1
+   FROM room_members
+  WHERE ((room_members.room_id = rooms.id) AND (room_members.user_id = auth.uid())))))                                                                                                                                | null                                                     |
+| public     | rooms         | Users can update own rooms           | PERMISSIVE | {authenticated} | UPDATE | ((auth.uid() = creator_id) OR (auth.uid() = created_by))                                                                                                                                                                                                                                                                                       | ((auth.uid() = creator_id) OR (auth.uid() = created_by)) |
+| public     | room_members  | Users can read room members          | PERMISSIVE | {authenticated} | SELECT | ((auth.uid() = user_id) OR (EXISTS ( SELECT 1
+   FROM rooms
+  WHERE ((rooms.id = room_members.room_id) AND ((rooms.is_public = true) OR (rooms.creator_id = auth.uid()) OR (rooms.created_by = auth.uid()))))) OR (EXISTS ( SELECT 1
+   FROM room_members rm2
+  WHERE ((rm2.room_id = room_members.room_id) AND (rm2.user_id = auth.uid()))))) | null                                                     |
+| public     | room_members  | Room creators can manage members     | PERMISSIVE | {public}        | SELECT | (EXISTS ( SELECT 1
+   FROM rooms
+  WHERE ((rooms.id = room_members.room_id) AND (rooms.created_by = auth.uid()))))                                                                                                                                                                                                                             | null                                                     |
+| public     | room_members  | Room creators can remove members     | PERMISSIVE | {public}        | DELETE | (EXISTS ( SELECT 1
+   FROM rooms
+  WHERE ((rooms.id = room_members.room_id) AND (rooms.created_by = auth.uid()))))                                                                                                                                                                                                                             | null                                                     |
+| public     | room_members  | Members can view room members        | PERMISSIVE | {public}        | SELECT | (EXISTS ( SELECT 1
+   FROM room_members rm2
+  WHERE ((rm2.room_id = room_members.room_id) AND (rm2.user_id = auth.uid()))))                                                                                                                                                                                                                    | null                                                     |
+| public     | messages      | Users can update their own messages  | PERMISSIVE | {public}        | UPDATE | (sender_id = auth.uid())                                                                                                                                                                                                                                                                                                                       | null                                                     |
+| public     | notifications | Users can view their notifications   | PERMISSIVE | {public}        | SELECT | (user_id = auth.uid())                                                                                                                                                                                                                                                                                                                         | null                                                     |
+| public     | notifications | Users can update their notifications | PERMISSIVE | {public}        | UPDATE | (user_id = auth.uid())                                                                                                                                                                                                                                                                                                                         | null                                                     |
+| public     | friends       | Users can read own friends           | PERMISSIVE | {public}        | SELECT | ((auth.uid() = from_user) OR (auth.uid() = to_user))                                                                                                                                                                                                                                                                                           | null                                                     |
+
+
+-----------------
+
+
