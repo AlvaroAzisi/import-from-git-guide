@@ -1,3 +1,4 @@
+// TODO adapted for new Supabase backend
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -111,6 +112,7 @@ const ProfilePage: React.FC = () => {
         bio: profile.bio || '',
         interests: Array.isArray(profile.interests) ? profile.interests : [],
       });
+      // TODO adapted for new Supabase backend - stats now read directly from backend
       setStats({
         roomsCreated: profile.rooms_created || 0,
         roomsJoined: profile.rooms_joined || 0,

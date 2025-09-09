@@ -8,7 +8,8 @@ import {
 } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import {
   createOrUpdateProfile,
   getProfile,

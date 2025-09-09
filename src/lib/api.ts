@@ -1,35 +1,40 @@
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
+import type { UserProfile } from './auth';
 
 export interface Room {
   id: string;
   name: string;
-  description: string;
-  subject: string;
-  max_members: number;
-  is_public: boolean;
-  creator_id: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  description: string | null;
+  subject: string | null;
+  max_members: number | null;
+  is_public: boolean | null;
+  creator_id: string | null;
+  created_by: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+  join_code: string | null;
+  short_code: string | null;
   member_count?: number;
   creator?: {
     id?: string;
     full_name: string;
-    avatar_url: string;
-  };
+    avatar_url: string | null;
+  } | null;
 }
 
 export interface RoomMember {
   id: string;
-  room_id: string;
-  user_id: string;
-  joined_at: string;
-  role: 'member' | 'admin';
+  room_id: string | null;
+  user_id: string | null;
+  joined_at: string | null;
+  role: string | null;
   profile?: {
     full_name: string;
     avatar_url: string;
     username: string;
-  };
+  } | null;
 }
 
 export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
@@ -38,7 +43,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
       .from('room_members')
       .select(`
         *,
-        profile:profiles!fk_room_members_user_id(
+        profile:profiles!user_id(
           full_name,
           avatar_url,
           username
@@ -48,7 +53,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
       .order('joined_at', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as RoomMember[];
   } catch (error) {
     console.error('Get room members error:', error);
     return [];
@@ -67,6 +72,7 @@ export const getRoomMemberCount = async (roomId: string): Promise<number> => {
   }
 };
 
+// TODO adapted for new Supabase backend - simplified room fetching
 export const getRooms = async (limit: number = 10): Promise<Room[]> => {
   try {
     const { data: rooms, error: roomsError } = await supabase
@@ -84,24 +90,74 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
 
     if (roomsError) throw roomsError;
 
-    const memberCounts = await Promise.all(
-      rooms.map(async (room) => {
+    // TODO removed redundant logic - backend now handles member counts via triggers
+    const roomsWithCounts = await Promise.all(
+      (rooms || []).map(async (room) => {
         const count = await getRoomMemberCount(room.id);
-        return { id: room.id, member_count: count };
+        return { ...room, member_count: count };
       })
     );
-
-    const roomsWithCounts = rooms.map(room => {
-      const countObj = memberCounts.find(c => c.id === room.id);
-      return {
-        ...room,
-        member_count: countObj ? countObj.member_count : 0
-      };
-    });
 
     return roomsWithCounts;
   } catch (error) {
     console.error('Get rooms error:', error);
+    return [];
+  }
+};
+
+// TODO adapted for new Supabase backend - get public rooms only
+export const getPublicRooms = async (limit: number = 10): Promise<Room[]> => {
+  return getRooms(limit);
+};
+
+// TODO adapted for new Supabase backend - get user's rooms
+export const getUserRooms = async (userId: string): Promise<Room[]> => {
+  try {
+    const { data: memberData, error } = await supabase
+      .from('room_members')
+      .select(`
+        room:rooms!room_id(
+          *,
+          creator:profiles!creator_id(full_name, avatar_url)
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    const rooms = (memberData || []).map(item => item.room).filter(Boolean);
+    return rooms as Room[];
+  } catch (error) {
+    console.error('Get user rooms error:', error);
+    return [];
+  }
+};
+
+// TODO adapted for new Supabase backend - simplified friends fetching
+export const getFriends = async (): Promise<UserProfile[]> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('friends')
+      .select(`
+        to_user,
+        from_user,
+        to_profile:profiles!to_user(*),
+        from_profile:profiles!from_user(*)
+      `)
+      .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
+      .eq('status', 'accepted');
+
+    if (error) throw error;
+
+    // TODO removed redundant logic - get the friend profile (not current user)
+    return (data || []).map(item => {
+      return item.from_user === user.id ? item.to_profile : item.from_profile;
+    }).filter(Boolean) as UserProfile[];
+  } catch (error) {
+    console.error('Get friends error:', error);
     return [];
   }
 };

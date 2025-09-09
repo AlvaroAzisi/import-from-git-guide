@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { panelBase, panelHeader, panelTitle } from '../styles/panelBase';
 import { useToast } from '../hooks/useToast';
-import { supabase } from '../lib/supabaseClient';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import RoomRequestItem, { RoomRequestItemData } from './RoomRequestItem';
 import { Users } from 'lucide-react';
 import { subscribeToRoomRequests } from '../lib/supabaseRealtime';

@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
 
@@ -80,6 +81,7 @@ const ensureUniqueUsername = async (base: string, userId?: string, attempts = 8)
 };
 
 // Use a temporary type until database is properly rebuilt
+// TODO adapted for new Supabase backend - updated interface to match schema
 export interface UserProfile {
   id: string;
   username: string;
@@ -87,27 +89,27 @@ export interface UserProfile {
   email: string;
   avatar_url?: string | null;
   bio?: string | null;
-  xp: number;
-  level: number;
-  streak: number;
-  rooms_joined: number;
-  rooms_created: number;
-  messages_sent: number;
-  friends_count: number;
-  is_online_visible: boolean;
-  email_notifications: boolean;
-  push_notifications: boolean;
+  xp: number | null;
+  level: number | null;
+  streak: number | null;
+  rooms_joined: number | null;
+  rooms_created: number | null;
+  messages_sent: number | null;
+  friends_count: number | null;
+  is_online_visible: boolean | null;
+  email_notifications: boolean | null;
+  push_notifications: boolean | null;
   interests?: string[] | null;
   phone?: string | null;
-  phone_verified: boolean;
-  status: 'online' | 'offline' | 'away' | 'busy';
-  is_verified: boolean;
-  is_deleted: boolean;
+  phone_verified: boolean | null;
+  status: 'online' | 'offline' | 'away' | 'busy' | null;
+  is_verified: boolean | null;
+  is_deleted: boolean | null;
   last_seen_at?: string | null;
   location?: string | null;
   website?: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export const getCurrentUser = async (): Promise<User | null> => {

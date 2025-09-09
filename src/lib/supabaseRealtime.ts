@@ -1,4 +1,5 @@
-import { supabase } from './supabaseClient';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 
 export type Unsubscribe = () => void;
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, KeyRound } from 'lucide-react';
 import { panelBase, panelHeader, panelTitle, panelActions } from '../styles/panelBase';
-import { supabase } from '../lib/supabaseClient';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/useToast';
 
 interface JoinWithCodeModalProps {

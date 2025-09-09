@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 // relative path to your supabase client
-import { supabase } from "../lib/supabaseClient";
+// TODO adapted for new Supabase backend
+import { supabase } from "../integrations/supabase/client";
 
 type Props = {
   isOpen: boolean;

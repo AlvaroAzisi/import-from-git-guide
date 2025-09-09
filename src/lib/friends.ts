@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+// TODO adapted for new Supabase backend
+import { supabase } from '../integrations/supabase/client';
 import type { UserProfile } from './auth';
 
 /**
@@ -15,6 +16,7 @@ export interface FriendRequest {
   target_profile?: UserProfile;
 }
 
+// TODO adapted for new Supabase backend
 export const sendFriendRequest = async (targetUserId: string): Promise<boolean> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -24,11 +26,11 @@ export const sendFriendRequest = async (targetUserId: string): Promise<boolean> 
       throw new Error('Cannot send friend request to yourself');
     }
 
-    // Check if request already exists
+    // Check if request already exists  
     const { data: existing } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select('id, status')
-      .or(`and(user_id.eq.${user.id},target_user_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},target_user_id.eq.${user.id})`)
+      .or(`and(from_user.eq.${user.id},to_user.eq.${targetUserId}),and(from_user.eq.${targetUserId},to_user.eq.${user.id})`)
       .single();
 
     if (existing) {
@@ -40,11 +42,10 @@ export const sendFriendRequest = async (targetUserId: string): Promise<boolean> 
     }
 
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .insert({
-        user_id: user.id,
-        target_user_id: targetUserId,
-        created_by: user.id,
+        from_user: user.id,
+        to_user: targetUserId,
         status: 'pending'
       });
 
@@ -56,10 +57,11 @@ export const sendFriendRequest = async (targetUserId: string): Promise<boolean> 
   }
 };
 
+// TODO adapted for new Supabase backend
 export const acceptFriendRequest = async (requestId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .update({ status: 'accepted' })
       .eq('id', requestId);
 
@@ -71,10 +73,11 @@ export const acceptFriendRequest = async (requestId: string): Promise<boolean> =
   }
 };
 
+// TODO adapted for new Supabase backend
 export const rejectFriendRequest = async (requestId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .delete()
       .eq('id', requestId);
 
@@ -86,62 +89,75 @@ export const rejectFriendRequest = async (requestId: string): Promise<boolean> =
   }
 };
 
+// TODO adapted for new Supabase backend
 export const getFriends = async (): Promise<UserProfile[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select(`
-        target_user_id,
-        target_profile:profiles!target_user_id(*)
+        to_user,
+        from_user,
+        to_profile:profiles!to_user(*),
+        from_profile:profiles!from_user(*)
       `)
-      .eq('user_id', user.id)
+      .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
       .eq('status', 'accepted');
 
     if (error) throw error;
 
-    return (data || []).map(item => item.target_profile).filter(Boolean) as unknown as UserProfile[];
+    // TODO removed redundant logic - get the friend profile (not current user)
+    const friends = (data || []).map(item => {
+      return item.from_user === user.id ? item.to_profile : item.from_profile;
+    }).filter(Boolean);
+    return friends as unknown as UserProfile[];
   } catch (error) {
     console.error('Get friends error:', error);
     return [];
   }
 };
 
+// TODO adapted for new Supabase backend
 export const getFriendRequests = async (): Promise<FriendRequest[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select(`
         *,
-        user_profile:profiles!user_id(*),
-        target_profile:profiles!target_user_id(*)
+        user_profile:profiles!from_user(*),
+        target_profile:profiles!to_user(*)
       `)
-      .eq('target_user_id', user.id)
+      .eq('to_user', user.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      user_id: item.from_user,
+      target_user_id: item.to_user
+    })) as FriendRequest[];
   } catch (error) {
     console.error('Get friend requests error:', error);
     return [];
   }
 };
 
+// TODO adapted for new Supabase backend
 export const removeFriend = async (friendId: string): Promise<boolean> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
     const { error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .delete()
-      .or(`and(user_id.eq.${user.id},target_user_id.eq.${friendId}),and(user_id.eq.${friendId},target_user_id.eq.${user.id})`);
+      .or(`and(from_user.eq.${user.id},to_user.eq.${friendId}),and(from_user.eq.${friendId},to_user.eq.${user.id})`);
 
     if (error) throw error;
     return true;
@@ -151,19 +167,20 @@ export const removeFriend = async (friendId: string): Promise<boolean> => {
   }
 };
 
+// TODO adapted for new Supabase backend
 export const getFriendshipStatus = async (userId: string): Promise<'none' | 'pending' | 'accepted' | 'blocked'> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id === userId) return 'none';
 
     const { data, error } = await supabase
-      .from('user_relationships')
+      .from('friends')
       .select('status')
-      .or(`and(user_id.eq.${user.id},target_user_id.eq.${userId}),and(user_id.eq.${userId},target_user_id.eq.${user.id})`)
+      .or(`and(from_user.eq.${user.id},to_user.eq.${userId}),and(from_user.eq.${userId},to_user.eq.${user.id})`)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
-    return data?.status || 'none';
+    return (data?.status as 'none' | 'pending' | 'accepted' | 'blocked') || 'none';
   } catch (error) {
     console.error('Get friendship status error:', error);
     return 'none';

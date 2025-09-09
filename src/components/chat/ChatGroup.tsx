@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+// TODO adapted for new Supabase backend
+import { supabase } from '../../integrations/supabase/client';
 import { subscribeToGroupMessages } from '../../lib/supabaseRealtime';
 import MessageComposer from './MessageComposer';
 
@@ -13,7 +14,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, name }) => {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }: any) => setUserId(data.user?.id ?? null));
   }, []);
 
   useEffect(() => {
