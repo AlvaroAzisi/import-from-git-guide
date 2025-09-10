@@ -1,6 +1,5 @@
-// TODO adapted for new Supabase backend
+// TODO: Disabled – depends on old schema (room member checks)
 import { supabase } from '../integrations/supabase/client';
-import { isRoomMember, joinRoom, getRoom } from './rooms';
 
 export interface RoomAccessResult {
   canAccess: boolean;
@@ -10,13 +9,9 @@ export interface RoomAccessResult {
   error?: string;
 }
 
-/**
- * Smart room access logic that determines if user can access a room
- * and what actions they need to take
- */
+// Simplified room access check
 export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult> => {
   try {
-    // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
@@ -27,9 +22,14 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
       };
     }
 
-    // Get room details
-    const room = await getRoom(roomId);
-    if (!room) {
+    const { data: room, error: roomError } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomId)
+      .eq('is_active', true)
+      .single();
+
+    if (roomError || !room) {
       return {
         canAccess: false,
         isMember: false,
@@ -38,11 +38,14 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
       };
     }
 
-    // Check if user is already a member
-    const isMember = await isRoomMember(roomId);
+    const { data: membership } = await supabase
+      .from('room_members')
+      .select('id')
+      .eq('room_id', roomId)
+      .eq('user_id', user.id)
+      .maybeSingle();
     
-    if (isMember) {
-      // User is already a member, can access immediately
+    if (membership) {
       return {
         canAccess: true,
         isMember: true,
@@ -51,14 +54,12 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
       };
     }
 
-    // Check if room is public and has space
     if (room.is_public) {
-      // Get current member count
       const { data: memberCount } = await supabase.rpc('get_room_member_count', {
-        room_uuid: roomId
+        p_room_id: roomId
       });
-
-      if (memberCount >= room.max_members) {
+      
+      if ((memberCount || 0) >= (room.max_members || 10)) {
         return {
           canAccess: false,
           isMember: false,
@@ -68,7 +69,6 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
         };
       }
 
-      // Room is public and has space, user can join
       return {
         canAccess: true,
         isMember: false,
@@ -77,7 +77,6 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
       };
     }
 
-    // Room is private and user is not a member
     return {
       canAccess: false,
       isMember: false,
@@ -97,9 +96,6 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
   }
 };
 
-/**
- * Smart room entry that handles the entire flow
- */
 export const enterRoom = async (roomId: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const accessResult = await checkRoomAccess(roomId);
@@ -111,10 +107,12 @@ export const enterRoom = async (roomId: string): Promise<{ success: boolean; err
       };
     }
 
-    // If user needs to join, do it automatically
     if (accessResult.requiresJoin) {
-      const joinResult = await joinRoom(roomId);
-      if (!joinResult) {
+      const { data, error } = await supabase.rpc('join_room_safe', {
+        p_room_identifier: roomId
+      });
+      
+      if (error || !data) {
         return {
           success: false,
           error: 'Failed to join room'
@@ -133,9 +131,6 @@ export const enterRoom = async (roomId: string): Promise<{ success: boolean; err
   }
 };
 
-/**
- * Check if room requires verification before access
- */
 export const requiresVerification = async (roomId: string): Promise<boolean> => {
   try {
     const accessResult = await checkRoomAccess(roomId);

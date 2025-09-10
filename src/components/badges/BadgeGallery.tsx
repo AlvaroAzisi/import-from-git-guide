@@ -14,7 +14,7 @@ export const BadgeGallery: React.FC<BadgeGalleryProps> = ({ badges, earned }) =>
       <h2 id="badges-title" className="text-xl font-bold mb-4">Badges</h2>
       <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-3">
         {badges.map((b) => (
-          <BadgeItem key={b.id} badge={b} unlocked={earnedIds.has(b.id)} />
+          <BadgeItem key={b.id} badge={b} earned={earnedIds.has(b.id)} />
         ))}
         {badges.length === 0 && (
           <p className="text-sm text-muted-foreground">No badges yet.</p>

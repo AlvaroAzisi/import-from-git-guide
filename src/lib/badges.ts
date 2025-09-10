@@ -1,32 +1,28 @@
-// TODO adapted for new Supabase backend - badges functionality disabled
-// This file used 'badges' and 'profiles_badges' tables which don't exist in simplified schema
-
+// TODO: Disabled – depends on old schema (badges, profiles_badges)
 export interface Badge {
   id: string;
+  name: string;
   icon_name: string;
   color: string;
-  requirement_type: string;
-  requirement_value: number;
+  description?: string;
 }
 
 export interface ProfileBadge {
-  profile_id: string;
+  id: string;
   badge_id: string;
+  user_id: string;
   earned_at: string;
 }
 
-// Disabled functions returning empty arrays
-export const getAllBadges = async (): Promise<Badge[]> => {
-  console.warn('Badges functionality temporarily disabled during backend migration');
+// Placeholder functions - disabled
+export const getAllBadges = async () => {
   return [];
 };
 
-export const getUserBadges = async (_userId: string): Promise<ProfileBadge[]> => {
-  console.warn('User badges functionality temporarily disabled during backend migration');
+export const getUserBadges = async (_userId: string) => {
   return [];
 };
 
-export const awardBadge = async (_userId: string, _badgeId: string): Promise<boolean> => {
-  console.warn('Badge awarding temporarily disabled during backend migration');
-  return false;
+export const checkBadgeEligibility = async (_userId: string) => {
+  return [];
 };

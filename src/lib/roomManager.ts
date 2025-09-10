@@ -32,8 +32,8 @@ export class RoomManager {
         const roomData = data[0];
         return {
           success: true,
-          room: roomData.room,
-          membership: roomData.membership
+        room: roomData.room as any as Room,
+        membership: roomData.membership as any
         };
       }
 
@@ -107,7 +107,7 @@ export class RoomManager {
       return {
         success: true,
         room: roomCheck.room,
-        membership: data
+        membership: data as any
       };
 
     } catch (error: any) {
@@ -152,7 +152,7 @@ export class RoomManager {
         return { exists: false, error: error.message };
       }
 
-      return { exists: true, room: data };
+      return { exists: true, room: data as any as Room };
 
     } catch (error: any) {
       return { exists: false, error: error.message };
@@ -172,7 +172,7 @@ export class RoomManager {
       const [roomResult, memberResult, membershipResult] = await Promise.all([
         supabase.from('rooms').select('*').eq('id', roomId).single(),
         supabase.from('room_members').select('id').eq('room_id', roomId),
-        supabase.from('room_members').select('id').eq('room_id', roomId).eq('user_id', (await supabase.auth.getUser()).data.user?.id).single()
+        supabase.from('room_members').select('id').eq('room_id', roomId).eq('user_id', (await supabase.auth.getUser()).data.user?.id || '').single()
       ]);
 
       if (roomResult.error) {
@@ -180,7 +180,7 @@ export class RoomManager {
       }
 
       return {
-        room: roomResult.data,
+        room: roomResult.data as any as Room,
         memberCount: memberResult.data?.length || 0,
         userIsMember: !membershipResult.error
       };

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { UserMinus, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { leaveRoom } from '../lib/rooms';
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
+import { supabase } from '../integrations/supabase/client';
 
 interface LeaveRoomButtonProps {
   roomId: string;
@@ -14,6 +14,7 @@ interface LeaveRoomButtonProps {
   className?: string;
 }
 
+// TODO adapted for new Supabase backend
 export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
   roomId,
   roomName,
@@ -31,23 +32,26 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
 
     setLoading(true);
     try {
-      const success = await leaveRoom(roomId);
-      
-      if (success) {
-        toast({
-          title: 'Left room successfully',
-          description: `You have left ${roomName || 'the room'}.`
-        });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-        // Call onLeave callback if provided
-        if (onLeave) {
-          onLeave();
-        } else {
-          // Default behavior: navigate to home
-          navigate('/home', { replace: true });
-        }
+      const { error } = await supabase
+        .from('room_members')
+        .delete()
+        .eq('room_id', roomId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Left room successfully',
+        description: `You have left ${roomName || 'the room'}.`
+      });
+
+      if (onLeave) {
+        onLeave();
       } else {
-        throw new Error('Failed to leave room');
+        navigate('/home', { replace: true });
       }
     } catch (error: any) {
       console.error('Leave room error:', error);
@@ -81,7 +85,6 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
 
   return (
     <>
-      {/* Leave Room Button */}
       <button
         onClick={() => setShowConfirm(true)}
         disabled={loading}
@@ -91,11 +94,9 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
         {variant === 'minimal' ? 'Leave' : 'Leave Room'}
       </button>
 
-      {/* Confirmation Modal */}
       <AnimatePresence>
         {showConfirm && (
           <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -104,7 +105,6 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
               onClick={() => setShowConfirm(false)}
             />
             
-            {/* Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -114,18 +114,15 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
                          shadow-2xl p-6"
             >
               <div className="text-center">
-                {/* Warning Icon */}
                 <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full 
                                flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
                 </div>
 
-                {/* Title */}
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Leave Room?
                 </h3>
 
-                {/* Description */}
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   Are you sure you want to leave 
                   {roomName ? (
@@ -137,7 +134,6 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
                   )}? You'll need to be re-invited or find the room again to rejoin.
                 </p>
 
-                {/* Action Buttons */}
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
