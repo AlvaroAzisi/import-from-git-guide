@@ -117,3 +117,19 @@ export const sendFriendRequest = async (_toUserId: string) => {
 export const removeFriend = async (_friendId: string) => {
   return { success: false, error: 'Feature disabled' };
 };
+
+// Additional placeholder exports for room settings modal
+export const updateRoom = async (_roomId: string, _updates: any): Promise<{ error: string | null }> => {
+  // TODO: disabled – old schema (room_requests)
+  return { error: 'Feature disabled' };
+};
+
+export const regenerateRoomCode = async (_roomId: string): Promise<{ error: string | null }> => {
+  // TODO: disabled – old schema (room_requests)
+  return { error: 'Feature disabled' };
+};
+
+export const softDeleteRoom = async (_roomId: string): Promise<{ error: string | null }> => {
+  // TODO: disabled – old schema (room_requests)
+  return { error: 'Feature disabled' };
+};

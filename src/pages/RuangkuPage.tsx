@@ -92,7 +92,7 @@ const RuangkuPage: React.FC = () => {
       
       setLoadingMessages(true);
       try {
-        const messagesData = await getMessages(roomId, 50);
+        const messagesData = await getMessages(roomId);
         setMessages(messagesData);
       } catch (error) {
         console.error('Error loading messages:', error);
@@ -170,17 +170,14 @@ const RuangkuPage: React.FC = () => {
 
     setLeavingRoom(true);
     try {
-      const success = await leaveRoom(roomId);
-      if (success) {
-        toast({
-          title: t('common.success'),
-          description: 'Successfully left the room'
-        });
-        // Navigate back to home
-        window.location.href = '/home';
-      } else {
-        throw new Error('Failed to leave room');
-      }
+      await leaveRoom(roomId);
+      // leaveRoom returns void, so we assume success if no error is thrown
+      toast({
+        title: 'Success',
+        description: 'Successfully left the room'
+      });
+      // Navigate back to home
+      window.location.href = '/home';
     } catch (error: any) {
       toast({
         title: t('common.error'),
@@ -310,8 +307,8 @@ const RuangkuPage: React.FC = () => {
                     <div key={message.id} className="flex gap-3">
                       <Avatar className="w-8 h-8 border border-white/20">
                         <AvatarImage 
-                          src={message.profile?.avatar_url} 
-                          alt={message.profile?.full_name}
+                           src={message.profile?.avatar_url || undefined} 
+                           alt={message.profile?.full_name || 'User'}
                         />
                         <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
                           {message.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
@@ -386,8 +383,8 @@ const RuangkuPage: React.FC = () => {
                       >
                         <Avatar className="w-12 h-12 border-2 border-white/20">
                           <AvatarImage 
-                            src={member.profile?.avatar_url} 
-                            alt={member.profile?.full_name}
+                             src={member.profile?.avatar_url || undefined} 
+                             alt={member.profile?.full_name || 'User'}
                           />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-medium">
                             {member.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
@@ -402,7 +399,7 @@ const RuangkuPage: React.FC = () => {
                             {getRoleIcon(member.role)}
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            @{member.profile?.username}
+                            {member.role === 'admin' ? 'Administrator' : 'Member'}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Joined {new Date(member.joined_at).toLocaleDateString()}

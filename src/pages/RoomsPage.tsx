@@ -87,15 +87,15 @@ const RoomsPage: React.FC = () => {
     if (searchQuery.trim()) {
       filtered = filtered.filter(room =>
         room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (room.subject ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (room.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     if (selectedFilters.length > 0) {
       filtered = filtered.filter(room =>
         selectedFilters.some(filter =>
-          room.subject.toLowerCase().includes(filter.toLowerCase()) ||
+          (room.subject ?? '').toLowerCase().includes(filter.toLowerCase()) ||
           room.name.toLowerCase().includes(filter.toLowerCase())
         )
       );
@@ -332,7 +332,7 @@ const RoomsPage: React.FC = () => {
                         {room.name}
                       </h3>
                       <span className="inline-block px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 rounded-xl text-sm font-medium">
-                        {room.subject}
+                        {room.subject ?? 'No subject'}
                       </span>
                     </div>
                     {room.is_public && (
@@ -348,7 +348,7 @@ const RoomsPage: React.FC = () => {
                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        <span>{room.member_count || 0}/{room.max_members}</span>
+                        <span>0/{room.max_members}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />

@@ -28,11 +28,8 @@ const ChatLayout: React.FC = () => {
           <ChatSidebar 
             activeConversation={activeChat ? { 
               id: activeChat.id, 
-              type: activeChat.type === 'friend' ? 'dm' : 'group',
-              name: activeChat.name,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              type: activeChat.type === 'friend' ? 'direct' : 'group',
+              name: activeChat.name
             } : null}
             onConversationSelect={(chat: any) => setActiveChat({
               id: chat.id,

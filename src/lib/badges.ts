@@ -26,3 +26,14 @@ export const getUserBadges = async (_userId: string) => {
 export const checkBadgeEligibility = async (_userId: string) => {
   return [];
 };
+
+// Additional placeholder exports
+export const fetchAllBadges = async (): Promise<Badge[]> => {
+  // TODO: disabled – old schema (badges)
+  return [];
+};
+
+export const fetchProfileBadges = async (_userId: string): Promise<ProfileBadge[]> => {
+  // TODO: disabled – old schema (profiles_badges)
+  return [];
+};

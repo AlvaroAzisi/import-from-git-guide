@@ -38,7 +38,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   isOpen,
   onClose,
   room,
-  onRoomUpdate,
+  onRoomUpdate: _onRoomUpdate,
   onRoomDelete,
   userRole = 'member'
 }) => {
@@ -99,13 +99,13 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // Expected response: { success: boolean, room: Room, error?: string }
       const result = await updateRoom(room.id!, formData);
       
-      if (result.success && result.room) {
+      if (!result.error) {
         toast({
           title: "Room updated",
           description: "Room settings saved successfully.",
         });
         
-        onRoomUpdate?.(result.room);
+        // TODO: Re-enable when updateRoom returns proper data
         onClose();
       } else {
         throw new Error(result.error || 'Failed to update room');
@@ -130,15 +130,12 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // Expected response: { success: boolean, new_code: string, error?: string }
       const result = await regenerateRoomCode(room.id!);
       
-      if (result.success && result.new_code) {
+      if (!result.error) {
         toast({
-          title: "Code regenerated",
-          description: `New invite code: ${result.new_code}`,
+          title: "Code regeneration disabled",
+          description: "This feature is temporarily disabled.",
+          variant: "destructive"
         });
-        
-        // Update room with new code
-        const updatedRoom = { ...room, short_code: result.new_code };
-        onRoomUpdate?.(updatedRoom);
       } else {
         throw new Error(result.error || 'Failed to regenerate code');
       }
@@ -162,7 +159,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // Expected response: { success: boolean, error?: string }
       const result = await softDeleteRoom(room.id!);
       
-      if (result.success) {
+      if (!result.error) {
         toast({
           title: "Room deleted",
           description: "The room has been deleted.",

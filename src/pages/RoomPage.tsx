@@ -9,8 +9,8 @@ import { uploadChatMedia } from '../lib/storage';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/useToast';
 import { RoomSettingsModal } from '../components/modals/RoomSettingsModal';
-import { AdminRoomRequestsPanel } from '../components/AdminRoomRequestsPanel';
-import { RequestToJoinButton } from '../components/RequestToJoinButton';
+import AdminRoomRequestsPanel from '../components/AdminRoomRequestsPanel';
+import RequestToJoinButton from '../components/RequestToJoinButton';
 
 const RoomPage: React.FC = () => {
   const { roomId, code } = useParams<{ roomId?: string; code?: string }>();
@@ -147,18 +147,23 @@ const RoomPage: React.FC = () => {
           filter: `room_id=eq.${actualRoomId}`
         },
         async (payload) => {
-          const newMessage = payload.new as Message;
+          // Safely handle the incoming message payload
+          const incomingMessage = payload.new as any;
           try {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('full_name, avatar_url')
-              .eq('id', newMessage.user_id)
+              .select('id, full_name, avatar_url')
+              .eq('id', incomingMessage.sender_id)
               .single();
-
-            setMessages(prev => [...prev, {
-              ...newMessage,
+            const messageToAdd: Message = {
+              id: incomingMessage.id,
+              room_id: actualRoomId,
+              user_id: incomingMessage.sender_id || '',
+              content: incomingMessage.content,
+              created_at: incomingMessage.created_at,
               profile: profileData || undefined
-            }]);
+            };
+            setMessages(prev => [...prev, messageToAdd]);
           } catch (error) {
             console.error('Error fetching profile for message:', JSON.stringify(error, null, 2));
           }
@@ -466,7 +471,7 @@ const RoomPage: React.FC = () => {
                   <SettingsIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
               )}
-              <AdminRoomRequestsPanel roomId={room.id} isCreator={room.creator_id === user?.id} />
+              <AdminRoomRequestsPanel />
               
               {isMember && room.creator_id !== user?.id && (
                 <button
@@ -597,7 +602,7 @@ const RoomPage: React.FC = () => {
                         {member.profile?.full_name || 'Unknown'}
                       </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
-                        @{member.profile?.username || 'unknown'}
+                        {member.role === 'admin' ? 'Admin' : 'Member'}
                       </p>
                     </div>
                     {member.role === 'admin' && (
