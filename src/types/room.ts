@@ -4,7 +4,7 @@ export interface Room {
   name: string;
   description?: string | null;
   subject?: string | null;
-  creator_id?: string | null;
+  created_by?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   is_active?: boolean;

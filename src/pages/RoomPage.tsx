@@ -462,7 +462,7 @@ const RoomPage: React.FC = () => {
                 <span className="hidden sm:inline">Invite</span>
               </button>
               
-              {(room.creator_id === user?.id) && (
+              {(room.created_by === user?.id) && (
                 <button
                   onClick={() => setSettingsOpen(true)}
                   className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
@@ -473,7 +473,7 @@ const RoomPage: React.FC = () => {
               )}
               <AdminRoomRequestsPanel />
               
-              {isMember && room.creator_id !== user?.id && (
+              {isMember && room.created_by !== user?.id && (
                 <button
                   onClick={handleLeaveRoom}
                   className="px-4 py-2 bg-red-500/20 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-500/30 dark:hover:bg-red-500/20 transition-colors"
@@ -621,7 +621,7 @@ const RoomPage: React.FC = () => {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         room={room}
-        userRole={room.creator_id === user?.id ? 'admin' : 'member'}
+        userRole={room.created_by === user?.id ? 'admin' : 'member'}
         onRoomUpdate={handleRoomUpdate}
         onRoomDelete={handleRoomDelete}
       />

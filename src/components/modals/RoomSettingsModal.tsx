@@ -57,7 +57,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   });
 
   // Check if user is admin
-  const isAdmin = userRole === 'admin' || room.creator_id === user?.id;
+  const isAdmin = userRole === 'admin' || room.created_by === user?.id;
 
   // Reset form when room changes
   useEffect(() => {

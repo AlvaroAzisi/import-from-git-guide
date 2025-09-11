@@ -9,7 +9,6 @@ export interface Room {
   subject: string | null;
   max_members: number | null;
   is_public: boolean | null;
-  creator_id: string | null;
   created_by: string | null;
   is_active: boolean | null;
   created_at: string | null;
@@ -80,7 +79,7 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       .select(
         `
         *,
-        creator:profiles!creator_id(full_name, avatar_url)
+        creator:profiles!created_by(full_name, avatar_url)
       `
       )
       .eq('is_public', true)
@@ -118,7 +117,7 @@ export const getUserRooms = async (userId: string): Promise<Room[]> => {
       .select(`
         room:rooms!room_id(
           *,
-          creator:profiles!creator_id(full_name, avatar_url)
+          creator:profiles!created_by(full_name, avatar_url)
         )
       `)
       .eq('user_id', userId);

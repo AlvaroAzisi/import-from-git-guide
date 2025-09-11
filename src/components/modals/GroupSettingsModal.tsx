@@ -37,7 +37,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
     description: groupDescription,
     subject: 'Group Chat',
     short_code: '', // Groups don't have codes
-    creator_id: '', // Will be checked via userRole prop
+    created_by: '', // Will be checked via userRole prop
     max_members: 50, // Default for groups
     is_public: false
   };
