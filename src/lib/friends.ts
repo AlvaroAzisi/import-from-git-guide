@@ -26,12 +26,13 @@ export const sendFriendRequest = async (targetUserId: string): Promise<boolean> 
       throw new Error('Cannot send friend request to yourself');
     }
 
-    // Check if request already exists  
-    const { data: existing } = await supabase
-      .from('friends')
-      .select('id, status')
-      .or(`and(from_user.eq.${user.id},to_user.eq.${targetUserId}),and(from_user.eq.${targetUserId},to_user.eq.${user.id})`)
-      .single();
+    // Check if request already exists - using separate queries to avoid complex OR
+    const [existingRequest1, existingRequest2] = await Promise.all([
+      supabase.from('friends').select('id, status').eq('from_user', user.id).eq('to_user', targetUserId).maybeSingle(),
+      supabase.from('friends').select('id, status').eq('from_user', targetUserId).eq('to_user', user.id).maybeSingle()
+    ]);
+    
+    const existing = existingRequest1.data || existingRequest2.data;
 
     if (existing) {
       if (existing.status === 'pending') {
@@ -95,23 +96,30 @@ export const getFriends = async (): Promise<UserProfile[]> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    const { data, error } = await supabase
-      .from('friends')
-      .select(`
+    // Get friends using separate queries to avoid complex OR conditions
+    const [friendsAsFrom, friendsAsTo] = await Promise.all([
+      supabase.from('friends').select(`
         to_user,
         from_user,
-        to_profile:profiles!to_user(*),
+        to_profile:profiles!to_user(*)
+      `).eq('from_user', user.id).eq('status', 'accepted'),
+      supabase.from('friends').select(`
+        to_user,
+        from_user,
         from_profile:profiles!from_user(*)
-      `)
-      .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
-      .eq('status', 'accepted');
+      `).eq('to_user', user.id).eq('status', 'accepted')
+    ]);
 
-    if (error) throw error;
+    if (friendsAsFrom.error || friendsAsTo.error) {
+      throw friendsAsFrom.error || friendsAsTo.error;
+    }
 
-    // TODO removed redundant logic - get the friend profile (not current user)
-    const friends = (data || []).map(item => {
-      return item.from_user === user.id ? item.to_profile : item.from_profile;
-    }).filter(Boolean);
+    const data = [
+      ...(friendsAsFrom.data || []).map(item => ({ ...item, friend_profile: item.to_profile })),
+      ...(friendsAsTo.data || []).map(item => ({ ...item, friend_profile: item.from_profile }))
+    ];
+
+    const friends = data.map(item => item.friend_profile).filter(Boolean);
     return friends as unknown as UserProfile[];
   } catch (error) {
     console.error('Get friends error:', error);
@@ -154,12 +162,15 @@ export const removeFriend = async (friendId: string): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { error } = await supabase
-      .from('friends')
-      .delete()
-      .or(`and(from_user.eq.${user.id},to_user.eq.${friendId}),and(from_user.eq.${friendId},to_user.eq.${user.id})`);
+    // Remove friendship using separate queries to avoid complex OR
+    const [delete1, delete2] = await Promise.all([
+      supabase.from('friends').delete().eq('from_user', user.id).eq('to_user', friendId),
+      supabase.from('friends').delete().eq('from_user', friendId).eq('to_user', user.id)
+    ]);
 
-    if (error) throw error;
+    if (delete1.error && delete2.error) {
+      throw delete1.error || delete2.error;
+    }
     return true;
   } catch (error) {
     console.error('Remove friend error:', error);
@@ -173,13 +184,16 @@ export const getFriendshipStatus = async (userId: string): Promise<'none' | 'pen
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id === userId) return 'none';
 
-    const { data, error } = await supabase
-      .from('friends')
-      .select('status')
-      .or(`and(from_user.eq.${user.id},to_user.eq.${userId}),and(from_user.eq.${userId},to_user.eq.${user.id})`)
-      .single();
+    // Check friendship status using separate queries to avoid complex OR
+    const [status1, status2] = await Promise.all([
+      supabase.from('friends').select('status').eq('from_user', user.id).eq('to_user', userId).maybeSingle(),
+      supabase.from('friends').select('status').eq('from_user', userId).eq('to_user', user.id).maybeSingle()
+    ]);
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (status1.error && status1.error.code !== 'PGRST116') throw status1.error;
+    if (status2.error && status2.error.code !== 'PGRST116') throw status2.error;
+
+    const data = status1.data || status2.data;
     return (data?.status as 'none' | 'pending' | 'accepted' | 'blocked') || 'none';
   } catch (error) {
     console.error('Get friendship status error:', error);

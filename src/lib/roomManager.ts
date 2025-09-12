@@ -32,8 +32,8 @@ export class RoomManager {
         const roomData = data[0];
         return {
           success: true,
-        room: roomData.room as any as Room,
-        membership: roomData.membership as any
+          room: roomData.room as any as Room,
+          membership: roomData.membership as any
         };
       }
 
@@ -169,10 +169,11 @@ export class RoomManager {
     error?: string;
   }> {
     try {
+      const user = (await supabase.auth.getUser()).data.user;
       const [roomResult, memberResult, membershipResult] = await Promise.all([
         supabase.from('rooms').select('*').eq('id', roomId).single(),
-        supabase.from('room_members').select('id').eq('room_id', roomId),
-        supabase.from('room_members').select('id').eq('room_id', roomId).eq('user_id', (await supabase.auth.getUser()).data.user?.id || '').single()
+        supabase.from('room_members').select('id,room_id,user_id').eq('room_id', roomId),
+        user ? supabase.from('room_members').select('id,room_id,user_id').eq('room_id', roomId).eq('user_id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null })
       ]);
 
       if (roomResult.error) {
