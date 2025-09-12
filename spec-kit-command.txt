@@ -1,0 +1,25 @@
+1. Install Specify
+Initialize your project depending on the coding agent you're using:
+
+uvx --from git+https://github.com/github/spec-kit.git specify init <PROJECT_NAME>
+
+2. Create the spec
+Use the /specify command to describe what you want to build. Focus on the what and why, not the tech stack.
+
+uvx --from git+https://github.com/github/spec-kit.git specify 
+
+/specify Build an application that can help me organize my photos in separate photo albums. Albums are grouped by date and can be re-organized by dragging and dropping on the main page. Albums are never in other nested albums. Within each album, photos are previewed in a tile-like interface.
+
+3. Create a technical implementation plan
+Use the /plan command to provide your tech stack and architecture choices.
+
+uvx --from git+https://github.com/github/spec-kit.git plan
+
+/plan The application uses Vite with minimal number of libraries. Use vanilla HTML, CSS, and JavaScript as much as possible. Images are not uploaded anywhere and metadata is stored in a local SQLite database.
+
+
+4. Break down and implement
+Use /tasks to create an actionable task list, then ask your agent to implement the feature.
+
+uvx --from git+https://github.com/github/spec-kit.git tasks
+
