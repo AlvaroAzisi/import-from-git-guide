@@ -293,7 +293,6 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
-          creator_id: string | null
           description: string | null
           id: string
           is_active: boolean | null
@@ -308,7 +307,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
-          creator_id?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -323,7 +321,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
-          creator_id?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -343,47 +340,22 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "rooms_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
     }
     Views: {
       popular_rooms: {
         Row: {
-          created_at: string | null
           created_by: string | null
-          creator_avatar: string | null
-          creator_id: string | null
-          creator_name: string | null
           description: string | null
           id: string | null
-          is_active: boolean | null
-          is_public: boolean | null
-          join_code: string | null
-          max_members: number | null
           member_count: number | null
           name: string | null
-          short_code: string | null
-          subject: string | null
-          updated_at: string | null
         }
         Relationships: [
           {
             foreignKeyName: "rooms_created_by_fkey"
             columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "rooms_creator_id_fkey"
-            columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
