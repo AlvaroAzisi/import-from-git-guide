@@ -23,7 +23,7 @@ export const RoomAccessModal: React.FC<RoomAccessModalProps> = ({
   onJoin,
   room,
   memberCount,
-  loading = false
+  loading = false,
 }) => {
   const [isJoining, setIsJoining] = useState(false);
 
@@ -51,7 +51,7 @@ export const RoomAccessModal: React.FC<RoomAccessModalProps> = ({
             className="absolute inset-0"
             onClick={onClose}
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -70,21 +70,23 @@ export const RoomAccessModal: React.FC<RoomAccessModalProps> = ({
               >
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
-              
+
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 
-                               rounded-full flex items-center justify-center mx-auto mb-4">
+                <div
+                  className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 
+                               rounded-full flex items-center justify-center mx-auto mb-4"
+                >
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Join Study Room
                 </h3>
-                
+
                 <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
                   {room.name}
                 </h4>
-                
+
                 {room.subject && (
                   <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-2">
                     {room.subject}
@@ -104,13 +106,13 @@ export const RoomAccessModal: React.FC<RoomAccessModalProps> = ({
               )}
 
               {/* Room Stats */}
-              <div className="flex items-center justify-between p-3 
-                             bg-gray-50/50 dark:bg-gray-800/50 rounded-xl mb-6">
+              <div
+                className="flex items-center justify-between p-3 
+                             bg-gray-50/50 dark:bg-gray-800/50 rounded-xl mb-6"
+              >
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Members
-                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Members</span>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {memberCount} / {room.max_members}
@@ -140,15 +142,10 @@ export const RoomAccessModal: React.FC<RoomAccessModalProps> = ({
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  disabled={isJoining}
-                  className="flex-1"
-                >
+                <Button variant="outline" onClick={onClose} disabled={isJoining} className="flex-1">
                   Cancel
                 </Button>
-                
+
                 <Button
                   onClick={handleJoin}
                   disabled={isJoining || loading}
@@ -157,8 +154,10 @@ export const RoomAccessModal: React.FC<RoomAccessModalProps> = ({
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isJoining ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white 
-                                   rounded-full animate-spin" />
+                    <div
+                      className="w-4 h-4 border-2 border-white/30 border-t-white 
+                                   rounded-full animate-spin"
+                    />
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4 mr-2" />

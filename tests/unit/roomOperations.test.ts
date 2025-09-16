@@ -24,29 +24,29 @@ describe('Room Operations', () => {
   describe('createRoomAndJoin', () => {
     it('should create room and join successfully', async () => {
       const mockSession = {
-        user: { id: 'user-123' }
+        user: { id: 'user-123' },
       };
-      
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       });
 
       const mockResult = {
         success: true,
         room: { id: 'room-123', name: 'Test Room' },
-        membership: { role: 'admin' }
+        membership: { role: 'admin' },
       };
-      
+
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockResult,
-        error: null
+        error: null,
       });
 
       const result = await createRoomAndJoin({
         name: 'Test Room',
         description: 'Test Description',
-        subject: 'Mathematics'
+        subject: 'Mathematics',
       });
 
       expect(result.success).toBe(true);
@@ -56,18 +56,18 @@ describe('Room Operations', () => {
         p_description: 'Test Description',
         p_subject: 'Mathematics',
         p_is_public: true,
-        p_max_members: 10
+        p_max_members: 10,
       });
     });
 
     it('should handle authentication failure', async () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: null },
-        error: null
+        error: null,
       });
 
       const result = await createRoomAndJoin({
-        name: 'Test Room'
+        name: 'Test Room',
       });
 
       expect(result.success).toBe(false);
@@ -77,21 +77,21 @@ describe('Room Operations', () => {
 
     it('should handle RPC errors', async () => {
       const mockSession = {
-        user: { id: 'user-123' }
+        user: { id: 'user-123' },
       };
-      
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       });
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: null,
-        error: { message: 'Room name already exists' }
+        error: { message: 'Room name already exists' },
       });
 
       const result = await createRoomAndJoin({
-        name: 'Duplicate Room'
+        name: 'Duplicate Room',
       });
 
       expect(result.success).toBe(false);
@@ -102,23 +102,23 @@ describe('Room Operations', () => {
   describe('joinRoom', () => {
     it('should join room successfully', async () => {
       const mockSession = {
-        user: { id: 'user-123' }
+        user: { id: 'user-123' },
       };
-      
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       });
 
       const mockResult = {
         success: true,
         code: 'JOINED',
-        room_id: 'room-123'
+        room_id: 'room-123',
       };
-      
+
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockResult,
-        error: null
+        error: null,
       });
 
       const result = await joinRoom('room-123');
@@ -126,29 +126,29 @@ describe('Room Operations', () => {
       expect(result.success).toBe(true);
       expect(result.room_id).toBe('room-123');
       expect(supabase.rpc).toHaveBeenCalledWith('join_room_safe', {
-        p_room_identifier: 'room-123'
+        p_room_identifier: 'room-123',
       });
     });
 
     it('should handle already member case', async () => {
       const mockSession = {
-        user: { id: 'user-123' }
+        user: { id: 'user-123' },
       };
-      
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       });
 
       const mockResult = {
         success: true,
         code: 'ALREADY_MEMBER',
-        room_id: 'room-123'
+        room_id: 'room-123',
       };
-      
+
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockResult,
-        error: null
+        error: null,
       });
 
       const result = await joinRoom('room-123');
@@ -159,23 +159,23 @@ describe('Room Operations', () => {
 
     it('should handle room not found', async () => {
       const mockSession = {
-        user: { id: 'user-123' }
+        user: { id: 'user-123' },
       };
-      
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       });
 
       const mockResult = {
         success: false,
         code: 'ROOM_NOT_FOUND',
-        error: 'Room not found or inactive'
+        error: 'Room not found or inactive',
       };
-      
+
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockResult,
-        error: null
+        error: null,
       });
 
       const result = await joinRoom('invalid-room');
@@ -189,24 +189,24 @@ describe('Room Operations', () => {
   describe('leaveRoom', () => {
     it('should leave room successfully', async () => {
       const mockSession = {
-        user: { id: 'user-123' }
+        user: { id: 'user-123' },
       };
-      
+
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       });
 
       // Mock the delete operation
       const mockDelete = vi.fn().mockResolvedValue({ error: null });
       const mockEq = vi.fn().mockReturnValue({ error: null });
-      
+
       vi.mocked(supabase.from).mockReturnValue({
         delete: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            eq: mockEq
-          })
-        })
+            eq: mockEq,
+          }),
+        }),
       } as any);
 
       const result = await leaveRoom('room-123');

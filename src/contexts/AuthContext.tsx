@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  ReactNode,
-  useRef,
-} from 'react';
+import { createContext, useState, useEffect, useContext, ReactNode, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 // TODO adapted for new Supabase backend
@@ -90,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       try {
         console.log('[Auth] Initializing auth...');
-        
+
         // Set timeout
         timeoutId = setTimeout(() => {
           console.error('[AuthContext] Auth initialization timed out');
@@ -100,7 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Get initial session
         console.time('getSession');
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
         console.timeEnd('getSession');
 
         if (error) throw error;
@@ -115,7 +111,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         clearTimeout(timeoutId);
         setLoading(false);
         console.log('[Auth] Auth initialization complete');
-
       } catch (err: any) {
         console.error('[AuthContext] Init error:', err);
         setUser(null);
@@ -127,33 +122,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('[Auth] Auth state changed:', event);
-        
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth] Auth state changed:', event);
 
-        if (currentUser && event === 'SIGNED_IN') {
-          // Only fetch profile on sign in, not on token refresh
-          setTimeout(() => fetchProfile(currentUser), 0);
-          // Redirect to /home after successful authentication
-          if (['/', '/auth', '/login'].includes(location.pathname)) {
-            navigate('/home', { replace: true });
-          }
-        } else if (!currentUser) {
-          setProfile(null);
-          // Redirect to landing page when logged out
-          if (location.pathname !== '/' && !location.pathname.startsWith('/@')) {
-            navigate('/', { replace: true });
-          }
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser && event === 'SIGNED_IN') {
+        // Only fetch profile on sign in, not on token refresh
+        setTimeout(() => fetchProfile(currentUser), 0);
+        // Redirect to /home after successful authentication
+        if (['/', '/auth', '/login'].includes(location.pathname)) {
+          navigate('/home', { replace: true });
         }
-
-        if (initialized.current) {
-          setLoading(false);
+      } else if (!currentUser) {
+        setProfile(null);
+        // Redirect to landing page when logged out
+        if (location.pathname !== '/' && !location.pathname.startsWith('/@')) {
+          navigate('/', { replace: true });
         }
       }
-    );
+
+      if (initialized.current) {
+        setLoading(false);
+      }
+    });
 
     initAuth();
 

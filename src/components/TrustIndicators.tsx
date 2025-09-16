@@ -34,7 +34,9 @@ const Counter: React.FC<CounterProps> = ({ end, duration, suffix = '', prefix = 
 
   return (
     <span ref={ref}>
-      {prefix}{count.toLocaleString()}{suffix}
+      {prefix}
+      {count.toLocaleString()}
+      {suffix}
     </span>
   );
 };
@@ -46,14 +48,14 @@ const TrustIndicators: React.FC = () => {
       number: 50000,
       suffix: '+',
       label: 'Active Students',
-      color: 'from-blue-500 to-cyan-500'
+      color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: Clock,
       number: 2500000,
       suffix: '+',
       label: 'Study Hours',
-      color: 'from-emerald-500 to-teal-500'
+      color: 'from-emerald-500 to-teal-500',
     },
     {
       icon: Star,
@@ -61,15 +63,15 @@ const TrustIndicators: React.FC = () => {
       prefix: '',
       suffix: '/5',
       label: 'Average Rating',
-      color: 'from-amber-500 to-orange-500'
+      color: 'from-amber-500 to-orange-500',
     },
     {
       icon: Award,
       number: 95,
       suffix: '%',
       label: 'Success Rate',
-      color: 'from-purple-500 to-pink-500'
-    }
+      color: 'from-purple-500 to-pink-500',
+    },
   ];
 
   return (
@@ -101,19 +103,16 @@ const TrustIndicators: React.FC = () => {
               whileHover={{ y: -5 }}
               className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8 text-center group hover:shadow-xl transition-all duration-300"
             >
-              <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
+              >
                 <stat.icon className="w-8 h-8 text-white" />
               </div>
-              
+
               <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-                <Counter
-                  end={stat.number}
-                  duration={2}
-                  suffix={stat.suffix}
-                  prefix={stat.prefix}
-                />
+                <Counter end={stat.number} duration={2} suffix={stat.suffix} prefix={stat.prefix} />
               </div>
-              
+
               <p className="text-gray-600 font-medium">{stat.label}</p>
             </motion.div>
           ))}
@@ -130,7 +129,7 @@ const TrustIndicators: React.FC = () => {
           <p className="text-gray-500 mb-8 text-sm uppercase tracking-wide font-medium">
             Trusted at Top Universities
           </p>
-          
+
           <div className="backdrop-blur-sm bg-white/20 rounded-2xl border border-white/20 p-6 inline-block">
             <div className="flex items-center gap-8 text-gray-400">
               <div className="font-bold text-lg">Harvard</div>

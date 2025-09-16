@@ -10,7 +10,7 @@ import Sidebar from '../components/Sidebar';
 
 /**
  * AppLayout - Global layout wrapper with persistent sidebar
- * 
+ *
  * Manual test steps:
  * 1. Navigate between pages - sidebar should persist
  * 2. Minimize sidebar - state should persist on reload
@@ -36,7 +36,7 @@ export const AppLayout: React.FC = () => {
       if (result.success) {
         toast({
           title: 'Room Created!',
-          description: `Welcome to ${roomData.name}!`
+          description: `Welcome to ${roomData.name}!`,
         });
         setCreateRoomOpen(false);
         // Navigation is handled by useRoomOperations hook
@@ -46,14 +46,13 @@ export const AppLayout: React.FC = () => {
     }
   };
 
-
   const handleLeftEdgeEnter = () => {
     if (isOpen) return; // Don't trigger if already open
-    
+
     const timeout = setTimeout(() => {
       openSidebar();
     }, 150); // 150ms delay to prevent accidental triggers
-    
+
     setLeftEdgeHoverTimeout(timeout);
   };
 
@@ -68,7 +67,7 @@ export const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Top Bar */}
       <TopBar onMenuClick={toggleSidebar} />
-      
+
       <div className="flex">
         {/* Sidebar Toggle - Only show when sidebar is closed */}
         {!isOpen && (
@@ -80,7 +79,7 @@ export const AppLayout: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
           </button>
         )}
-        
+
         {/* Left-edge hot area for hover reveal */}
         {!isOpen && (
           <div
@@ -90,9 +89,9 @@ export const AppLayout: React.FC = () => {
             aria-hidden="true"
           />
         )}
-        
+
         {/* Persistent Sidebar */}
-        <Sidebar 
+        <Sidebar
           isOpen={isOpen}
           onClose={closeSidebar}
           onCreateRoom={handleCreateRoom}
@@ -101,20 +100,18 @@ export const AppLayout: React.FC = () => {
         />
 
         {/* Main Content with smooth recentering */}
-        <main className={`flex-1 transition-all duration-300 ease-in-out ${
-          isOpen 
-            ? isMinimized 
-              ? 'lg:ml-20' 
-              : 'lg:ml-80'
-            : 'ml-0 max-w-7xl mx-auto'
-        }`}>
+        <main
+          className={`flex-1 transition-all duration-300 ease-in-out ${
+            isOpen ? (isMinimized ? 'lg:ml-20' : 'lg:ml-80') : 'ml-0 max-w-7xl mx-auto'
+          }`}
+        >
           <Outlet />
         </main>
       </div>
 
       {/* Overlay for mobile when sidebar is open */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-35 lg:hidden"
           onClick={closeSidebar}
         />

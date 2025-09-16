@@ -27,12 +27,11 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
   minimized = false,
   variant = 'default',
   onFocus,
-  onBlur
+  onBlur,
 }) => {
-
   const handleClick = async () => {
     if (isLoading) return; // Prevent clicks while loading
-    
+
     // Handle special cases
     if (path === '/signout') {
       try {
@@ -42,7 +41,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
       }
       return;
     }
-    
+
     onClick?.();
   };
 
@@ -98,9 +97,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
-            {button}
-          </TooltipTrigger>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
           <TooltipContent side="right" className="z-50">
             <div className="rounded-lg px-3 py-2 bg-popover text-popover-foreground shadow-lg">
               {label}

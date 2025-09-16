@@ -9,9 +9,7 @@ interface TopBarProps {
   onMenuClick: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ 
-  onMenuClick,
-}) => {
+const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
 
@@ -28,14 +26,13 @@ const TopBar: React.FC<TopBarProps> = ({
           >
             <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </motion.button>
-          
         </div>
 
         {/* Right side - Controls */}
         <div className="flex items-center gap-3">
           {/* Notification Bell */}
           <NotificationBell />
-          
+
           {/* Language Toggle */}
           <div className="flex items-center gap-1 backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 rounded-xl p-1">
             <motion.button

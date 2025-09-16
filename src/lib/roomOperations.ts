@@ -11,14 +11,14 @@ export const useRoomOperations = () => {
         p_description: payload.description || '',
         p_subject: payload.subject || '',
         p_is_public: payload.is_public ?? true,
-        p_max_members: payload.max_members || 10
+        p_max_members: payload.max_members || 10,
       });
 
       if (error) {
         return {
           success: false,
           error: error.message,
-          code: 'GENERAL_ERROR'
+          code: 'GENERAL_ERROR',
         };
       }
 
@@ -27,20 +27,20 @@ export const useRoomOperations = () => {
         return {
           success: true,
           room: roomData.room as any,
-          membership: roomData.membership as any
+          membership: roomData.membership as any,
         };
       }
 
       return {
         success: false,
         error: 'Failed to create room',
-        code: 'GENERAL_ERROR'
+        code: 'GENERAL_ERROR',
       };
     } catch (error: any) {
       return {
         success: false,
         error: error.message,
-        code: 'GENERAL_ERROR'
+        code: 'GENERAL_ERROR',
       };
     }
   };
@@ -48,32 +48,32 @@ export const useRoomOperations = () => {
   const joinRoom = async (roomCode: string): Promise<JoinRoomResponse> => {
     try {
       const { data, error } = await supabase.rpc('join_room_safe', {
-        p_room_identifier: roomCode
+        p_room_identifier: roomCode,
       });
 
       if (error) {
         return {
           success: false,
           error: error.message,
-          code: 'GENERAL_ERROR'
+          code: 'GENERAL_ERROR',
         };
       }
 
       return {
         success: true,
-        membership: data as any
+        membership: data as any,
       };
     } catch (error: any) {
       return {
         success: false,
         error: error.message,
-        code: 'GENERAL_ERROR'
+        code: 'GENERAL_ERROR',
       };
     }
   };
 
   return {
     createAndJoinRoom,
-    joinRoom
+    joinRoom,
   };
 };

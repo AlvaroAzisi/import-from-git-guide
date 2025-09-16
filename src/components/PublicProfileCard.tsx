@@ -10,9 +10,20 @@ interface PublicProfileCardProps {
   streak: number;
 }
 
-export const PublicProfileCard: React.FC<PublicProfileCardProps> = ({ full_name, username, avatar_url, xp, streak }) => {
+export const PublicProfileCard: React.FC<PublicProfileCardProps> = ({
+  full_name,
+  username,
+  avatar_url,
+  xp,
+  streak,
+}) => {
   const currentLevel = Math.floor(xp / 1000) + 1;
-  const initials = full_name?.split(' ').map((n) => n[0]).join('').toUpperCase() || 'U';
+  const initials =
+    full_name
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase() || 'U';
 
   return (
     <article className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 mb-8">
@@ -30,7 +41,9 @@ export const PublicProfileCard: React.FC<PublicProfileCardProps> = ({ full_name,
             {streak > 0 && (
               <div className="flex items-center gap-1 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-1 rounded-full">
                 <Award className="w-4 h-4 text-orange-500" />
-                <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">{streak} day streak</span>
+                <span className="text-orange-600 dark:text-orange-400 text-sm font-medium">
+                  {streak} day streak
+                </span>
               </div>
             )}
           </div>

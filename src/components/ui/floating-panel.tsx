@@ -1,7 +1,7 @@
-import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
-import { cn } from "../../lib/utils";
+import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export interface FloatingPanelProps {
   isOpen: boolean;
@@ -19,13 +19,13 @@ const sizeClasses = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-lg',
-  xl: 'max-w-xl'
+  xl: 'max-w-xl',
 };
 
 const positionClasses = {
   center: 'items-center justify-center',
   right: 'items-center justify-end pr-4',
-  left: 'items-center justify-start pl-4'
+  left: 'items-center justify-start pl-4',
 };
 
 export const FloatingPanel: React.FC<FloatingPanelProps> = ({
@@ -37,7 +37,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
   size = 'md',
   position = 'center',
   showCloseButton = true,
-  closeOnBackdrop = true
+  closeOnBackdrop = true,
 }) => {
   return (
     <AnimatePresence>
@@ -58,25 +58,22 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            transition={{ 
+            transition={{
               duration: 0.22,
-              ease: [0.22, 0.9, 0.26, 1] // Custom easing for smooth feel
+              ease: [0.22, 0.9, 0.26, 1], // Custom easing for smooth feel
             }}
-            className={cn(
-              "fixed inset-0 z-50 flex p-4",
-              positionClasses[position]
-            )}
+            className={cn('fixed inset-0 z-50 flex p-4', positionClasses[position])}
           >
-            <div className={cn(
-              "w-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-2xl overflow-hidden",
-              sizeClasses[size],
-              className
-            )}>
+            <div
+              className={cn(
+                'w-full backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-2xl overflow-hidden',
+                sizeClasses[size],
+                className
+              )}
+            >
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/20 dark:border-gray-700/20">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                  {title}
-                </h2>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">{title}</h2>
                 {showCloseButton && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -90,9 +87,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
               </div>
 
               {/* Content */}
-              <div className="p-6">
-                {children}
-              </div>
+              <div className="p-6">{children}</div>
             </div>
           </motion.div>
         </>

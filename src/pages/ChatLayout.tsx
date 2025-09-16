@@ -25,17 +25,23 @@ const ChatLayout: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
         <aside className="col-span-12 md:col-span-4 lg:col-span-3">
-          <ChatSidebar 
-            activeConversation={activeChat ? { 
-              id: activeChat.id, 
-              type: activeChat.type === 'friend' ? 'direct' : 'group',
-              name: activeChat.name
-            } : null}
-            onConversationSelect={(chat: any) => setActiveChat({
-              id: chat.id,
-              type: chat.type === 'dm' ? 'friend' : 'group',
-              name: chat.name || chat.other_user?.full_name || 'Unknown'
-            })} 
+          <ChatSidebar
+            activeConversation={
+              activeChat
+                ? {
+                    id: activeChat.id,
+                    type: activeChat.type === 'friend' ? 'direct' : 'group',
+                    name: activeChat.name,
+                  }
+                : null
+            }
+            onConversationSelect={(chat: any) =>
+              setActiveChat({
+                id: chat.id,
+                type: chat.type === 'dm' ? 'friend' : 'group',
+                name: chat.name || chat.other_user?.full_name || 'Unknown',
+              })
+            }
             minimized={false}
             onToggleMinimized={() => {}}
           />
@@ -43,14 +49,14 @@ const ChatLayout: React.FC = () => {
 
         <main className="col-span-12 md:col-span-8 lg:col-span-9">
           {activeChat ? (
-            <ChatWindow 
-              conversation={{ 
-                id: activeChat.id, 
+            <ChatWindow
+              conversation={{
+                id: activeChat.id,
                 type: activeChat.type === 'friend' ? 'dm' : 'group',
                 name: activeChat.name,
                 is_active: true,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
               }}
               onBack={() => setActiveChat(null)}
               onToggleInfo={() => {}}

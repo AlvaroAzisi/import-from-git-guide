@@ -20,7 +20,7 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
   roomName,
   variant = 'default',
   onLeave,
-  className = ''
+  className = '',
 }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,9 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
@@ -40,12 +42,12 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
         .delete()
         .eq('room_id', roomId)
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
+
       toast({
         title: 'Left room successfully',
-        description: `You have left ${roomName || 'the room'}.`
+        description: `You have left ${roomName || 'the room'}.`,
       });
 
       if (onLeave) {
@@ -58,7 +60,7 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
       toast({
         title: 'Error leaving room',
         description: error.message || 'Failed to leave room. Please try again.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -67,8 +69,8 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
   };
 
   const getButtonStyles = () => {
-    const baseStyles = "inline-flex items-center gap-2 transition-all duration-200";
-    
+    const baseStyles = 'inline-flex items-center gap-2 transition-all duration-200';
+
     switch (variant) {
       case 'minimal':
         return `${baseStyles} px-3 py-2 text-sm text-red-600 dark:text-red-400 
@@ -85,11 +87,7 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
 
   return (
     <>
-      <button
-        onClick={() => setShowConfirm(true)}
-        disabled={loading}
-        className={getButtonStyles()}
-      >
+      <button onClick={() => setShowConfirm(true)} disabled={loading} className={getButtonStyles()}>
         <UserMinus className="w-4 h-4" />
         {variant === 'minimal' ? 'Leave' : 'Leave Room'}
       </button>
@@ -104,7 +102,7 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
               className="absolute inset-0"
               onClick={() => setShowConfirm(false)}
             />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -114,8 +112,10 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
                          shadow-2xl p-6"
             >
               <div className="text-center">
-                <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full 
-                               flex items-center justify-center mx-auto mb-4">
+                <div
+                  className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full 
+                               flex items-center justify-center mx-auto mb-4"
+                >
                   <AlertTriangle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
                 </div>
 
@@ -124,14 +124,16 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
                 </h3>
 
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Are you sure you want to leave 
+                  Are you sure you want to leave
                   {roomName ? (
                     <span className="font-medium text-gray-900 dark:text-gray-100">
-                      {' '}{roomName}
+                      {' '}
+                      {roomName}
                     </span>
                   ) : (
                     ' this room'
-                  )}? You'll need to be re-invited or find the room again to rejoin.
+                  )}
+                  ? You'll need to be re-invited or find the room again to rejoin.
                 </p>
 
                 <div className="flex gap-3">
@@ -143,7 +145,7 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
                   >
                     Cancel
                   </Button>
-                  
+
                   <Button
                     onClick={handleLeaveRoom}
                     disabled={loading}
@@ -152,8 +154,10 @@ export const LeaveRoomButton: React.FC<LeaveRoomButtonProps> = ({
                              disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white 
-                                     rounded-full animate-spin" />
+                      <div
+                        className="w-4 h-4 border-2 border-white/30 border-t-white 
+                                     rounded-full animate-spin"
+                      />
                     ) : (
                       <>
                         <UserMinus className="w-4 h-4 mr-2" />

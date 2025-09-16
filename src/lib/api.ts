@@ -40,14 +40,16 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   try {
     const { data, error } = await supabase
       .from('room_members')
-      .select(`
+      .select(
+        `
         *,
         profile:profiles!user_id(
           full_name,
           avatar_url,
           username
         )
-      `)
+      `
+      )
       .eq('room_id', roomId)
       .order('joined_at', { ascending: true });
 
@@ -61,8 +63,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
 
 export const getRoomMemberCount = async (roomId: string): Promise<number> => {
   try {
-    const { data, error } = await supabase
-      .rpc('get_room_member_count', { p_room_id: roomId });
+    const { data, error } = await supabase.rpc('get_room_member_count', { p_room_id: roomId });
     if (error) throw error;
     return data || 0;
   } catch (error) {
@@ -114,17 +115,19 @@ export const getUserRooms = async (userId: string): Promise<Room[]> => {
   try {
     const { data: memberData, error } = await supabase
       .from('room_members')
-      .select(`
+      .select(
+        `
         room:rooms!room_id(
           *,
           creator:profiles!created_by(full_name, avatar_url)
         )
-      `)
+      `
+      )
       .eq('user_id', userId);
 
     if (error) throw error;
 
-    const rooms = (memberData || []).map(item => item.room).filter(Boolean);
+    const rooms = (memberData || []).map((item) => item.room).filter(Boolean);
     return rooms as Room[];
   } catch (error) {
     console.error('Get user rooms error:', error);
@@ -135,26 +138,32 @@ export const getUserRooms = async (userId: string): Promise<Room[]> => {
 // TODO adapted for new Supabase backend - simplified friends fetching
 export const getFriends = async (): Promise<UserProfile[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
       .from('friends')
-      .select(`
+      .select(
+        `
         to_user,
         from_user,
         to_profile:profiles!to_user(*),
         from_profile:profiles!from_user(*)
-      `)
+      `
+      )
       .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
       .eq('status', 'accepted');
 
     if (error) throw error;
 
     // TODO removed redundant logic - get the friend profile (not current user)
-    return (data || []).map(item => {
-      return item.from_user === user.id ? item.to_profile : item.from_profile;
-    }).filter(Boolean) as UserProfile[];
+    return (data || [])
+      .map((item) => {
+        return item.from_user === user.id ? item.to_profile : item.from_profile;
+      })
+      .filter(Boolean) as UserProfile[];
   } catch (error) {
     console.error('Get friends error:', error);
     return [];

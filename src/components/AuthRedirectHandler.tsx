@@ -23,13 +23,13 @@ export const AuthRedirectHandler: React.FC = () => {
       try {
         if (!profile) {
           console.log('[AuthRedirectHandler] Profile not found, creating/updating...');
-          
+
           const profileResult = await createOrUpdateProfile(user);
-          
+
           if (!profileResult.data) {
             throw new Error(profileResult.error || 'Failed to create profile');
           }
-          
+
           console.log('[AuthRedirectHandler] Profile created/updated successfully');
         }
 
@@ -38,13 +38,12 @@ export const AuthRedirectHandler: React.FC = () => {
           console.log('[AuthRedirectHandler] Redirecting to /home');
           navigate(ROUTES.HOME, { replace: true });
         }
-        
       } catch (error: any) {
         console.error('[AuthRedirectHandler] Profile creation failed:', error);
         toast({
           title: 'Profile Setup Failed',
           description: error.message || 'Unable to set up your profile. Please try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     };

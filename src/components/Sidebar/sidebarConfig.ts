@@ -1,12 +1,4 @@
-import { 
-  Home, 
-  Users, 
-  BookOpen, 
-  User, 
-  Settings,
-  LogOut,
-  MessageCircle
-} from 'lucide-react';
+import { Home, Users, BookOpen, User, Settings, LogOut, MessageCircle } from 'lucide-react';
 
 export const sidebarMenuItems = [
   { icon: Home, label: 'Home', path: '/home' },

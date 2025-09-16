@@ -1,10 +1,10 @@
 // src/components/JoinRoomModal.tsx
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 // relative path to your supabase client
 // TODO adapted for new Supabase backend
-import { supabase } from "../integrations/supabase/client";
+import { supabase } from '../integrations/supabase/client';
 
 type Props = {
   isOpen: boolean;
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function JoinRoomModal({ isOpen, onClose }: Props) {
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (!isOpen) {
-      setCode("");
+      setCode('');
       setError(null);
       setSuccess(null);
       setLoading(false);
@@ -36,7 +36,7 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
 
     const roomCode = normalize(code);
     if (!roomCode) {
-      setError("Please enter a room code.");
+      setError('Please enter a room code.');
       return;
     }
 
@@ -45,14 +45,14 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
     try {
       // 1) Find the room with this code
       const { data: roomsData, error: roomErr } = await supabase
-        .from("rooms")
-        .select("id, title")
-        .eq("join_code", roomCode)
+        .from('rooms')
+        .select('id, title')
+        .eq('join_code', roomCode)
         .maybeSingle();
 
       if (roomErr) throw roomErr;
       if (!roomsData) {
-        setError("Room not found. Please check the code.");
+        setError('Room not found. Please check the code.');
         setLoading(false);
         return;
       }
@@ -73,33 +73,33 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
       }
 
       if (!userId) {
-        setError("Unable to determine user. Please login and try again.");
+        setError('Unable to determine user. Please login and try again.');
         setLoading(false);
         return;
       }
 
       // 3) Ensure not already a member
       const { data: existing, error: existingErr } = await supabase
-        .from("room_members")
-        .select("id")
-        .eq("room_id", roomId)
-        .eq("profile_id", userId)
+        .from('room_members')
+        .select('id')
+        .eq('room_id', roomId)
+        .eq('profile_id', userId)
         .limit(1)
         .maybeSingle();
 
       if (existingErr) throw existingErr;
 
       if (!existing) {
-        const { error: insertErr } = await supabase.from("room_members").insert({
+        const { error: insertErr } = await supabase.from('room_members').insert({
           room_id: roomId,
           profile_id: userId,
-          role: "member",
+          role: 'member',
           joined_at: new Date().toISOString(),
         });
         if (insertErr) throw insertErr;
       }
 
-      setSuccess(`Joined "${(roomsData as any).title ?? "room"}". Redirecting...`);
+      setSuccess(`Joined "${(roomsData as any).title ?? 'room'}". Redirecting...`);
       setLoading(false);
 
       // small delay so user sees success then navigate
@@ -108,8 +108,8 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
         navigate(`/room/${roomId}`);
       }, 550);
     } catch (err: any) {
-      console.error("JoinRoomModal error:", err);
-      setError(err?.message ?? "Unexpected error. Try again.");
+      console.error('JoinRoomModal error:', err);
+      setError(err?.message ?? 'Unexpected error. Try again.');
       setLoading(false);
     }
   };
@@ -201,7 +201,7 @@ export default function JoinRoomModal({ isOpen, onClose }: Props) {
                       />
                     </svg>
                   ) : null}
-                  <span>{loading ? "Joining..." : "Join"}</span>
+                  <span>{loading ? 'Joining...' : 'Join'}</span>
                 </button>
               </div>
             </form>

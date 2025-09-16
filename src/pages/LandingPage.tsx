@@ -33,17 +33,17 @@ const LandingPage: React.FC = () => {
       <FAQ />
       <FinalCTA onAuthClick={() => setIsAuthOpen(true)} />
       <Footer />
-      
+
       {/* Floating Auth Button */}
       <FloatingAuthButton onClick={() => setIsAuthOpen(true)} />
-      
+
       {/* Auth Panel */}
-      <AuthPanel 
+      <AuthPanel
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onSuccess={handleAuthSuccess}
       />
-      
+
       {/* Success Toast */}
       <SuccessToast
         isVisible={showSuccessToast}

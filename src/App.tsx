@@ -41,23 +41,9 @@ function App() {
 
       <Routes>
         {/* Landing: if already signed in, send to /home */}
-        <Route
-          path="/"
-          element={
-            user
-              ? <Navigate to="/home" replace />
-              : <LandingPage />
-          }
-        />
+        <Route path="/" element={user ? <Navigate to="/home" replace /> : <LandingPage />} />
 
-        <Route
-          path="/login"
-          element={
-            user
-              ? <Navigate to="/home" replace />
-              : <LoginPage />
-          }
-        />
+        <Route path="/login" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
 
         {/* Protected screens */}
         <Route
@@ -82,19 +68,12 @@ function App() {
         </Route>
 
         {/* Public profile pages */}
-        <Route
-          path="/@:username"
-          element={<PublicProfilePage />}
-        />
+        <Route path="/@:username" element={<PublicProfilePage />} />
 
         {/* Catch-all: if signed in, go home; otherwise go landing */}
         <Route
           path="*"
-          element={
-            user
-              ? <Navigate to="/home" replace />
-              : <Navigate to="/" replace />
-          }
+          element={user ? <Navigate to="/home" replace /> : <Navigate to="/" replace />}
         />
       </Routes>
     </>

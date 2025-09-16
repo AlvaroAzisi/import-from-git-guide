@@ -23,7 +23,7 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
   roomData,
   roomIdOrCode,
   onSuccess,
-  onError
+  onError,
 }) => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -48,10 +48,10 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
       if (result.success && result.room) {
         setStatus('success');
         setMessage('Room created successfully!');
-        
+
         toast({
           title: 'Room Created',
-          description: `Welcome to ${result.room.name}!`
+          description: `Welcome to ${result.room.name}!`,
         });
 
         // Navigate to room
@@ -59,20 +59,18 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
           navigateToRoom(result.room!.id);
           onSuccess?.(result.room!.id);
         }, 1000);
-
       } else {
         throw new Error(result.error || 'Failed to create room');
       }
-
     } catch (error: any) {
       console.error('Create room error:', error);
       setStatus('error');
       setMessage(error.message || 'Failed to create room');
-      
+
       toast({
         title: 'Creation Failed',
         description: error.message || 'Failed to create room',
-        variant: 'destructive'
+        variant: 'destructive',
       });
 
       onError?.(error.message);
@@ -98,19 +96,19 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
       if (result.success && result.room) {
         if (result.code === 'ALREADY_MEMBER') {
           setStatus('success');
-          setMessage('You\'re already a member of this room!');
-          
+          setMessage("You're already a member of this room!");
+
           toast({
             title: 'Already Joined',
-            description: `Welcome back to ${result.room.name}!`
+            description: `Welcome back to ${result.room.name}!`,
           });
         } else {
           setStatus('success');
           setMessage('Successfully joined room!');
-          
+
           toast({
             title: 'Joined Room',
-            description: `Welcome to ${result.room.name}!`
+            description: `Welcome to ${result.room.name}!`,
           });
         }
 
@@ -119,11 +117,10 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
           navigateToRoom(result.room!.id);
           onSuccess?.(result.room!.id);
         }, 1000);
-
       } else {
         // Handle different error codes with user-friendly messages
         let userMessage = result.error || 'Failed to join room';
-        
+
         switch (result.code) {
           case 'ROOM_NOT_FOUND':
             userMessage = 'Room not found. Please check the room code and try again.';
@@ -138,25 +135,24 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
 
         setStatus('error');
         setMessage(userMessage);
-        
+
         toast({
           title: 'Cannot Join Room',
           description: userMessage,
-          variant: 'destructive'
+          variant: 'destructive',
         });
 
         onError?.(userMessage);
       }
-
     } catch (error: any) {
       console.error('Join room error:', error);
       setStatus('error');
       setMessage(error.message || 'Failed to join room');
-      
+
       toast({
         title: 'Join Failed',
         description: error.message || 'Failed to join room',
-        variant: 'destructive'
+        variant: 'destructive',
       });
 
       onError?.(error.message);
@@ -210,13 +206,9 @@ export const JoinRoomFlow: React.FC<JoinRoomFlowProps> = ({
         >
           {getStatusIcon()}
           <div>
-            <p className="font-medium text-gray-800">
-              {message}
-            </p>
+            <p className="font-medium text-gray-800">{message}</p>
             {status === 'processing' && (
-              <p className="text-sm text-gray-600 mt-1">
-                Please wait, this may take a moment...
-              </p>
+              <p className="text-sm text-gray-600 mt-1">Please wait, this may take a moment...</p>
             )}
           </div>
         </motion.div>

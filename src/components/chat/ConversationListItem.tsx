@@ -7,7 +7,12 @@ interface ConversationListItemProps {
   onClick: () => void;
 }
 
-const ConversationListItem: React.FC<ConversationListItemProps> = ({ id, title, active, onClick }) => {
+const ConversationListItem: React.FC<ConversationListItemProps> = ({
+  id,
+  title,
+  active,
+  onClick,
+}) => {
   return (
     <button
       key={id}

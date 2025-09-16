@@ -24,17 +24,17 @@ const FinalCTA: React.FC<FinalCTAProps> = ({ onAuthClick }) => {
           <div className="absolute inset-0 opacity-20">
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               className="absolute top-10 right-10 w-20 h-20 border-2 border-blue-300 rounded-full"
             />
             <motion.div
               animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="absolute bottom-10 left-10 w-16 h-16 bg-gradient-to-br from-emerald-300 to-teal-300 rounded-full blur-sm"
             />
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               className="absolute top-1/2 left-1/4 w-8 h-8 bg-amber-300 rounded-full opacity-60"
             />
           </div>
@@ -64,12 +64,13 @@ const FinalCTA: React.FC<FinalCTAProps> = ({ onAuthClick }) => {
             </h2>
 
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Join over 50,000 students who've already discovered the power of collaborative learning with Kupintar.
+              Join over 50,000 students who've already discovered the power of collaborative
+              learning with Kupintar.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-8">
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)" }}
+                whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(59, 130, 246, 0.3)' }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onAuthClick}
                 className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center gap-3 group"
@@ -78,7 +79,7 @@ const FinalCTA: React.FC<FinalCTAProps> = ({ onAuthClick }) => {
                 {user ? 'Find Study Buddies Now' : 'Start Finding Study Buddies'}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </motion.button>
-              
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 className="text-gray-600 hover:text-blue-500 font-medium flex items-center gap-2 transition-colors px-4 py-2"
@@ -105,11 +106,9 @@ const FinalCTA: React.FC<FinalCTAProps> = ({ onAuthClick }) => {
             </div>
 
             <p className="text-gray-500 text-sm mt-6">
-              {user ? (
-                'Your perfect study partner is just a click away!'
-              ) : (
-                'No credit card required • Join in seconds • Start studying better today'
-              )}
+              {user
+                ? 'Your perfect study partner is just a click away!'
+                : 'No credit card required • Join in seconds • Start studying better today'}
             </p>
           </motion.div>
         </motion.div>

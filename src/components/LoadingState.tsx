@@ -9,13 +9,13 @@ interface LoadingStateProps {
 const sizeClasses = {
   sm: 'w-4 h-4',
   md: 'w-8 h-8',
-  lg: 'w-12 h-12'
+  lg: 'w-12 h-12',
 };
 
-export const LoadingState = ({ 
-  message = 'Loading...', 
+export const LoadingState = ({
+  message = 'Loading...',
   className = '',
-  size = 'md'
+  size = 'md',
 }: LoadingStateProps) => {
   return (
     <div className={`flex flex-col items-center justify-center p-4 ${className}`}>

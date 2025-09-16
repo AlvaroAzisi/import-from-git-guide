@@ -9,20 +9,20 @@
 
 ## ✨ Features
 
-*   **👥 Smart Study Partner Matching:** Find the perfect study buddy based on your learning preferences and goals.
-*   **🚪 Virtual Study Rooms:** Create, join, and manage public or private study rooms.
-*   **👤 User Authentication & Profiles:** Secure sign-up and login, with customizable user profiles.
-*   **👫 Friend Management:** Add and manage your friends within the platform.
-*   **🔔 Real-time Notifications:** Stay updated with real-time notifications for room invites and friend requests.
-*   **🌐 Public User Profiles:** Share your profile and achievements with others.
+- **👥 Smart Study Partner Matching:** Find the perfect study buddy based on your learning preferences and goals.
+- **🚪 Virtual Study Rooms:** Create, join, and manage public or private study rooms.
+- **👤 User Authentication & Profiles:** Secure sign-up and login, with customizable user profiles.
+- **👫 Friend Management:** Add and manage your friends within the platform.
+- **🔔 Real-time Notifications:** Stay updated with real-time notifications for room invites and friend requests.
+- **🌐 Public User Profiles:** Share your profile and achievements with others.
 
 ## 🛠️ Tech Stack
 
-*   **Frontend:** [React](https://reactjs.org/), [Vite](https://vitejs.dev/), [TypeScript](https://www.typescriptlang.org/)
-*   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-*   **Backend & Database:** [Supabase](https://supabase.io/)
-*   **Routing:** [React Router](https://reactrouter.com/)
-*   **UI Components:** [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/guide/packages/lucide-react)
+- **Frontend:** [React](https://reactjs.org/), [Vite](https://vitejs.dev/), [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Backend & Database:** [Supabase](https://supabase.io/)
+- **Routing:** [React Router](https://reactrouter.com/)
+- **UI Components:** [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/guide/packages/lucide-react)
 
 ## 🚀 Getting Started
 
@@ -30,8 +30,8 @@ To get a local copy up and running, follow these simple steps.
 
 ### Prerequisites
 
-*   Node.js (v18 or higher)
-*   npm
+- Node.js (v18 or higher)
+- npm
 
 ### Installation
 

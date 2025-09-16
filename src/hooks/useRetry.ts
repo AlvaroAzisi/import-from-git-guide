@@ -15,12 +15,7 @@ interface RetryState {
 
 export function useRetry<T>(
   operation: () => Promise<T>,
-  {
-    maxAttempts = 3,
-    initialDelay = 1000,
-    maxDelay = 10000,
-    backoffFactor = 2,
-  }: RetryConfig = {}
+  { maxAttempts = 3, initialDelay = 1000, maxDelay = 10000, backoffFactor = 2 }: RetryConfig = {}
 ) {
   const [state, setState] = useState<RetryState>({
     attempt: 0,
@@ -34,7 +29,7 @@ export function useRetry<T>(
   };
 
   const execute = useCallback(async (): Promise<T | null> => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
@@ -43,7 +38,7 @@ export function useRetry<T>(
         return result;
       } catch (error) {
         console.error(`Attempt ${attempt + 1} failed:`, error);
-        
+
         if (attempt === maxAttempts - 1) {
           setState({
             attempt: attempt + 1,
@@ -53,8 +48,8 @@ export function useRetry<T>(
           return null;
         }
 
-        setState(prev => ({ ...prev, attempt: attempt + 1 }));
-        await new Promise(resolve => setTimeout(resolve, calculateDelay(attempt)));
+        setState((prev) => ({ ...prev, attempt: attempt + 1 }));
+        await new Promise((resolve) => setTimeout(resolve, calculateDelay(attempt)));
       }
     }
 

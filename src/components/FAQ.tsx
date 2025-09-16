@@ -6,46 +6,52 @@ const FAQ: React.FC = () => {
   const [openItems, setOpenItems] = React.useState<number[]>([]);
 
   const toggleItem = (index: number) => {
-    setOpenItems(prev => 
-      prev.includes(index)
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
+    setOpenItems((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
 
   const faqItems = [
     {
       question: 'How does the AI matching work?',
-      answer: 'Our AI analyzes your learning style, schedule, subject preferences, study goals, and location to find compatible study partners. It considers factors like your preferred study times, learning pace, and study methods to ensure high-quality matches.'
+      answer:
+        'Our AI analyzes your learning style, schedule, subject preferences, study goals, and location to find compatible study partners. It considers factors like your preferred study times, learning pace, and study methods to ensure high-quality matches.',
     },
     {
       question: 'Is Kupintar free to use?',
-      answer: 'Yes! Kupintar is completely free for basic features including profile creation, AI matching, and messaging. We offer premium features like advanced scheduling tools and priority matching for students who want additional functionality.'
+      answer:
+        'Yes! Kupintar is completely free for basic features including profile creation, AI matching, and messaging. We offer premium features like advanced scheduling tools and priority matching for students who want additional functionality.',
     },
     {
       question: 'How do I know if someone is a legitimate student?',
-      answer: 'All users go through a verification process using their student email addresses. We also have a rating and review system where users can rate their study sessions, helping maintain a trustworthy community of serious learners.'
+      answer:
+        'All users go through a verification process using their student email addresses. We also have a rating and review system where users can rate their study sessions, helping maintain a trustworthy community of serious learners.',
     },
     {
       question: 'Can I study with people from different schools?',
-      answer: 'Absolutely! While we can match you with students from your own institution, you can also connect with students from other schools who are studying similar subjects or preparing for similar exams.'
+      answer:
+        'Absolutely! While we can match you with students from your own institution, you can also connect with students from other schools who are studying similar subjects or preparing for similar exams.',
     },
     {
-      question: 'What if I don\'t get along with my matched study partner?',
-      answer: 'No problem! You can easily end a study partnership at any time and request new matches. Our AI learns from your feedback to provide better matches in the future. We also have community guidelines and reporting features to ensure a positive experience.'
+      question: "What if I don't get along with my matched study partner?",
+      answer:
+        'No problem! You can easily end a study partnership at any time and request new matches. Our AI learns from your feedback to provide better matches in the future. We also have community guidelines and reporting features to ensure a positive experience.',
     },
     {
       question: 'How secure is my personal information?',
-      answer: 'We take privacy seriously. Your personal information is encrypted and never shared without your permission. You control what information is visible in your profile, and you can adjust your privacy settings at any time.'
+      answer:
+        'We take privacy seriously. Your personal information is encrypted and never shared without your permission. You control what information is visible in your profile, and you can adjust your privacy settings at any time.',
     },
     {
       question: 'Can I create or join study groups?',
-      answer: 'Yes! In addition to one-on-one study partnerships, you can create study groups or join existing ones. This is perfect for larger subjects or when you want to learn from multiple perspectives.'
+      answer:
+        'Yes! In addition to one-on-one study partnerships, you can create study groups or join existing ones. This is perfect for larger subjects or when you want to learn from multiple perspectives.',
     },
     {
       question: 'Do you support virtual study sessions?',
-      answer: 'Definitely! We have built-in video calling, screen sharing, and virtual whiteboard features. You can study together online whether you\'re in different buildings or different countries.'
-    }
+      answer:
+        "Definitely! We have built-in video calling, screen sharing, and virtual whiteboard features. You can study together online whether you're in different buildings or different countries.",
+    },
   ];
 
   return (
@@ -97,7 +103,7 @@ const FAQ: React.FC = () => {
                   )}
                 </div>
               </button>
-              
+
               <AnimatePresence>
                 {openItems.includes(index) && (
                   <motion.div
@@ -108,9 +114,7 @@ const FAQ: React.FC = () => {
                     className="overflow-hidden"
                   >
                     <div className="px-6 md:px-8 pb-6">
-                      <p className="text-gray-600 leading-relaxed">
-                        {item.answer}
-                      </p>
+                      <p className="text-gray-600 leading-relaxed">{item.answer}</p>
                     </div>
                   </motion.div>
                 )}
@@ -128,9 +132,7 @@ const FAQ: React.FC = () => {
           className="text-center mt-16"
         >
           <div className="backdrop-blur-md bg-white/30 rounded-2xl border border-white/20 shadow-lg p-6 max-w-md mx-auto">
-            <h3 className="font-bold text-gray-800 text-lg mb-2">
-              Still have questions?
-            </h3>
+            <h3 className="font-bold text-gray-800 text-lg mb-2">Still have questions?</h3>
             <p className="text-gray-600 text-sm mb-4">
               We're here to help! Reach out to our friendly support team.
             </p>

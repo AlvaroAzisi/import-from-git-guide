@@ -3,17 +3,24 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { Navigate, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Users, 
-  MessageCircle, 
-  Send, 
+import {
+  ArrowLeft,
+  Users,
+  MessageCircle,
+  Send,
   UserMinus,
   AlertTriangle,
   Crown,
-  MoreVertical
+  MoreVertical,
 } from 'lucide-react';
-import { getRoomMembers, getRoom, leaveRoom, getMessages, sendMessage, isRoomMember } from '../lib/rooms';
+import {
+  getRoomMembers,
+  getRoom,
+  leaveRoom,
+  getMessages,
+  sendMessage,
+  isRoomMember,
+} from '../lib/rooms';
 import { useToast } from '../hooks/useToast';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Button } from '../components/ui/button';
@@ -41,14 +48,11 @@ const RuangkuPage: React.FC = () => {
   useEffect(() => {
     const loadRoom = async () => {
       if (!roomId || !user) return;
-      
+
       setLoadingRoom(true);
       try {
-        const [roomData, memberCheck] = await Promise.all([
-          getRoom(roomId),
-          isRoomMember(roomId)
-        ]);
-        
+        const [roomData, memberCheck] = await Promise.all([getRoom(roomId), isRoomMember(roomId)]);
+
         setRoom(roomData);
         setIsMember(memberCheck);
       } catch (error) {
@@ -56,7 +60,7 @@ const RuangkuPage: React.FC = () => {
         toast({
           title: t('common.error'),
           description: 'Failed to load room details',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       } finally {
         setLoadingRoom(false);
@@ -70,7 +74,7 @@ const RuangkuPage: React.FC = () => {
   useEffect(() => {
     const loadMembers = async () => {
       if (!roomId || !isMember) return;
-      
+
       setLoadingMembers(true);
       try {
         const membersData = await getRoomMembers(roomId);
@@ -89,7 +93,7 @@ const RuangkuPage: React.FC = () => {
   useEffect(() => {
     const loadMessages = async () => {
       if (!roomId || !isMember) return;
-      
+
       setLoadingMessages(true);
       try {
         const messagesData = await getMessages(roomId);
@@ -130,7 +134,9 @@ const RuangkuPage: React.FC = () => {
         <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8 text-center max-w-md">
           <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
-          <p className="text-gray-600 mb-6">You need to be a member of this room to view its content.</p>
+          <p className="text-gray-600 mb-6">
+            You need to be a member of this room to view its content.
+          </p>
           <Button
             onClick={() => window.history.back()}
             className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
@@ -151,14 +157,14 @@ const RuangkuPage: React.FC = () => {
     try {
       const message = await sendMessage(roomId, newMessage.trim());
       if (message) {
-        setMessages(prev => [...prev, message]);
+        setMessages((prev) => [...prev, message]);
         setNewMessage('');
       }
     } catch (error: any) {
       toast({
         title: t('common.error'),
         description: error.message || 'Failed to send message',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setSendingMessage(false);
@@ -174,7 +180,7 @@ const RuangkuPage: React.FC = () => {
       // leaveRoom returns void, so we assume success if no error is thrown
       toast({
         title: 'Success',
-        description: 'Successfully left the room'
+        description: 'Successfully left the room',
       });
       // Navigate back to home
       window.location.href = '/home';
@@ -182,7 +188,7 @@ const RuangkuPage: React.FC = () => {
       toast({
         title: t('common.error'),
         description: error.message || 'Failed to leave room',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLeavingRoom(false);
@@ -199,10 +205,11 @@ const RuangkuPage: React.FC = () => {
     }
   };
 
-  const isAdmin = members.find(m => m.user_id === user.id)?.role === 'admin';
+  const isAdmin = members.find((m) => m.user_id === user.id)?.role === 'admin';
 
-  return (<>
-    <div className="max-w-6xl mx-auto px-4 py-8">
+  return (
+    <>
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -220,11 +227,9 @@ const RuangkuPage: React.FC = () => {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              
+
               <div>
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                  {room.name}
-                </h1>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">{room.name}</h1>
                 <p className="text-gray-600 dark:text-gray-400">
                   {room.subject} • {members.length} members
                 </p>
@@ -242,7 +247,7 @@ const RuangkuPage: React.FC = () => {
                   Leave Room
                 </Button>
               )}
-              
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -306,15 +311,19 @@ const RuangkuPage: React.FC = () => {
                   messages.map((message) => (
                     <div key={message.id} className="flex gap-3">
                       <Avatar className="w-8 h-8 border border-white/20">
-                        <AvatarImage 
-                           src={message.profile?.avatar_url || undefined} 
-                           alt={message.profile?.full_name || 'User'}
+                        <AvatarImage
+                          src={message.profile?.avatar_url || undefined}
+                          alt={message.profile?.full_name || 'User'}
                         />
                         <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
-                          {message.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                          {message.profile?.full_name
+                            ?.split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      
+
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
@@ -382,15 +391,19 @@ const RuangkuPage: React.FC = () => {
                         className="flex items-center gap-4 p-4 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-2xl"
                       >
                         <Avatar className="w-12 h-12 border-2 border-white/20">
-                          <AvatarImage 
-                             src={member.profile?.avatar_url || undefined} 
-                             alt={member.profile?.full_name || 'User'}
+                          <AvatarImage
+                            src={member.profile?.avatar_url || undefined}
+                            alt={member.profile?.full_name || 'User'}
                           />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-medium">
-                            {member.profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                            {member.profile?.full_name
+                              ?.split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
-                        
+
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h3 className="font-medium text-gray-800 dark:text-gray-200">
@@ -407,11 +420,13 @@ const RuangkuPage: React.FC = () => {
                         </div>
 
                         <div className="text-right">
-                          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                            member.role === 'admin' 
-                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                          }`}>
+                          <span
+                            className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                              member.role === 'admin'
+                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                            }`}
+                          >
                             {member.role}
                           </span>
                         </div>
@@ -439,9 +454,10 @@ const RuangkuPage: React.FC = () => {
                 Leave Room?
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Are you sure you want to leave this room? You'll need to be re-invited to join again.
+                Are you sure you want to leave this room? You'll need to be re-invited to join
+                again.
               </p>
-              
+
               <div className="flex gap-3">
                 <Button
                   onClick={() => setShowLeaveConfirm(false)}

@@ -8,33 +8,33 @@ const Footer: React.FC = () => {
       { name: 'Features', href: '#features' },
       { name: 'How It Works', href: '#how-it-works' },
       { name: 'Pricing', href: '#' },
-      { name: 'Mobile App', href: '#' }
+      { name: 'Mobile App', href: '#' },
     ],
     support: [
       { name: 'Help Center', href: '#' },
       { name: 'Contact Us', href: '#' },
       { name: 'Status', href: '#' },
-      { name: 'Bug Reports', href: '#' }
+      { name: 'Bug Reports', href: '#' },
     ],
     company: [
       { name: 'About', href: '#' },
       { name: 'Blog', href: '#' },
       { name: 'Careers', href: '#' },
-      { name: 'Press', href: '#' }
+      { name: 'Press', href: '#' },
     ],
     legal: [
       { name: 'Privacy Policy', href: '#' },
       { name: 'Terms of Service', href: '#' },
       { name: 'Cookie Policy', href: '#' },
-      { name: 'Community Guidelines', href: '#' }
-    ]
+      { name: 'Community Guidelines', href: '#' },
+    ],
   };
 
   const socialLinks = [
     { icon: Twitter, href: '#', label: 'Twitter' },
     { icon: Facebook, href: '#', label: 'Facebook' },
     { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' }
+    { icon: Linkedin, href: '#', label: 'LinkedIn' },
   ];
 
   return (
@@ -54,11 +54,12 @@ const Footer: React.FC = () => {
                 <BookOpen className="w-8 h-8 text-blue-500" />
                 <span className="text-2xl font-bold text-gray-800">Kupintar</span>
               </div>
-              
+
               <p className="text-gray-600 mb-6 leading-relaxed max-w-md">
-                Your smart study companion that connects you with perfect study partners using AI-powered matching. Study better, learn faster, achieve more.
+                Your smart study companion that connects you with perfect study partners using
+                AI-powered matching. Study better, learn faster, achieve more.
               </p>
-              
+
               <div className="flex items-center space-x-4">
                 {socialLinks.map((social, index) => (
                   <motion.a
@@ -121,7 +122,7 @@ const Footer: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-600 text-sm">
                   <Mail className="w-4 h-4" />
@@ -141,7 +142,7 @@ const Footer: React.FC = () => {
               <p className="text-gray-500 text-sm">
                 © 2024 Kupintar. All rights reserved. Made with ❤️ for students worldwide.
               </p>
-              
+
               <div className="flex items-center space-x-6">
                 {footerLinks.legal.map((link, index) => (
                   <a

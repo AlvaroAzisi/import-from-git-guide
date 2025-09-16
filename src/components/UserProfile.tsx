@@ -29,7 +29,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onSignOut }) => {
   };
 
   const getAvatarUrl = () => {
-    return user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName())}&background=3b82f6&color=fff`;
+    return (
+      user.user_metadata?.avatar_url ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName())}&background=3b82f6&color=fff`
+    );
   };
 
   return (
@@ -45,18 +48,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onSignOut }) => {
           alt={getDisplayName()}
           className="w-8 h-8 rounded-full object-cover"
         />
-        <span className="hidden md:block text-gray-700 font-medium">
-          Hi, {getDisplayName()}
-        </span>
+        <span className="hidden md:block text-gray-700 font-medium">Hi, {getDisplayName()}</span>
       </motion.button>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -67,13 +65,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onSignOut }) => {
               <p className="font-medium text-gray-800">{getDisplayName()}</p>
               <p className="text-sm text-gray-600">{user.email}</p>
             </div>
-            
+
             <div className="p-2">
               <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-700 hover:bg-white/20 rounded-xl transition-colors">
                 <Settings className="w-4 h-4" />
                 Settings
               </button>
-              
+
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50/50 rounded-xl transition-colors"

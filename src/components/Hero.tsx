@@ -18,7 +18,7 @@ const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 py-20">
       {/* Navigation */}
-      <motion.nav 
+      <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -30,19 +30,19 @@ const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
             <span className="font-bold text-gray-800">Kupintar</span>
           </div>
           <div className="hidden md:flex items-center space-x-6 text-sm">
-            <button 
+            <button
               onClick={() => scrollToSection('features')}
               className="text-gray-600 hover:text-blue-500 transition-colors"
             >
               Features
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('how-it-works')}
               className="text-gray-600 hover:text-blue-500 transition-colors"
             >
               How It Works
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('testimonials')}
               className="text-gray-600 hover:text-blue-500 transition-colors"
             >
@@ -50,12 +50,9 @@ const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
             </button>
           </div>
           {user ? (
-            <UserProfile 
-              user={user} 
-              onSignOut={() => window.location.reload()} 
-            />
+            <UserProfile user={user} onSignOut={() => window.location.reload()} />
           ) : (
-            <button 
+            <button
               onClick={onAuthClick}
               className="bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-colors text-sm font-medium"
             >
@@ -79,9 +76,10 @@ const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
             </span>
             <span className="text-4xl md:text-5xl">in Minutes</span>
           </h1>
-          
+
           <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
-            AI-powered matching connects you with compatible study partners who share your goals, schedule, and learning style.
+            AI-powered matching connects you with compatible study partners who share your goals,
+            schedule, and learning style.
           </p>
         </motion.div>
 
@@ -102,7 +100,7 @@ const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
               <Users className="w-5 h-5" />
               {user ? 'Find Study Buddies Now' : 'Get Started Free'}
             </motion.button>
-            
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               onClick={() => scrollToSection('how-it-works')}
@@ -125,7 +123,10 @@ const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
             {user ? (
               <>Welcome back! Ready to find your study buddy?</>
             ) : (
-              <>Trusted by <span className="font-semibold text-blue-500">50,000+</span> students worldwide</>
+              <>
+                Trusted by <span className="font-semibold text-blue-500">50,000+</span> students
+                worldwide
+              </>
             )}
           </p>
         </motion.div>

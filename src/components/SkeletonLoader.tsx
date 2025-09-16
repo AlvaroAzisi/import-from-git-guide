@@ -8,11 +8,11 @@ interface SkeletonLoaderProps {
   count?: number;
 }
 
-export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ 
-  width = 'w-full', 
-  height = 'h-4', 
+export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
+  width = 'w-full',
+  height = 'h-4',
   className = '',
-  count = 1 
+  count = 1,
 }) => {
   return (
     <>
@@ -42,7 +42,9 @@ export const MessageSkeleton: React.FC = () => {
     <div className="space-y-4">
       {[...Array(3)].map((_, i) => (
         <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
-          <div className={`max-w-xs p-3 rounded-2xl ${i % 2 === 0 ? 'bg-white/20 dark:bg-gray-800/20' : 'bg-blue-500/20'}`}>
+          <div
+            className={`max-w-xs p-3 rounded-2xl ${i % 2 === 0 ? 'bg-white/20 dark:bg-gray-800/20' : 'bg-blue-500/20'}`}
+          >
             <SkeletonLoader height="h-3" className="mb-2" />
             <SkeletonLoader width="w-3/4" height="h-3" />
           </div>

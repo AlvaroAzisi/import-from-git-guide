@@ -8,18 +8,12 @@ export const JoinRoomButton: React.FC = () => {
 
   return (
     <>
-      <Button
-        onClick={() => setShowModal(true)}
-        className="bg-primary hover:bg-primary/90"
-      >
+      <Button onClick={() => setShowModal(true)} className="bg-primary hover:bg-primary/90">
         <UserPlus className="w-4 h-4 mr-2" />
         Join Room
       </Button>
 
-      <JoinRoomModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-      />
+      <JoinRoomModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </>
   );
 };

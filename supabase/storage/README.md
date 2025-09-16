@@ -5,10 +5,11 @@ This directory contains information about Supabase Storage buckets needed for th
 ## Required Buckets
 
 ### avatars
+
 - **Purpose**: Store user profile pictures
 - **Public**: Yes (for public access to avatar images)
 - **File size limit**: 5MB
-- **Allowed file types**: image/*
+- **Allowed file types**: image/\*
 
 ## Setup Instructions
 
@@ -24,7 +25,7 @@ This directory contains information about Supabase Storage buckets needed for th
 -- Allow authenticated users to upload their own avatars
 CREATE POLICY "Users can upload own avatar" ON storage.objects
 FOR INSERT WITH CHECK (
-  bucket_id = 'avatars' 
+  bucket_id = 'avatars'
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
 
@@ -35,14 +36,14 @@ FOR SELECT USING (bucket_id = 'avatars');
 -- Allow users to update their own avatars
 CREATE POLICY "Users can update own avatar" ON storage.objects
 FOR UPDATE USING (
-  bucket_id = 'avatars' 
+  bucket_id = 'avatars'
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
 
 -- Allow users to delete their own avatars
 CREATE POLICY "Users can delete own avatar" ON storage.objects
 FOR DELETE USING (
-  bucket_id = 'avatars' 
+  bucket_id = 'avatars'
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
 ```

@@ -26,15 +26,15 @@ export const joinRoomByCode = async (code: string): Promise<JoinRoomByCodeRespon
   try {
     const normalized = code.trim().toUpperCase();
 
-    const { data, error } = await supabase.rpc('validate_join_code', { 
-      p_code: normalized 
+    const { data, error } = await supabase.rpc('validate_join_code', {
+      p_code: normalized,
     });
 
     if (error) {
       console.error('Join room by code error:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid room code' 
+      return {
+        success: false,
+        error: error.message || 'Invalid room code',
       };
     }
 
@@ -55,24 +55,20 @@ export const joinRoomByCode = async (code: string): Promise<JoinRoomByCodeRespon
     return {
       success: true,
       room_id: result.room_id,
-      room_title: room?.name || undefined
+      room_title: room?.name || undefined,
     };
   } catch (error: any) {
     console.error('Join room by code error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to join room' 
+    return {
+      success: false,
+      error: error.message || 'Failed to join room',
     };
   }
 };
 
 export const getRoomById = async (roomId: string): Promise<any> => {
   try {
-    const { data, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', roomId)
-      .single();
+    const { data, error } = await supabase.from('rooms').select('*').eq('id', roomId).single();
 
     if (error) throw error;
     return data;
@@ -93,12 +89,12 @@ export const getProfileDetails = async (userId: string): Promise<ProfileDetails>
 
     if (profileError) throw profileError;
     if (!profileData) throw new Error('Profile not found');
-    
+
     return {
       ...profileData,
       friendship_status: 'none',
       mutual_rooms: [],
-      mutual_friends_count: 0
+      mutual_friends_count: 0,
     } as ProfileDetails;
   } catch (error: any) {
     console.error('Get profile details error:', error);
@@ -119,7 +115,10 @@ export const removeFriend = async (_friendId: string) => {
 };
 
 // Additional placeholder exports for room settings modal
-export const updateRoom = async (_roomId: string, _updates: any): Promise<{ error: string | null }> => {
+export const updateRoom = async (
+  _roomId: string,
+  _updates: any
+): Promise<{ error: string | null }> => {
   // TODO: disabled – old schema (room_requests)
   return { error: 'Feature disabled' };
 };

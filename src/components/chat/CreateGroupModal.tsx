@@ -14,7 +14,7 @@ interface CreateGroupModalProps {
 export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -38,12 +38,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
   };
 
   return (
-    <FloatingPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Create Group Chat"
-      size="md"
-    >
+    <FloatingPanel isOpen={isOpen} onClose={onClose} title="Create Group Chat" size="md">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Icon */}
         <div className="text-center">
@@ -95,7 +90,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
           >
             Cancel
           </Button>
-          
+
           <Button
             type="submit"
             disabled={loading || !name.trim()}

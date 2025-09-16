@@ -8,26 +8,27 @@ const HowItWorks: React.FC = () => {
       icon: UserPlus,
       title: 'Create Your Profile',
       description: 'Tell us about your subjects, schedule, learning style, and study goals.',
-      color: 'from-blue-500 to-cyan-500'
+      color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: Search,
       title: 'Get Matched',
-      description: 'Our AI finds compatible study partners based on your preferences and availability.',
-      color: 'from-emerald-500 to-teal-500'
+      description:
+        'Our AI finds compatible study partners based on your preferences and availability.',
+      color: 'from-emerald-500 to-teal-500',
     },
     {
       icon: MessageCircle,
       title: 'Connect & Plan',
       description: 'Chat with potential study partners and schedule your first study session.',
-      color: 'from-amber-500 to-orange-500'
+      color: 'from-amber-500 to-orange-500',
     },
     {
       icon: BookOpen,
       title: 'Study Together',
       description: 'Meet up in person or join virtual study rooms to learn collaboratively.',
-      color: 'from-purple-500 to-pink-500'
-    }
+      color: 'from-purple-500 to-pink-500',
+    },
   ];
 
   return (
@@ -40,18 +41,17 @@ const HowItWorks: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-            How It Works
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">How It Works</h2>
           <p className="text-gray-600 text-lg max-w-3xl mx-auto">
-            Get started with Kupintar in just a few simple steps. Finding your perfect study partner has never been easier.
+            Get started with Kupintar in just a few simple steps. Finding your perfect study partner
+            has never been easier.
           </p>
         </motion.div>
 
         <div className="relative">
           {/* Connection Line */}
           <div className="hidden lg:block absolute top-1/2 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-blue-200 via-emerald-200 via-amber-200 to-purple-200 -translate-y-1/2 z-0"></div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
             {steps.map((step, index) => (
               <motion.div
@@ -64,24 +64,22 @@ const HowItWorks: React.FC = () => {
               >
                 <motion.div
                   whileHover={{ scale: 1.05, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
                   className="backdrop-blur-md bg-white/40 rounded-3xl border border-white/30 shadow-lg p-8 mb-4 hover:shadow-xl transition-all duration-300"
                 >
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-6 shadow-lg`}>
+                  <div
+                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-6 shadow-lg`}
+                  >
                     <step.icon className="w-8 h-8 text-white" />
                   </div>
-                  
+
                   <div className="absolute -top-3 -left-3 w-8 h-8 bg-white rounded-full border-4 border-blue-100 flex items-center justify-center text-sm font-bold text-blue-500">
                     {index + 1}
                   </div>
-                  
-                  <h3 className="font-bold text-gray-800 text-xl mb-4">
-                    {step.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 leading-relaxed">
-                    {step.description}
-                  </p>
+
+                  <h3 className="font-bold text-gray-800 text-xl mb-4">{step.title}</h3>
+
+                  <p className="text-gray-600 leading-relaxed">{step.description}</p>
                 </motion.div>
               </motion.div>
             ))}

@@ -1,17 +1,17 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  Users, 
-  BookOpen, 
-  User, 
+import {
+  Home,
+  Users,
+  BookOpen,
+  User,
   Settings,
   LogOut,
   Plus,
   ChevronLeft,
   ChevronRight,
-  MessageCircle
+  MessageCircle,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import { useAuth } from '../hooks/useAuth';
@@ -27,12 +27,12 @@ interface SidebarProps {
   onToggleMinimized?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  isOpen, 
-  onClose, 
+const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
   onCreateRoom,
   minimized = false,
-  onToggleMinimized
+  onToggleMinimized,
 }) => {
   const location = useLocation();
   const { safeNavigate, isNavigating } = useNavigation();
@@ -101,7 +101,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     isActive?: boolean;
     isLoading?: boolean;
     variant?: 'default' | 'create' | 'danger';
-  }> = ({ icon: Icon, label, onClick, isActive = false, isLoading = false, variant = 'default' }) => {
+  }> = ({
+    icon: Icon,
+    label,
+    onClick,
+    isActive = false,
+    isLoading = false,
+    variant = 'default',
+  }) => {
     const getButtonStyles = () => {
       if (variant === 'create') {
         return 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg hover:shadow-xl';
@@ -148,9 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
-              {button}
-            </TooltipTrigger>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
             <TooltipContent side="right" className="z-50">
               <div className="rounded-lg px-3 py-2 bg-popover text-popover-foreground shadow-lg">
                 {label}
@@ -180,16 +185,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       <motion.div
         ref={sidebarRef}
         initial={{ x: minimized ? -72 : -320 }}
-        animate={{ 
+        animate={{
           x: 0,
-          width: minimized ? '72px' : '320px'
+          width: minimized ? '72px' : '320px',
         }}
         exit={{ x: minimized ? -72 : -320 }}
-        transition={{ 
-          type: "spring", 
-          damping: 25, 
+        transition={{
+          type: 'spring',
+          damping: 25,
           stiffness: 200,
-          duration: 0.22
+          duration: 0.22,
         }}
         className="fixed left-0 top-0 h-full backdrop-blur-md bg-white/95 dark:bg-gray-900/95 border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col"
         role="navigation"
@@ -199,29 +204,29 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-6 border-b border-white/10 dark:border-gray-700/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-blue-500" />
-            <AnimatePresence>
-              {!minimized && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="text-2xl font-bold text-gray-800 dark:text-gray-200"
-                >
-                  Kupintar
-                </motion.span>
-              )}
-            </AnimatePresence>
+              <BookOpen className="w-8 h-8 text-blue-500" />
+              <AnimatePresence>
+                {!minimized && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-2xl font-bold text-gray-800 dark:text-gray-200"
+                  >
+                    Kupintar
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
-            
+
             {onToggleMinimized && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onToggleMinimized}
                 className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
-                title={minimized ? "Expand sidebar" : "Minimize sidebar"}
+                title={minimized ? 'Expand sidebar' : 'Minimize sidebar'}
               >
                 {minimized ? (
                   <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -243,29 +248,32 @@ const Sidebar: React.FC<SidebarProps> = ({
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-            <div className="flex items-center gap-4">
-              <img
-                src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=3b82f6&color=fff`}
-                alt={profile.full_name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-white/20 dark:border-gray-700/20"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200 truncate">
-                  {profile.full_name}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  @{profile.username}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-blue-500 font-medium">
-                    Level {Math.floor((profile.xp || 0) / 1000) + 1}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {profile.xp || 0} XP
-                  </span>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={
+                      profile.avatar_url ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=3b82f6&color=fff`
+                    }
+                    alt={profile.full_name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-white/20 dark:border-gray-700/20"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 truncate">
+                      {profile.full_name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                      @{profile.username}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-blue-500 font-medium">
+                        Level {Math.floor((profile.xp || 0) / 1000) + 1}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {profile.xp || 0} XP
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -278,7 +286,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <img
-                    src={profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=3b82f6&color=fff`}
+                    src={
+                      profile.avatar_url ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=3b82f6&color=fff`
+                    }
                     alt={profile.full_name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white/20 dark:border-gray-700/20 cursor-pointer hover:scale-105 transition-transform"
                     onClick={() => handleNavigation('/profile')}
@@ -311,7 +322,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
               );
             })}
-
           </div>
         </nav>
 
@@ -325,13 +335,13 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={handleCreateRoom}
               variant="create"
             />
-            
+
             <SidebarButton
               icon={Settings}
               label="Settings"
               onClick={() => handleNavigation('/settings')}
             />
-            
+
             <SidebarButton
               icon={LogOut}
               label={t('nav.signOut')}
@@ -343,7 +353,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {onToggleMinimized && (
               <SidebarButton
                 icon={minimized ? ChevronRight : ChevronLeft}
-                label={minimized ? "Expand" : "Minimize"}
+                label={minimized ? 'Expand' : 'Minimize'}
                 onClick={onToggleMinimized}
               />
             )}

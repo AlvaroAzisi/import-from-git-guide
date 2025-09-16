@@ -51,8 +51,8 @@ const HomePage: React.FC = () => {
         onSuccess={() => {
           setShowCreateModal(false);
           toast({
-            title: "Success!",
-            description: "Your study room has been created.",
+            title: 'Success!',
+            description: 'Your study room has been created.',
           });
         }}
       />

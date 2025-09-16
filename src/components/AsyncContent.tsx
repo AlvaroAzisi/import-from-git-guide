@@ -18,7 +18,7 @@ export function AsyncContent<T>({
   onRetry,
   loadingMessage,
   children,
-  fallback
+  fallback,
 }: AsyncContentProps<T>) {
   if (isLoading || error) {
     return (

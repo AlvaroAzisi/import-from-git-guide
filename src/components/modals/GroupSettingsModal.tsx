@@ -14,7 +14,7 @@ interface GroupSettingsModalProps {
 
 /**
  * GroupSettingsModal - Thin wrapper for RoomSettingsModal for group chats
- * 
+ *
  * Manual test steps:
  * 1. Open from group chat header
  * 2. Should behave identically to RoomSettingsModal
@@ -28,7 +28,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   groupDescription,
   userRole,
   onGroupUpdate,
-  onGroupDelete
+  onGroupDelete,
 }) => {
   // Convert group data to room format for reusability
   const roomData = {
@@ -39,7 +39,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
     short_code: '', // Groups don't have codes
     created_by: '', // Will be checked via userRole prop
     max_members: 50, // Default for groups
-    is_public: false
+    is_public: false,
   };
 
   const handleGroupUpdate = (updatedRoom: any) => {

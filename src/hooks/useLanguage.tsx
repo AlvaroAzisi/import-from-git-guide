@@ -16,7 +16,7 @@ const translations = {
     'nav.friends': 'Find Friends',
     'nav.rooms': 'Study Rooms',
     'nav.signOut': 'Sign Out',
-    
+
     // Common
     'common.loading': 'Loading...',
     'common.save': 'Save',
@@ -26,7 +26,7 @@ const translations = {
     'common.confirm': 'Confirm',
     'common.error': 'Error',
     'common.success': 'Success',
-    
+
     // Profile
     'profile.title': 'Profile',
     'profile.bio': 'Bio',
@@ -38,7 +38,7 @@ const translations = {
     'profile.addInterest': 'Add an interest...',
     'profile.noBio': 'No bio added yet. Click edit to add one!',
     'profile.noInterests': 'No interests added yet. Click edit to add some!',
-    
+
     // Rooms
     'rooms.create': 'Create Room',
     'rooms.join': 'Join Room',
@@ -50,7 +50,7 @@ const translations = {
     'rooms.maxMembers': 'Max Members',
     'rooms.public': 'Public Room',
     'rooms.private': 'Private Room',
-    
+
     // Friends
     'friends.title': 'Find Study Buddies',
     'friends.addFriend': 'Add Friend',
@@ -59,7 +59,7 @@ const translations = {
     'friends.accepted': 'Friends',
     'friends.online': 'Online',
     'friends.offline': 'Offline',
-    
+
     // Messages
     'messages.typeMessage': 'Type a message...',
     'messages.send': 'Send',
@@ -72,7 +72,7 @@ const translations = {
     'nav.friends': 'Cari Teman',
     'nav.rooms': 'Ruang Belajar',
     'nav.signOut': 'Keluar',
-    
+
     // Common
     'common.loading': 'Memuat...',
     'common.save': 'Simpan',
@@ -82,7 +82,7 @@ const translations = {
     'common.confirm': 'Konfirmasi',
     'common.error': 'Error',
     'common.success': 'Berhasil',
-    
+
     // Profile
     'profile.title': 'Profil',
     'profile.bio': 'Bio',
@@ -94,7 +94,7 @@ const translations = {
     'profile.addInterest': 'Tambah minat...',
     'profile.noBio': 'Belum ada bio. Klik edit untuk menambahkan!',
     'profile.noInterests': 'Belum ada minat. Klik edit untuk menambahkan!',
-    
+
     // Rooms
     'rooms.create': 'Buat Ruang',
     'rooms.join': 'Gabung Ruang',
@@ -106,7 +106,7 @@ const translations = {
     'rooms.maxMembers': 'Maks Anggota',
     'rooms.public': 'Ruang Publik',
     'rooms.private': 'Ruang Privat',
-    
+
     // Friends
     'friends.title': 'Cari Teman Belajar',
     'friends.addFriend': 'Tambah Teman',
@@ -115,12 +115,12 @@ const translations = {
     'friends.accepted': 'Berteman',
     'friends.online': 'Online',
     'friends.offline': 'Offline',
-    
+
     // Messages
     'messages.typeMessage': 'Ketik pesan...',
     'messages.send': 'Kirim',
     'messages.noMessages': 'Belum ada pesan. Mulai percakapan!',
-  }
+  },
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -149,7 +149,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations['en']] || key;
+    return translations[language][key as keyof (typeof translations)['en']] || key;
   };
 
   return (

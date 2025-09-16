@@ -1,6 +1,6 @@
 import React from 'react';
 
-// TODO adapted for new Supabase backend - room requests functionality disabled 
+// TODO adapted for new Supabase backend - room requests functionality disabled
 // This component used 'room_requests' table which doesn't exist in simplified schema
 const AdminRoomRequestsPanel: React.FC = () => {
   return (

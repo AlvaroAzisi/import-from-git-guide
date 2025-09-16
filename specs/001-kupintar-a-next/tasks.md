@@ -4,7 +4,7 @@
 **Plan:** [`plan.md`](./plan.md)  
 **Data Model:** [`data-model.md`](./data-model.md)  
 **Contracts:** [`contracts/`](./contracts/)  
-**Quickstart:** [`quickstart.md`](./quickstart.md)  
+**Quickstart:** [`quickstart.md`](./quickstart.md)
 
 ---
 

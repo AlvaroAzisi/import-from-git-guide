@@ -55,9 +55,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
       <motion.aside
         ref={sidebarRef}
         initial={{ width: isMinimized ? 80 : 320 }}
-        animate={{ 
+        animate={{
           width: isMinimized ? 80 : 320,
-          x: isOpen ? 0 : -320
+          x: isOpen ? 0 : -320,
         }}
         transition={{ duration: 0.3 }}
         className={`fixed inset-y-0 left-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-r border-white/20 dark:border-gray-700/20 shadow-2xl ${className}`}
@@ -66,7 +66,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
           {/* Header */}
           <div className="p-4 border-b border-white/10 dark:border-gray-700/20">
             <div className="flex items-center justify-between">
-              <h2 className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent ${isMinimized ? 'hidden' : ''}`}>
+              <h2
+                className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent ${isMinimized ? 'hidden' : ''}`}
+              >
                 Kupintar
               </h2>
               <button
@@ -79,61 +81,58 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
             </div>
           </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto p-4">
-          <ul className="space-y-2">
-            {sidebarMenuItems.map((item) => (
-              <li key={item.path}>
-                <SidebarItem
-                  icon={item.icon}
-                  label={item.label}
-                  path={item.path}
-                  isActive={location.pathname === item.path}
-                  minimized={isMinimized}
-                  variant={item.variant}
-                />
-              </li>
-            ))}
-          </ul>
-        </nav>
+          {/* Navigation Links */}
+          <nav className="flex-1 overflow-y-auto p-4">
+            <ul className="space-y-2">
+              {sidebarMenuItems.map((item) => (
+                <li key={item.path}>
+                  <SidebarItem
+                    icon={item.icon}
+                    label={item.label}
+                    path={item.path}
+                    isActive={location.pathname === item.path}
+                    minimized={isMinimized}
+                    variant={item.variant}
+                  />
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-white/10 dark:border-gray-700/20 space-y-4">
-          {/* User Profile */}
-          {user && (
-            <div className="flex items-center gap-3">
-              {user.avatar_url && (
-                <img
-                  src={user.avatar_url}
-                  alt={user.full_name || 'User avatar'}
-                  className="w-10 h-10 rounded-full border border-white/20 dark:border-gray-700/20"
-                />
-              )}
-              {!isMinimized && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {user.full_name}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Minimize Toggle */}
-          <MinimizeToggle
-            minimized={isMinimized}
-            onToggle={toggleMinimized}
-          />
+          {/* Footer */}
+          <div className="p-4 border-t border-white/10 dark:border-gray-700/20 space-y-4">
+            {/* User Profile */}
+            {user && (
+              <div className="flex items-center gap-3">
+                {user.avatar_url && (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.full_name || 'User avatar'}
+                    className="w-10 h-10 rounded-full border border-white/20 dark:border-gray-700/20"
+                  />
+                )}
+                {!isMinimized && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {user.full_name}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* Copyright */}
-          {!isMinimized && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              © 2024 Kupintar
-            </p>
-          )}
+            {/* Minimize Toggle */}
+            <MinimizeToggle minimized={isMinimized} onToggle={toggleMinimized} />
+
+            {/* Copyright */}
+            {!isMinimized && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                © 2024 Kupintar
+              </p>
+            )}
+          </div>
         </div>
-      </div>
-    </motion.aside>
+      </motion.aside>
     </>
   );
 };

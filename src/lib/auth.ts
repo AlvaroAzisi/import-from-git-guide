@@ -2,8 +2,6 @@
 import { supabase } from '../integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-
-
 /**
  * DB constraints:
  * - username: /^[A-Za-z0-9_]+$/  AND length 3..30
@@ -37,7 +35,8 @@ const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
   // ensure regex compliance — fallback to a safe base if somehow still invalid
   username = username.replace(/^[^a-z0-9_]+/i, ''); // remove leading invalid if any
   if (!USERNAME_RE.test(username)) {
-    username = username.replace(/[^a-z0-9_]/gi, '') || `user${Math.random().toString(36).slice(2,5)}`;
+    username =
+      username.replace(/[^a-z0-9_]/gi, '') || `user${Math.random().toString(36).slice(2, 5)}`;
   }
 
   // re-enforce length bounds
@@ -52,7 +51,11 @@ const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
  * - base: initial username candidate
  * - userId: optional; if found owner is same user, it's OK
  */
-const ensureUniqueUsername = async (base: string, userId?: string, attempts = 8): Promise<string> => {
+const ensureUniqueUsername = async (
+  base: string,
+  userId?: string,
+  attempts = 8
+): Promise<string> => {
   let candidate = base;
   for (let i = 0; i < attempts; i++) {
     const { data: existing, error } = await supabase
@@ -117,7 +120,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
     if (!supabase) throw new Error('Supabase client is not initialized');
     const {
       data: { user },
-      error
+      error,
     } = await supabase.auth.getUser();
 
     if (error) {
@@ -139,7 +142,9 @@ export const getCurrentUser = async (): Promise<User | null> => {
  * - enforces level >= 1 and xp >= 0 defaults
  * - if existing profile has an invalid username, it will normalize + try to fix it
  */
-export const createOrUpdateProfile = async (user: User): Promise<{ data: UserProfile | null; error: string | null }> => {
+export const createOrUpdateProfile = async (
+  user: User
+): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
     // 1) Try to find existing profile (safe read)
     const { data: existingProfile, error: getErr } = await supabase
@@ -163,8 +168,16 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
       let { username } = existingProfile as any;
 
       // If username is null/empty or invalid per DB constraints, create a safe & unique replacement
-      if (!username || !USERNAME_RE.test(username) || username.length < USERNAME_MIN || username.length > USERNAME_MAX) {
-        const baseCandidate = makeSafeUsername(emailBase || metadataName || fallbackBase, fallbackBase);
+      if (
+        !username ||
+        !USERNAME_RE.test(username) ||
+        username.length < USERNAME_MIN ||
+        username.length > USERNAME_MAX
+      ) {
+        const baseCandidate = makeSafeUsername(
+          emailBase || metadataName || fallbackBase,
+          fallbackBase
+        );
         try {
           const unique = await ensureUniqueUsername(baseCandidate, user.id);
           // update username + updated_at
@@ -192,8 +205,8 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
         email: user.email || existingProfile.email,
         updated_at: new Date().toISOString(),
         // defensive: ensure xp/level meet constraints if present
-        xp: (existingProfile.xp ?? 0) < 0 ? 0 : existingProfile.xp ?? 0,
-        level: (existingProfile.level ?? 1) < 1 ? 1 : existingProfile.level ?? 1,
+        xp: (existingProfile.xp ?? 0) < 0 ? 0 : (existingProfile.xp ?? 0),
+        level: (existingProfile.level ?? 1) < 1 ? 1 : (existingProfile.level ?? 1),
       };
 
       const { data: finalProfile, error: finalErr } = await supabase
@@ -240,7 +253,7 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
       is_deleted: false,
       last_seen_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     // Try upsert once (idempotent). If unique-violation happens (rare due to ensureUniqueUsername race),
@@ -259,7 +272,12 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
 
       // If it's a unique-violation on username or other transient uniqueness issue, retry with new username
       const msg = (error && (error.message || '')).toString().toLowerCase();
-      if (msg.includes('duplicate') || msg.includes('unique') || msg.includes('23505') || attempt < maxRetries) {
+      if (
+        msg.includes('duplicate') ||
+        msg.includes('unique') ||
+        msg.includes('23505') ||
+        attempt < maxRetries
+      ) {
         // generate a new safe candidate and retry
         const newBase = baseCandidate + Math.random().toString(36).slice(2, 5);
         profileData.username = await ensureUniqueUsername(newBase, user.id);
@@ -283,15 +301,18 @@ export const createOrUpdateProfile = async (user: User): Promise<{ data: UserPro
 /**
  * Signs up with email and password
  */
-export const signUpWithEmail = async (email: string, password: string): Promise<{ data: { user: any } | null; error: string | null }> => {
+export const signUpWithEmail = async (
+  email: string,
+  password: string
+): Promise<{ data: { user: any } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/home`
-      }
+        emailRedirectTo: `${window.location.origin}/home`,
+      },
     });
 
     if (error) {
@@ -309,12 +330,15 @@ export const signUpWithEmail = async (email: string, password: string): Promise<
 /**
  * Signs in with email and password
  */
-export const signInWithEmail = async (email: string, password: string): Promise<{ data: { user: any } | null; error: string | null }> => {
+export const signInWithEmail = async (
+  email: string,
+  password: string
+): Promise<{ data: { user: any } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
     if (error) {
@@ -339,7 +363,7 @@ export const signInWithGoogle = async (): Promise<{ data: any; error: string | n
     console.log(`[Auth] Signing in with Google, redirect: ${redirectTo}`);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo }
+      options: { redirectTo },
     });
 
     if (error) {
@@ -379,14 +403,16 @@ export const signOut = async (): Promise<{ error: string | null }> => {
 /**
  * Gets a user profile by ID
  */
-export const getProfile = async (userId: string): Promise<{ data: UserProfile | null; error: string | null }> => {
+export const getProfile = async (
+  userId: string
+): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .maybeSingle();
-    
+
     if (error) throw error;
     return { data, error: null };
   } catch (error: any) {
@@ -398,14 +424,16 @@ export const getProfile = async (userId: string): Promise<{ data: UserProfile | 
 /**
  * Gets a user profile by username
  */
-export const getProfileByUsername = async (username: string): Promise<{ data: UserProfile | null; error: string | null }> => {
+export const getProfileByUsername = async (
+  username: string
+): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('username', username)
       .maybeSingle();
-    
+
     if (error) throw error;
     return { data, error: null };
   } catch (error: any) {
@@ -418,13 +446,13 @@ export const getProfileByUsername = async (username: string): Promise<{ data: Us
  * Updates a user profile
  */
 export const updateProfile = async (
-  userId: string, 
+  userId: string,
   updates: Partial<UserProfile>
 ): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
     const updateData = {
       ...updates,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -433,7 +461,7 @@ export const updateProfile = async (
       .eq('id', userId)
       .select()
       .maybeSingle();
-    
+
     if (error) throw error;
     return { data, error: null };
   } catch (error: any) {
@@ -445,7 +473,9 @@ export const updateProfile = async (
 /**
  * Searches for users by name or username
  */
-export const searchUsers = async (query: string): Promise<{ data: UserProfile[]; error: string | null }> => {
+export const searchUsers = async (
+  query: string
+): Promise<{ data: UserProfile[]; error: string | null }> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -453,7 +483,7 @@ export const searchUsers = async (query: string): Promise<{ data: UserProfile[];
       .or(`full_name.ilike.%${query}%,username.ilike.%${query}%`)
       .eq('is_deleted', false)
       .limit(20);
-    
+
     if (error) throw error;
     return { data: data || [], error: null };
   } catch (error: any) {
@@ -478,12 +508,12 @@ export const incrementUserXP = async (userId: string, xpAmount: number = 1): Pro
     const newXP = (profile.xp || 0) + xpAmount;
     const { error } = await supabase
       .from('profiles')
-      .update({ 
+      .update({
         xp: newXP,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
-    
+
     if (error) throw error;
   } catch (error: any) {
     console.error('[Auth] Increment user XP failed:', error);
@@ -509,7 +539,11 @@ interface ValidationResult {
   };
 }
 
-export const validateSignUpForm = (email: string, password: string, confirmPassword?: string): ValidationResult => {
+export const validateSignUpForm = (
+  email: string,
+  password: string,
+  confirmPassword?: string
+): ValidationResult => {
   const errors: { email?: string; password?: string; confirmPassword?: string } = {};
 
   if (!email) {
@@ -530,6 +564,6 @@ export const validateSignUpForm = (email: string, password: string, confirmPassw
 
   return {
     isValid: Object.keys(errors).length === 0,
-    errors: Object.keys(errors).length > 0 ? errors : undefined
+    errors: Object.keys(errors).length > 0 ? errors : undefined,
   };
 };

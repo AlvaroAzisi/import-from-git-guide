@@ -17,12 +17,7 @@ interface SidebarProps {
   className?: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  isOpen, 
-  onClose, 
-  onToggle,
-  className = '' 
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle, className = '' }) => {
   const { user, profile } = useAuth();
   const { safeNavigate, isNavigating } = useNavigation();
   const location = useLocation();
@@ -109,10 +104,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ref={sidebarRef}
         initial={{ x: -320 }}
         animate={{ x: isOpen ? 0 : -320 }}
-        transition={{ 
+        transition={{
           type: 'tween',
           duration: 0.3,
-          ease: [0.4, 0, 0.2, 1]
+          ease: [0.4, 0, 0.2, 1],
         }}
         className={`fixed left-0 top-0 h-full w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-r border-white/20 dark:border-gray-700/20 shadow-2xl z-50 flex flex-col ${className}`}
         role="navigation"
@@ -142,7 +137,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Avatar className="w-12 h-12 border-2 border-white/20 dark:border-gray-700/20">
                 <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-medium">
-                  {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                  {profile.full_name
+                    ?.split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
@@ -170,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {sidebarMenuItems.map((item, index) => {
             const isActive = isActivePath(item.path);
             const isLoading = isNavigating(item.path);
-            
+
             return (
               <motion.button
                 key={item.path}
@@ -185,18 +184,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   isActive
                     ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
                     : item.variant === 'danger'
-                    ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-800/50'
+                      ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-800/50'
                 }`}
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={`Navigate to ${item.label}`}
               >
-                <item.icon className={`w-5 h-5 transition-transform duration-200 ${
-                  hoveredItem === item.path ? 'scale-110' : ''
-                } ${isLoading ? 'animate-pulse' : ''}`} />
-                
+                <item.icon
+                  className={`w-5 h-5 transition-transform duration-200 ${
+                    hoveredItem === item.path ? 'scale-110' : ''
+                  } ${isLoading ? 'animate-pulse' : ''}`}
+                />
+
                 <span className="font-medium">{item.label}</span>
-                
+
                 {isLoading && (
                   <div className="ml-auto w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 )}
@@ -216,9 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer */}
         <div className="p-6 border-t border-white/10 dark:border-gray-700/20">
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            © 2024 Kupintar
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">© 2024 Kupintar</p>
         </div>
       </motion.div>
 

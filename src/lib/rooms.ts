@@ -20,7 +20,7 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       return [];
     }
 
-    return (data || []).map(room => ({
+    return (data || []).map((room) => ({
       id: room.id,
       name: room.name,
       description: room.description || '',
@@ -31,7 +31,7 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       is_active: room.is_active ?? true,
       is_public: room.is_public ?? true,
       max_members: room.max_members || 10,
-      short_code: room.short_code
+      short_code: room.short_code,
     }));
   } catch (error) {
     console.error('Error in getRooms:', error);
@@ -55,30 +55,28 @@ export const getRoomMembersByRole = async (_roomId: string) => {
 // Additional exports required by pages - placeholder implementations
 export const getRoom = async (roomId: string): Promise<Room | null> => {
   try {
-    const { data, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', roomId)
-      .single();
+    const { data, error } = await supabase.from('rooms').select('*').eq('id', roomId).single();
 
     if (error) {
       console.error('Error fetching room:', error);
       return null;
     }
 
-    return data ? {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      subject: data.subject || '',
-      created_by: data.created_by,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      is_active: data.is_active ?? true,
-      is_public: data.is_public ?? true,
-      max_members: data.max_members || 10,
-      short_code: data.short_code
-    } : null;
+    return data
+      ? {
+          id: data.id,
+          name: data.name,
+          description: data.description || '',
+          subject: data.subject || '',
+          created_by: data.created_by,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          is_active: data.is_active ?? true,
+          is_public: data.is_public ?? true,
+          max_members: data.max_members || 10,
+          short_code: data.short_code,
+        }
+      : null;
   } catch (error) {
     console.error('Error in getRoom:', error);
     return null;
@@ -115,10 +113,12 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
   try {
     const { data, error } = await supabase
       .from('room_members')
-      .select(`
+      .select(
+        `
         *,
         profile:profiles(id, full_name, avatar_url)
-      `)
+      `
+      )
       .eq('room_id', roomId);
 
     if (error) {
@@ -126,13 +126,13 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
       return [];
     }
 
-    return (data || []).map(member => ({
+    return (data || []).map((member) => ({
       id: member.id,
       room_id: member.room_id || '',
       user_id: member.user_id || '',
       role: member.role as 'admin' | 'member',
       joined_at: member.joined_at || '',
-      profile: member.profile || undefined
+      profile: member.profile || undefined,
     }));
   } catch (error) {
     console.error('Error in getRoomMembers:', error);
@@ -144,10 +144,12 @@ export const getMessages = async (roomId: string): Promise<Message[]> => {
   try {
     const { data, error } = await supabase
       .from('messages')
-      .select(`
+      .select(
+        `
         *,
         profile:profiles(id, full_name, avatar_url)
-      `)
+      `
+      )
       .eq('conversation_id', roomId)
       .order('created_at', { ascending: true });
 
@@ -156,13 +158,13 @@ export const getMessages = async (roomId: string): Promise<Message[]> => {
       return [];
     }
 
-    return (data || []).map(message => ({
+    return (data || []).map((message) => ({
       id: message.id,
       room_id: roomId,
       user_id: message.sender_id || '',
       content: message.content,
       created_at: message.created_at,
-      profile: message.profile || undefined
+      profile: message.profile || undefined,
     }));
   } catch (error) {
     console.error('Error in getMessages:', error);
@@ -181,12 +183,14 @@ export const sendMessage = async (roomId: string, content: string): Promise<Mess
         conversation_id: roomId,
         sender_id: user.user.id,
         content,
-        message_type: 'text'
+        message_type: 'text',
       })
-      .select(`
+      .select(
+        `
         *,
         profile:profiles(id, full_name, avatar_url)
-      `)
+      `
+      )
       .single();
 
     if (error) {
@@ -200,7 +204,7 @@ export const sendMessage = async (roomId: string, content: string): Promise<Mess
       user_id: data.sender_id || '',
       content: data.content,
       created_at: data.created_at,
-      profile: data.profile || undefined
+      profile: data.profile || undefined,
     };
   } catch (error) {
     console.error('Error in sendMessage:', error);
@@ -213,16 +217,15 @@ export const joinRoom = async (roomId: string): Promise<void> => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('Not authenticated');
 
-    const { error } = await supabase
-      .from('room_members')
-      .insert({
-        room_id: roomId,
-        user_id: user.user.id,
-        role: 'member'
-      });
+    const { error } = await supabase.from('room_members').insert({
+      room_id: roomId,
+      user_id: user.user.id,
+      role: 'member',
+    });
 
     if (error) {
-      if (error.code === '23505') { // Unique constraint violation
+      if (error.code === '23505') {
+        // Unique constraint violation
         throw new Error('You are already a member of this room');
       }
       throw error;
@@ -263,7 +266,8 @@ export const isRoomMember = async (roomId: string): Promise<boolean> => {
       .eq('user_id', user.user.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is "no rows returned"
       console.error('Error checking room membership:', error);
       return false;
     }
@@ -288,19 +292,21 @@ export const getRoomByCode = async (code: string): Promise<Room | null> => {
       return null;
     }
 
-    return data ? {
-      id: data.id,
-      name: data.name,
-      description: data.description || '',
-      subject: data.subject || '',
-      created_by: data.created_by,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      is_active: data.is_active ?? true,
-      is_public: data.is_public ?? true,
-      max_members: data.max_members || 10,
-      short_code: data.short_code
-    } : null;
+    return data
+      ? {
+          id: data.id,
+          name: data.name,
+          description: data.description || '',
+          subject: data.subject || '',
+          created_by: data.created_by,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          is_active: data.is_active ?? true,
+          is_public: data.is_public ?? true,
+          max_members: data.max_members || 10,
+          short_code: data.short_code,
+        }
+      : null;
   } catch (error) {
     console.error('Error in getRoomByCode:', error);
     return null;

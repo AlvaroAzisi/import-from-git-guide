@@ -32,7 +32,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return true;
     }
   });
-  
+
   const [isMinimized, setIsMinimized] = useState(() => {
     try {
       const stored = localStorage.getItem('kupintar_sidebar_minimized');
@@ -94,9 +94,5 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toggleMinimized,
   };
 
-  return (
-    <SidebarContext.Provider value={value}>
-      {children}
-    </SidebarContext.Provider>
-  );
+  return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;
 };

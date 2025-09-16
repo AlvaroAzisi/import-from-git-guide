@@ -11,20 +11,15 @@ export function subscribeToTableInserts(
 ): Unsubscribe {
   const channel = supabase
     .channel(channelName)
-    .on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table, filter },
-      (payload: any) => onInsert(payload.new)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table, filter }, (payload: any) =>
+      onInsert(payload.new)
     )
     .subscribe();
 
   return () => supabase.removeChannel(channel);
 }
 
-export function subscribeToRoomRequests(
-  roomId: string,
-  onChange: (row: any) => void
-): Unsubscribe {
+export function subscribeToRoomRequests(roomId: string, onChange: (row: any) => void): Unsubscribe {
   const channel = supabase
     .channel(`room-requests-${roomId}`)
     .on(
@@ -37,11 +32,13 @@ export function subscribeToRoomRequests(
   return () => supabase.removeChannel(channel);
 }
 
-export function subscribeToRoomMessages(
-  roomId: string,
-  onInsert: (row: any) => void
-): Unsubscribe {
-  return subscribeToTableInserts(`messages-room-${roomId}`, 'messages', `room_id=eq.${roomId}`, onInsert);
+export function subscribeToRoomMessages(roomId: string, onInsert: (row: any) => void): Unsubscribe {
+  return subscribeToTableInserts(
+    `messages-room-${roomId}`,
+    'messages',
+    `room_id=eq.${roomId}`,
+    onInsert
+  );
 }
 
 export function subscribeToGroupMessages(
@@ -52,7 +49,12 @@ export function subscribeToGroupMessages(
     .channel(`group-messages-${groupId}`)
     .on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` },
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'group_messages',
+        filter: `group_id=eq.${groupId}`,
+      },
       (payload: any) => onInsert(payload.new)
     )
     .subscribe();

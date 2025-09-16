@@ -8,20 +8,16 @@ export const uploadAvatar = async (file: File, userId: string): Promise<string |
     // Structure path for RLS policy: userId/filename
     const filePath = `${userId}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
 
     if (uploadError) {
       throw uploadError;
     }
 
-    const { data } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
     return data.publicUrl;
   } catch (error) {
@@ -37,9 +33,7 @@ export const deleteAvatar = async (url: string): Promise<boolean> => {
     const fileName = urlParts[urlParts.length - 1];
     const filePath = `avatars/${fileName}`;
 
-    const { error } = await supabase.storage
-      .from('avatars')
-      .remove([filePath]);
+    const { error } = await supabase.storage.from('avatars').remove([filePath]);
 
     if (error) {
       throw error;
@@ -52,7 +46,11 @@ export const deleteAvatar = async (url: string): Promise<boolean> => {
   }
 };
 
-export const uploadChatMedia = async (file: File, roomId: string, userId: string): Promise<string | null> => {
+export const uploadChatMedia = async (
+  file: File,
+  roomId: string,
+  userId: string
+): Promise<string | null> => {
   try {
     // Validate file size (max 3MB)
     if (file.size > 3 * 1024 * 1024) {
@@ -73,16 +71,14 @@ export const uploadChatMedia = async (file: File, roomId: string, userId: string
     const { error: uploadError } = await supabase.storage
       .from('chat_media')
       .upload(filePath, file, {
-        cacheControl: '3600'
+        cacheControl: '3600',
       });
 
     if (uploadError) {
       throw uploadError;
     }
 
-    const { data } = supabase.storage
-      .from('chat_media')
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from('chat_media').getPublicUrl(filePath);
 
     return data.publicUrl;
   } catch (error) {
@@ -96,14 +92,12 @@ export const deleteChatMedia = async (url: string): Promise<boolean> => {
     // Extract file path from URL
     const urlPath = new URL(url).pathname;
     const filePath = urlPath.split('/chat_media/')[1];
-    
+
     if (!filePath) {
       throw new Error('Invalid file URL');
     }
 
-    const { error } = await supabase.storage
-      .from('chat_media')
-      .remove([filePath]);
+    const { error } = await supabase.storage.from('chat_media').remove([filePath]);
 
     if (error) {
       throw error;

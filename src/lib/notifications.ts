@@ -15,7 +15,9 @@ export interface Notification {
 // TODO adapted for new Supabase backend - get user notifications
 export const getUserNotifications = async (): Promise<Notification[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return [];
 
     const { data, error } = await supabase
@@ -35,7 +37,9 @@ export const getUserNotifications = async (): Promise<Notification[]> => {
 // TODO adapted for new Supabase backend - get unread count
 export const getUnreadNotificationCount = async (): Promise<number> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return 0;
 
     const { count, error } = await supabase

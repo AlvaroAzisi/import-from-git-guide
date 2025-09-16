@@ -28,7 +28,11 @@ const MessageComposer: React.FC<MessageComposerProps> = ({ onSend, disabled }) =
         placeholder="Type a message..."
         className="flex-1 px-3 py-2 border rounded dark:bg-gray-800"
       />
-      <button onClick={submit} disabled={sending || disabled} className="px-4 py-2 bg-blue-500 text-white rounded">
+      <button
+        onClick={submit}
+        disabled={sending || disabled}
+        className="px-4 py-2 bg-blue-500 text-white rounded"
+      >
         {sending ? 'Sending…' : 'Send'}
       </button>
     </div>

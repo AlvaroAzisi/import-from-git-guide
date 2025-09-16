@@ -16,7 +16,7 @@ export class RoomManager {
         p_description: payload.description || '',
         p_subject: payload.subject || '',
         p_is_public: payload.is_public ?? true,
-        p_max_members: payload.max_members || 10
+        p_max_members: payload.max_members || 10,
       });
 
       if (error) {
@@ -24,7 +24,7 @@ export class RoomManager {
         return {
           success: false,
           error: error.message,
-          code: 'GENERAL_ERROR'
+          code: 'GENERAL_ERROR',
         };
       }
 
@@ -33,22 +33,21 @@ export class RoomManager {
         return {
           success: true,
           room: roomData.room as any as Room,
-          membership: roomData.membership as any
+          membership: roomData.membership as any,
         };
       }
 
       return {
         success: false,
         error: 'No data returned from room creation',
-        code: 'GENERAL_ERROR'
+        code: 'GENERAL_ERROR',
       };
-
     } catch (error: any) {
       console.error('Create and join room error:', error);
       return {
         success: false,
         error: error.message || 'Failed to create room',
-        code: 'GENERAL_ERROR'
+        code: 'GENERAL_ERROR',
       };
     }
   }
@@ -64,13 +63,13 @@ export class RoomManager {
         return {
           success: false,
           error: 'Room not found',
-          code: 'ROOM_NOT_FOUND'
+          code: 'ROOM_NOT_FOUND',
         };
       }
 
       // Call the join room RPC
       const { data, error } = await supabase.rpc('join_room_safe', {
-        p_room_identifier: roomIdOrCode
+        p_room_identifier: roomIdOrCode,
       });
 
       if (error) {
@@ -79,43 +78,42 @@ export class RoomManager {
           return {
             success: true, // Still success - they're already in
             room: roomCheck.room,
-            code: 'ALREADY_MEMBER'
+            code: 'ALREADY_MEMBER',
           };
         }
         if (error.message.includes('max capacity')) {
           return {
             success: false,
             error: 'Room is at maximum capacity',
-            code: 'MAX_CAPACITY'
+            code: 'MAX_CAPACITY',
           };
         }
         if (error.message.includes('private') || error.message.includes('not public')) {
           return {
             success: false,
             error: 'Room is private',
-            code: 'ROOM_PRIVATE'
+            code: 'ROOM_PRIVATE',
           };
         }
 
         return {
           success: false,
           error: error.message,
-          code: 'GENERAL_ERROR'
+          code: 'GENERAL_ERROR',
         };
       }
 
       return {
         success: true,
         room: roomCheck.room,
-        membership: data as any
+        membership: data as any,
       };
-
     } catch (error: any) {
       console.error('Join room error:', error);
       return {
         success: false,
         error: error.message || 'Failed to join room',
-        code: 'GENERAL_ERROR'
+        code: 'GENERAL_ERROR',
       };
     }
   }
@@ -130,10 +128,7 @@ export class RoomManager {
   }> {
     try {
       // Try by ID first, then by short_code
-      let query = supabase
-        .from('rooms')
-        .select('*')
-        .eq('is_active', true);
+      let query = supabase.from('rooms').select('*').eq('is_active', true);
 
       // Check if it looks like a UUID (room ID) or short code
       if (roomIdOrCode.length > 10 && roomIdOrCode.includes('-')) {
@@ -153,7 +148,6 @@ export class RoomManager {
       }
 
       return { exists: true, room: data as any as Room };
-
     } catch (error: any) {
       return { exists: false, error: error.message };
     }
@@ -173,7 +167,14 @@ export class RoomManager {
       const [roomResult, memberResult, membershipResult] = await Promise.all([
         supabase.from('rooms').select('*').eq('id', roomId).single(),
         supabase.from('room_members').select('id,room_id,user_id').eq('room_id', roomId),
-        user ? supabase.from('room_members').select('id,room_id,user_id').eq('room_id', roomId).eq('user_id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null })
+        user
+          ? supabase
+              .from('room_members')
+              .select('id,room_id,user_id')
+              .eq('room_id', roomId)
+              .eq('user_id', user.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
       ]);
 
       if (roomResult.error) {
@@ -183,9 +184,8 @@ export class RoomManager {
       return {
         room: roomResult.data as any as Room,
         memberCount: memberResult.data?.length || 0,
-        userIsMember: !membershipResult.error
+        userIsMember: !membershipResult.error,
       };
-
     } catch (error: any) {
       return { error: error.message };
     }

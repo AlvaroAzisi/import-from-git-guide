@@ -8,58 +8,72 @@ export const useNavigation = () => {
   const [navigating, setNavigating] = useState<string | null>(null);
   const [clickedItem, setClickedItem] = useState<string | null>(null);
 
-  const safeNavigate = useCallback(async (
-    path: string, 
-    options?: { 
-      replace?: boolean;
-      state?: any;
-      beforeNavigate?: () => Promise<void>;
-    }
-  ) => {
-    if (navigating === path) return; // Prevent duplicate navigation
-
-    try {
-      setNavigating(path);
-      setClickedItem(path);
-
-      // Execute any pre-navigation logic
-      if (options?.beforeNavigate) {
-        await options.beforeNavigate();
+  const safeNavigate = useCallback(
+    async (
+      path: string,
+      options?: {
+        replace?: boolean;
+        state?: any;
+        beforeNavigate?: () => Promise<void>;
       }
+    ) => {
+      if (navigating === path) return; // Prevent duplicate navigation
 
-      // Small delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        setNavigating(path);
+        setClickedItem(path);
 
-      // Navigate
-      navigate(path, {
-        replace: options?.replace,
-        state: options?.state
-      });
+        // Execute any pre-navigation logic
+        if (options?.beforeNavigate) {
+          await options.beforeNavigate();
+        }
 
-    } catch (error) {
-      console.error('Navigation error:', error);
-    } finally {
-      setNavigating(null);
-      // Keep clicked state briefly for visual feedback
-      setTimeout(() => setClickedItem(null), 300);
-    }
-  }, [navigate, navigating]);
+        // Small delay to show loading state
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-  const navigateToRoom = useCallback((roomId: string, replace = false) => {
-    safeNavigate(ROUTES.ROOM(roomId), { replace });
-  }, [safeNavigate]);
+        // Navigate
+        navigate(path, {
+          replace: options?.replace,
+          state: options?.state,
+        });
+      } catch (error) {
+        console.error('Navigation error:', error);
+      } finally {
+        setNavigating(null);
+        // Keep clicked state briefly for visual feedback
+        setTimeout(() => setClickedItem(null), 300);
+      }
+    },
+    [navigate, navigating]
+  );
 
-  const navigateToRuangku = useCallback((roomId: string, replace = false) => {
-    safeNavigate(ROUTES.RUANGKU(roomId), { replace });
-  }, [safeNavigate]);
+  const navigateToRoom = useCallback(
+    (roomId: string, replace = false) => {
+      safeNavigate(ROUTES.ROOM(roomId), { replace });
+    },
+    [safeNavigate]
+  );
 
-  const navigateToHome = useCallback((replace = false) => {
-    safeNavigate(ROUTES.HOME, { replace });
-  }, [safeNavigate]);
+  const navigateToRuangku = useCallback(
+    (roomId: string, replace = false) => {
+      safeNavigate(ROUTES.RUANGKU(roomId), { replace });
+    },
+    [safeNavigate]
+  );
 
-  const navigateToWork = useCallback((replace = false) => {
-    safeNavigate(ROUTES.WORK, { replace });
-  }, [safeNavigate]);
+  const navigateToHome = useCallback(
+    (replace = false) => {
+      safeNavigate(ROUTES.HOME, { replace });
+    },
+    [safeNavigate]
+  );
+
+  const navigateToWork = useCallback(
+    (replace = false) => {
+      safeNavigate(ROUTES.WORK, { replace });
+    },
+    [safeNavigate]
+  );
 
   return {
     safeNavigate,
@@ -69,8 +83,8 @@ export const useNavigation = () => {
     navigateToWork,
     navigating,
     clickedItem,
-    isNavigating: (path?: string) => path ? navigating === path : !!navigating,
-    isClicked: (path?: string) => path ? clickedItem === path : !!clickedItem
+    isNavigating: (path?: string) => (path ? navigating === path : !!navigating),
+    isClicked: (path?: string) => (path ? clickedItem === path : !!clickedItem),
   };
 };
 
@@ -79,13 +93,16 @@ export const useDebouncedNavigation = (delay = 300) => {
   const { safeNavigate, navigating } = useNavigation();
   const [lastClick, setLastClick] = useState<number>(0);
 
-  const debouncedNavigate = useCallback((path: string, options?: any) => {
-    const now = Date.now();
-    if (now - lastClick < delay || navigating) return;
-    
-    setLastClick(now);
-    safeNavigate(path, options);
-  }, [safeNavigate, navigating, lastClick, delay]);
+  const debouncedNavigate = useCallback(
+    (path: string, options?: any) => {
+      const now = Date.now();
+      if (now - lastClick < delay || navigating) return;
+
+      setLastClick(now);
+      safeNavigate(path, options);
+    },
+    [safeNavigate, navigating, lastClick, delay]
+  );
 
   return { debouncedNavigate, navigating };
 };

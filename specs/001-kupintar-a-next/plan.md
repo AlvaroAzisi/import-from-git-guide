@@ -1,10 +1,10 @@
 # Implementation Plan: [FEATURE]
 
-
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Execution Flow (/plan command scope)
+
 ```
 1. Load feature spec from Input path
    → If not found: ERROR "No feature spec at {path}"
@@ -28,9 +28,11 @@
 **IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
 
 ## Summary
+
 [Kupintar is a next-generation learning and collaboration platform for ambitious students, enabling real-time study rooms, chat, friend groups, XP/streaks, and Pro features. The technical approach leverages a modular monorepo with Vite+React frontend, Supabase backend (Postgres, Auth, Realtime, Storage), and a clear separation of UI, business logic, and persistence.]
 
 ## Technical Context
+
 **Language/Version**: TypeScript (frontend), SQL/PLPGSQL (backend), Bash (scripts)
 **Primary Dependencies**: React 18, Vite, TailwindCSS, shadcn/ui, Supabase JS, React Router DOM, Framer Motion
 **Storage**: Supabase (PostgreSQL managed instance), Supabase Storage (avatars)
@@ -42,21 +44,25 @@
 **Scale/Scope**: MVP: 10k users, 100k messages/day, 1000 concurrent rooms; scalable to 200+ room size and 100k+ users
 
 ## Constitution Check
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 **Simplicity**:
+
 - Projects: [#] (max 3 - e.g., api, cli, tests)
 - Using framework directly? (no wrapper classes)
 - Single data model? (no DTOs unless serialization differs)
 - Avoiding patterns? (no Repository/UoW without proven need)
 
 **Architecture**:
+
 - EVERY feature as library? (no direct app code)
 - Libraries listed: [name + purpose for each]
 - CLI per library: [commands with --help/--version/--format]
 - Library docs: llms.txt format planned?
 
 **Testing (NON-NEGOTIABLE)**:
+
 - RED-GREEN-Refactor cycle enforced? (test MUST fail first)
 - Git commits show tests before implementation?
 - Order: Contract→Integration→E2E→Unit strictly followed?
@@ -65,11 +71,13 @@
 - FORBIDDEN: Implementation before test, skipping RED phase
 
 **Observability**:
+
 - Structured logging included?
 - Frontend logs → backend? (unified stream)
 - Error context sufficient?
 
 **Versioning**:
+
 - Version number assigned? (MAJOR.MINOR.BUILD)
 - BUILD increments on every change?
 - Breaking changes handled? (parallel tests, migration plan)
@@ -77,6 +85,7 @@
 ## Project Structure
 
 ### Documentation (this feature)
+
 ```
 specs/[###-feature]/
 ├── plan.md              # This file (/plan command output)
@@ -88,6 +97,7 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+
 ```
 # Option 1: Single project (DEFAULT)
 src/
@@ -127,12 +137,14 @@ ios/ or android/
 **Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
 
 ## Phase 0: Outline & Research
+
 1. **Extract unknowns from Technical Context** above:
    - For each NEEDS CLARIFICATION → research task
    - For each dependency → best practices task
    - For each integration → patterns task
 
 2. **Generate and dispatch research agents**:
+
    ```
    For each unknown in Technical Context:
      Task: "Research {unknown} for {feature context}"
@@ -148,6 +160,7 @@ ios/ or android/
 **Output**: research.md with all NEEDS CLARIFICATION resolved
 
 ### Phase 0 Research Tasks
+
 - Find best practices for Vite+React monorepo structure for web apps with separate frontend/backend/shared modules
 - Research Supabase RLS policy patterns for multi-tenant study rooms and per-user data privacy
 - Investigate optimal chat architecture using Supabase Realtime for low-latency, scalable messaging
@@ -160,7 +173,8 @@ ios/ or android/
 **No open NEEDS CLARIFICATION remain.**
 
 ## Phase 1: Design & Contracts
-*Prerequisites: research.md complete*
+
+_Prerequisites: research.md complete_
 
 1. **Extract entities from feature spec** → `data-model.md`:
    - Entity name, fields, relationships
@@ -189,21 +203,24 @@ ios/ or android/
    - Keep under 150 lines for token efficiency
    - Output to repository root
 
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+**Output**: data-model.md, /contracts/\*, failing tests, quickstart.md, agent-specific file
 
 ## Phase 2: Task Planning Approach
-*This section describes what the /tasks command will do - DO NOT execute during /plan*
+
+_This section describes what the /tasks command will do - DO NOT execute during /plan_
 
 **Task Generation Strategy**:
+
 - Load `/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
 - Each contract → contract test task [P]
-- Each entity → model creation task [P] 
+- Each entity → model creation task [P]
 - Each user story → integration test task
 - Implementation tasks to make tests pass
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
+
+- TDD order: Tests before implementation
 - Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
 
@@ -212,34 +229,38 @@ ios/ or android/
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
 ## Phase 3+: Future Implementation
-*These phases are beyond the scope of the /plan command*
+
+_These phases are beyond the scope of the /plan command_
 
 **Phase 3**: Task execution (/tasks command creates tasks.md)  
 **Phase 4**: Implementation (execute tasks.md following constitutional principles)  
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking
-*Fill ONLY if Constitution Check has violations that must be justified*
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+_Fill ONLY if Constitution Check has violations that must be justified_
 
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
 
 ## Progress Tracking
-*This checklist is updated during execution flow*
+
+_This checklist is updated during execution flow_
 
 **Phase Status**:
- [x] Phase 0: Research complete (/plan command)
- [x] Phase 1: Design complete (/plan command)
- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+[x] Phase 0: Research complete (/plan command)
+[x] Phase 1: Design complete (/plan command)
+[x] Phase 2: Task planning complete (/plan command - describe approach only)
 
 **Gate Status**:
+
 - [ ] Initial Constitution Check: PASS
 - [ ] Post-Design Constitution Check: PASS
 - [ ] All NEEDS CLARIFICATION resolved
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v2.1.1 - See `/memory/constitution.md`*
+
+_Based on Constitution v2.1.1 - See `/memory/constitution.md`_

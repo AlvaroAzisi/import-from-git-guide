@@ -14,7 +14,7 @@ interface JoinRoomModalProps {
 
 /**
  * JoinRoomModal - Centered modal for joining rooms by code
- * 
+ *
  * Manual test steps:
  * 1. Open modal - should be centered and focus on input
  * 2. Press ESC or click backdrop - should close
@@ -66,13 +66,13 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const trimmedCode = code.trim().toUpperCase();
     if (!trimmedCode) {
       toast({
         title: 'Invalid Code',
         description: 'Please enter a room code',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -83,13 +83,13 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
       // Expected params: { p_code: string }
       // Expected response: { room_id: string, room_title: string, success: boolean }
       const result = await joinRoomByCode(trimmedCode);
-      
+
       if (result.success && result.room_id) {
         toast({
           title: 'Joined Successfully!',
-          description: `Welcome to ${result.room_title || 'the room'}!`
+          description: `Welcome to ${result.room_title || 'the room'}!`,
         });
-        
+
         onClose();
         navigate(`/ruangku/${result.room_id}`);
       } else {
@@ -100,7 +100,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
       toast({
         title: 'Failed to Join',
         description: error.message || 'Invalid room code or room is full',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -116,7 +116,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
   return (
     <AnimatePresence>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={handleBackdropClick}
         >
@@ -127,7 +127,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
             exit={{ opacity: 0 }}
             className="absolute inset-0"
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -146,16 +146,16 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
               >
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
-              
+
               <div className="text-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <KeyRound className="w-8 h-8 text-white" />
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Join Study Room
                 </h3>
-                
+
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Enter the room code to join instantly
                 </p>
@@ -196,7 +196,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ isOpen, onClose })
                   >
                     Cancel
                   </Button>
-                  
+
                   <Button
                     type="submit"
                     disabled={loading || !code.trim()}

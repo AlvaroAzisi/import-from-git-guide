@@ -85,7 +85,7 @@ export const setLanguagePreference = (language: 'en' | 'id'): void => {
  */
 export const clearStoredPreferences = (): void => {
   try {
-    Object.values(STORAGE_KEYS).forEach(key => {
+    Object.values(STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key);
     });
   } catch (error) {

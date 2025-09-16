@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Users, 
-  Filter, 
-  Clock,
-  Star,
-  Plus
-} from 'lucide-react';
+import { Search, Users, Filter, Clock, Star, Plus } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getRooms, joinRoom, isRoomMember } from '../lib/rooms';
 import { useToast } from '../hooks/useToast';
@@ -21,13 +14,8 @@ const RoomsPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const {
-    data: rooms,
-    error,
-    isLoading,
-    execute: fetchRooms
-  } = useDataFetching<Room[]>();
+
+  const { data: rooms, error, isLoading, execute: fetchRooms } = useDataFetching<Room[]>();
 
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,8 +25,16 @@ const RoomsPage: React.FC = () => {
   const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   const filterOptions = [
-    'Mathematics', 'Science', 'History', 'Literature', 'Programming', 
-    'Language', 'Physics', 'Chemistry', 'Biology', 'Art'
+    'Mathematics',
+    'Science',
+    'History',
+    'Literature',
+    'Programming',
+    'Language',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Art',
   ];
 
   useEffect(() => {
@@ -55,7 +51,7 @@ const RoomsPage: React.FC = () => {
     await fetchRooms(
       async () => {
         const data = await getRooms(50);
-        
+
         // Check membership status for each room
         if (user && data.length > 0) {
           const membershipStatus = await Promise.all(
@@ -81,22 +77,24 @@ const RoomsPage: React.FC = () => {
 
   const filterRooms = () => {
     if (!rooms) return;
-    
+
     let filtered = rooms;
 
     if (searchQuery.trim()) {
-      filtered = filtered.filter(room =>
-        room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (room.subject ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (room.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (room) =>
+          room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (room.subject ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (room.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     if (selectedFilters.length > 0) {
-      filtered = filtered.filter(room =>
-        selectedFilters.some(filter =>
-          (room.subject ?? '').toLowerCase().includes(filter.toLowerCase()) ||
-          room.name.toLowerCase().includes(filter.toLowerCase())
+      filtered = filtered.filter((room) =>
+        selectedFilters.some(
+          (filter) =>
+            (room.subject ?? '').toLowerCase().includes(filter.toLowerCase()) ||
+            room.name.toLowerCase().includes(filter.toLowerCase())
         )
       );
     }
@@ -105,53 +103,51 @@ const RoomsPage: React.FC = () => {
   };
 
   const toggleFilter = (filter: string) => {
-    setSelectedFilters(prev =>
-      prev.includes(filter)
-        ? prev.filter(f => f !== filter)
-        : [...prev, filter]
+    setSelectedFilters((prev) =>
+      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
     );
   };
 
   const handleJoinRoom = async (roomId: string) => {
     if (!user) return;
-    
+
     // Check if user is already a member
     if (isMemberMap[roomId]) {
       toast({
-        title: "Already joined",
-        description: "You are already a member of this room.",
-        variant: "default"
+        title: 'Already joined',
+        description: 'You are already a member of this room.',
+        variant: 'default',
       });
       navigate(`/room/${roomId}`);
       return;
     }
-    
+
     setJoining(roomId);
     try {
       await joinRoom(roomId);
-      setIsMemberMap(prev => ({ ...prev, [roomId]: true }));
+      setIsMemberMap((prev) => ({ ...prev, [roomId]: true }));
       toast({
         title: 'Success',
-        description: 'Joined room successfully!'
+        description: 'Joined room successfully!',
       });
       navigate(`/room/${roomId}`);
     } catch (error: any) {
       console.error('Error joining room:', error);
-      
+
       // Handle specific error cases
       if (error.message?.includes('already a member')) {
-        setIsMemberMap(prev => ({ ...prev, [roomId]: true }));
+        setIsMemberMap((prev) => ({ ...prev, [roomId]: true }));
         toast({
-          title: "Already joined",
-          description: "You are already a member of this room.",
-          variant: "default"
+          title: 'Already joined',
+          description: 'You are already a member of this room.',
+          variant: 'default',
         });
         navigate(`/room/${roomId}`);
       } else {
         toast({
           title: 'Error',
           description: error.message || 'Failed to join room',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     } finally {
@@ -184,7 +180,7 @@ const RoomsPage: React.FC = () => {
                 Study Room
               </span>
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -242,7 +238,7 @@ const RoomsPage: React.FC = () => {
             <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <span className="font-medium text-gray-700 dark:text-gray-300">Filter by subject:</span>
           </div>
-          
+
           <div className="flex flex-wrap gap-3">
             {filterOptions.map((filter, index) => (
               <motion.button
@@ -317,68 +313,66 @@ const RoomsPage: React.FC = () => {
               <AnimatePresence>
                 <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredRooms.map((room, index) => (
-                <motion.div
-                  key={room.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -30 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  whileHover={{ y: -10, scale: 1.02 }}
-                  className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg hover:shadow-2xl transition-all duration-300 p-6 cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {room.name}
-                      </h3>
-                      <span className="inline-block px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 rounded-xl text-sm font-medium">
-                        {room.subject ?? 'No subject'}
-                      </span>
-                    </div>
-                    {room.is_public && (
-                      <Star className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                    {room.description || "Join this amazing study room to learn together!"}
-                  </p>
-
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>0/{room.max_members}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>Active</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {!isMemberMap[room.id] ? (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleJoinRoom(room.id)}
-                      disabled={joining === room.id}
-                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+                    <motion.div
+                      key={room.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -30 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ y: -10, scale: 1.02 }}
+                      className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg hover:shadow-2xl transition-all duration-300 p-6 cursor-pointer group"
                     >
-                      {joining === room.id ? 'Joining...' : 'Join Room'}
-                    </motion.button>
-                  ) : (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => navigate(`/room/${room.id}`)}
-                      className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
-                    >
-                      Enter Room
-                    </motion.button>
-                  )}
-                </motion.div>
-              ))}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {room.name}
+                          </h3>
+                          <span className="inline-block px-3 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-700 dark:text-blue-300 rounded-xl text-sm font-medium">
+                            {room.subject ?? 'No subject'}
+                          </span>
+                        </div>
+                        {room.is_public && <Star className="w-5 h-5 text-yellow-500" />}
+                      </div>
+
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                        {room.description || 'Join this amazing study room to learn together!'}
+                      </p>
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            <span>0/{room.max_members}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>Active</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {!isMemberMap[room.id] ? (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleJoinRoom(room.id)}
+                          disabled={joining === room.id}
+                          className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+                        >
+                          {joining === room.id ? 'Joining...' : 'Join Room'}
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => navigate(`/room/${room.id}`)}
+                          className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                        >
+                          Enter Room
+                        </motion.button>
+                      )}
+                    </motion.div>
+                  ))}
                 </motion.div>
               </AnimatePresence>
             ) : (
@@ -412,15 +406,13 @@ const RoomsPage: React.FC = () => {
                   </motion.button>
                 </div>
               </motion.div>
-            )}
+            )
+          }
         </AsyncContent>
       </div>
 
       {/* Join Room Modal */}
-      <JoinRoomModal
-        isOpen={joinModalOpen}
-        onClose={() => setJoinModalOpen(false)}
-      />
+      <JoinRoomModal isOpen={joinModalOpen} onClose={() => setJoinModalOpen(false)} />
     </div>
   );
 };

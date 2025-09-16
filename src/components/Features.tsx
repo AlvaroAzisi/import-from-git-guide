@@ -7,51 +7,53 @@ const Features: React.FC = () => {
     {
       icon: Brain,
       title: 'AI-Powered Matching',
-      description: 'Smart algorithms match you with study partners based on learning style, schedule, and goals.',
-      color: 'from-purple-500 to-pink-500'
+      description:
+        'Smart algorithms match you with study partners based on learning style, schedule, and goals.',
+      color: 'from-purple-500 to-pink-500',
     },
     {
       icon: Calendar,
       title: 'Smart Scheduling',
       description: 'Automatically find common free time slots and sync with your calendar.',
-      color: 'from-blue-500 to-cyan-500'
+      color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: Shield,
       title: 'Verified Profiles',
       description: 'All users are verified students with ratings and reviews for safety.',
-      color: 'from-emerald-500 to-teal-500'
+      color: 'from-emerald-500 to-teal-500',
     },
     {
       icon: MessageCircle,
       title: 'Built-in Chat',
       description: 'Seamless messaging to coordinate study sessions and share resources.',
-      color: 'from-amber-500 to-orange-500'
+      color: 'from-amber-500 to-orange-500',
     },
     {
       icon: Video,
       title: 'Video Study Rooms',
       description: 'Virtual study spaces with video calls, screen sharing, and whiteboards.',
-      color: 'from-red-500 to-pink-500'
+      color: 'from-red-500 to-pink-500',
     },
     {
       icon: Users,
       title: 'Group Formation',
       description: 'Create or join study groups for larger collaborative sessions.',
-      color: 'from-indigo-500 to-purple-500'
+      color: 'from-indigo-500 to-purple-500',
     },
     {
       icon: Target,
       title: 'Goal Tracking',
       description: 'Set and track study goals together with accountability partners.',
-      color: 'from-green-500 to-emerald-500'
+      color: 'from-green-500 to-emerald-500',
     },
     {
       icon: Star,
       title: 'Success Analytics',
-      description: 'Track your progress and see how studying with partners improves your performance.',
-      color: 'from-yellow-500 to-orange-500'
-    }
+      description:
+        'Track your progress and see how studying with partners improves your performance.',
+      color: 'from-yellow-500 to-orange-500',
+    },
   ];
 
   return (
@@ -68,7 +70,8 @@ const Features: React.FC = () => {
             Everything You Need to Study Better
           </h2>
           <p className="text-gray-600 text-lg max-w-3xl mx-auto">
-            Powerful features designed to make finding and collaborating with study partners effortless and effective.
+            Powerful features designed to make finding and collaborating with study partners
+            effortless and effective.
           </p>
         </motion.div>
 
@@ -83,14 +86,16 @@ const Features: React.FC = () => {
               whileHover={{ y: -8, scale: 1.02 }}
               className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-6 group hover:shadow-2xl transition-all duration-300"
             >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+              <div
+                className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
+              >
                 <feature.icon className="w-7 h-7 text-white" />
               </div>
-              
+
               <h3 className="font-bold text-gray-800 text-lg mb-3 group-hover:text-gray-900 transition-colors">
                 {feature.title}
               </h3>
-              
+
               <p className="text-gray-600 text-sm leading-relaxed group-hover:text-gray-700 transition-colors">
                 {feature.description}
               </p>
@@ -118,9 +123,10 @@ const Features: React.FC = () => {
               Why Students Love Kupintar
             </h3>
             <p className="text-gray-600 text-lg mb-8">
-              Our platform combines cutting-edge AI with intuitive design to create the most effective study partner experience possible.
+              Our platform combines cutting-edge AI with intuitive design to create the most
+              effective study partner experience possible.
             </p>
-            
+
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div>
                 <div className="text-3xl font-bold text-blue-500 mb-2">2x</div>

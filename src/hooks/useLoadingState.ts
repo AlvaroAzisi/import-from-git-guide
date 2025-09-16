@@ -17,20 +17,23 @@ export function useLoadingState(initialState: boolean = false) {
     setState({ isLoading: true, error: null });
   }, []);
 
-  const stopLoading = useCallback((error?: Error) => {
-    setState({
-      isLoading: false,
-      error: error || null,
-    });
-
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
+  const stopLoading = useCallback(
+    (error?: Error) => {
+      setState({
+        isLoading: false,
+        error: error || null,
       });
-    }
-  }, [toast]);
+
+      if (error) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    },
+    [toast]
+  );
 
   return {
     ...state,

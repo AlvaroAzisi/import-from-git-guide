@@ -4,11 +4,7 @@ import { X, Settings, Save, Trash2, RotateCcw, Copy, Share2 } from 'lucide-react
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
-import { 
-  updateRoom, 
-  regenerateRoomCode, 
-  softDeleteRoom 
-} from '../../lib/supabase-rpc';
+import { updateRoom, regenerateRoomCode, softDeleteRoom } from '../../lib/supabase-rpc';
 import type { Room } from '../../lib/rooms';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -25,7 +21,7 @@ interface RoomSettingsModalProps {
 
 /**
  * RoomSettingsModal - Reusable centered modal for room/group settings
- * 
+ *
  * Manual test steps:
  * 1. Open as admin - should see all edit/delete options
  * 2. Open as member - should see limited options
@@ -40,16 +36,16 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   room,
   onRoomUpdate: _onRoomUpdate,
   onRoomDelete,
-  userRole = 'member'
+  userRole = 'member',
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: room.name,
     description: room.description || '',
@@ -93,18 +89,18 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
 
     try {
       setLoading(true);
-      
+
       // TODO: DB/RLS: Varo will paste SQL for update_room RPC
       // Expected params: { room_id: string, updates: RoomUpdateData }
       // Expected response: { success: boolean, room: Room, error?: string }
       const result = await updateRoom(room.id!, formData);
-      
+
       if (!result.error) {
         toast({
-          title: "Room updated",
-          description: "Room settings saved successfully.",
+          title: 'Room updated',
+          description: 'Room settings saved successfully.',
         });
-        
+
         // TODO: Re-enable when updateRoom returns proper data
         onClose();
       } else {
@@ -112,9 +108,9 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update room.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to update room.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -129,21 +125,21 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       // Expected params: { room_id: string }
       // Expected response: { success: boolean, new_code: string, error?: string }
       const result = await regenerateRoomCode(room.id!);
-      
+
       if (!result.error) {
         toast({
-          title: "Code regeneration disabled",
-          description: "This feature is temporarily disabled.",
-          variant: "destructive"
+          title: 'Code regeneration disabled',
+          description: 'This feature is temporarily disabled.',
+          variant: 'destructive',
         });
       } else {
         throw new Error(result.error || 'Failed to regenerate code');
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to regenerate code.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to regenerate code.',
+        variant: 'destructive',
       });
     }
   };
@@ -153,18 +149,18 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
 
     try {
       setDeleting(true);
-      
+
       // TODO: DB/RLS: Varo will paste SQL for soft_delete_room RPC
       // Expected params: { room_id: string }
       // Expected response: { success: boolean, error?: string }
       const result = await softDeleteRoom(room.id!);
-      
+
       if (!result.error) {
         toast({
-          title: "Room deleted",
-          description: "The room has been deleted.",
+          title: 'Room deleted',
+          description: 'The room has been deleted.',
         });
-        
+
         onRoomDelete?.();
         onClose();
         navigate('/home');
@@ -173,9 +169,9 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete room.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to delete room.',
+        variant: 'destructive',
       });
     } finally {
       setDeleting(false);
@@ -187,7 +183,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
     if (room.short_code) {
       navigator.clipboard.writeText(room.short_code);
       toast({
-        title: "Code copied!",
+        title: 'Code copied!',
         description: `Invite code: ${room.short_code}`,
       });
     }
@@ -197,8 +193,8 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
     const message = `Join my study room "${room.name}" on Kupintar! Use code: ${room.short_code}`;
     navigator.clipboard.writeText(message);
     toast({
-      title: "Invite message copied!",
-      description: "Share this message with your friends.",
+      title: 'Invite message copied!',
+      description: 'Share this message with your friends.',
     });
   };
 
@@ -211,7 +207,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={handleBackdropClick}
         >
@@ -222,7 +218,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
             exit={{ opacity: 0 }}
             className="absolute inset-0"
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -254,8 +250,10 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
               {/* Room Info Section */}
               {isAdmin && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Room Information</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Room Information
+                  </h3>
+
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -263,7 +261,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                       </label>
                       <Input
                         value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         placeholder="Enter room name"
                         className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50"
                         disabled={!isAdmin}
@@ -276,7 +274,9 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                       </label>
                       <Input
                         value={formData.subject}
-                        onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, subject: e.target.value }))
+                        }
                         placeholder="Enter subject"
                         className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50"
                         disabled={!isAdmin}
@@ -289,7 +289,9 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                       </label>
                       <Textarea
                         value={formData.description}
-                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, description: e.target.value }))
+                        }
                         placeholder="Describe your room"
                         rows={3}
                         className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 resize-none"
@@ -317,14 +319,18 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
 
               {/* Invite Code Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Invite Code</h3>
-                
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                  Invite Code
+                </h3>
+
                 <div className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 border border-white/20 dark:border-gray-700/20">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Current Code:</span>
-                    <code className="text-lg font-mono font-bold text-primary">{room.short_code}</code>
+                    <code className="text-lg font-mono font-bold text-primary">
+                      {room.short_code}
+                    </code>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       onClick={handleCopyInviteCode}
@@ -345,7 +351,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                       Share
                     </Button>
                   </div>
-                  
+
                   {isAdmin && (
                     <Button
                       onClick={handleRegenerateCode}
@@ -363,8 +369,10 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
               {/* Danger Zone */}
               {isAdmin && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h3>
-                  
+                  <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
+                    Danger Zone
+                  </h3>
+
                   {!showDeleteConfirm ? (
                     <Button
                       onClick={() => setShowDeleteConfirm(true)}
@@ -378,7 +386,8 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                     <div className="space-y-3">
                       <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
                         <p className="text-sm text-red-700 dark:text-red-300">
-                          This action cannot be undone. This will permanently delete the room and all messages.
+                          This action cannot be undone. This will permanently delete the room and
+                          all messages.
                         </p>
                       </div>
                       <div className="flex gap-2">

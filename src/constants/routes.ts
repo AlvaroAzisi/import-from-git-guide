@@ -24,8 +24,17 @@ export const isRoomRoute = (path: string): boolean => {
 };
 
 export const isProtectedRoute = (path: string): boolean => {
-  const protectedPaths = ['/home', '/profile', '/rooms', '/chat', '/temanku', '/settings', '/room/', '/ruangku/'];
-  return protectedPaths.some(p => path.startsWith(p));
+  const protectedPaths = [
+    '/home',
+    '/profile',
+    '/rooms',
+    '/chat',
+    '/temanku',
+    '/settings',
+    '/room/',
+    '/ruangku/',
+  ];
+  return protectedPaths.some((p) => path.startsWith(p));
 };
 
 export const isPublicRoute = (path: string): boolean => {

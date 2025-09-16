@@ -8,8 +8,8 @@ export const useNavigation = () => {
   const [navigating, setNavigating] = useState<string | null>(null);
 
   const safeNavigate = async (
-    path: string, 
-    options?: { 
+    path: string,
+    options?: {
       replace?: boolean;
       state?: any;
       beforeNavigate?: () => Promise<void>;
@@ -28,9 +28,8 @@ export const useNavigation = () => {
       // Navigate
       navigate(path, {
         replace: options?.replace,
-        state: options?.state
+        state: options?.state,
       });
-
     } catch (error) {
       console.error('Navigation error:', error);
     } finally {
@@ -56,6 +55,6 @@ export const useNavigation = () => {
     navigateToHome,
     navigateToWork,
     navigating,
-    isNavigating: (path?: string) => path ? navigating === path : !!navigating
+    isNavigating: (path?: string) => (path ? navigating === path : !!navigating),
   };
 };

@@ -15,9 +15,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = () => {
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
           Chat Window Coming Soon
         </h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          Message functionality is being rebuilt.
-        </p>
+        <p className="text-gray-600 dark:text-gray-400">Message functionality is being rebuilt.</p>
       </div>
     </div>
   );

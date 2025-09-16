@@ -16,7 +16,7 @@ const result = await createRoomAndJoin({
   description: 'Mathematics study session',
   subject: 'Mathematics',
   is_public: true,
-  max_members: 10
+  max_members: 10,
 });
 
 if (result.success) {
@@ -58,6 +58,7 @@ if (result.success) {
 ### `create_room_and_join`
 
 **Parameters:**
+
 - `p_name` (text) - Room name
 - `p_description` (text) - Room description
 - `p_subject` (text) - Subject/topic
@@ -65,6 +66,7 @@ if (result.success) {
 - `p_max_members` (integer) - Maximum members
 
 **Returns:**
+
 ```json
 {
   "room": { ... },
@@ -75,9 +77,11 @@ if (result.success) {
 ### `join_room_safe`
 
 **Parameters:**
+
 - `p_room_identifier` (text) - Room ID or short code
 
 **Returns:**
+
 ```json
 {
   "status": "ok",
@@ -87,6 +91,7 @@ if (result.success) {
 ```
 
 **Error Codes:**
+
 - `ROOM_NOT_FOUND` - Room doesn't exist or is inactive
 - `ALREADY_MEMBER` - User is already a member
 - `MAX_CAPACITY` - Room is at capacity
@@ -171,6 +176,7 @@ Key metrics to track:
 - Error rates by operation type
 
 Set up alerts for:
+
 - Error rate > 1%
 - Response time P95 > 500ms
 - Connection pool > 80% utilization

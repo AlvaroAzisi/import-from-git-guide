@@ -12,13 +12,16 @@ export interface RoomAccessResult {
 // Simplified room access check
 export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult> => {
   try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return {
         canAccess: false,
         isMember: false,
         requiresJoin: false,
-        error: 'Authentication required'
+        error: 'Authentication required',
       };
     }
 
@@ -34,7 +37,7 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
         canAccess: false,
         isMember: false,
         requiresJoin: false,
-        error: 'Room not found or inactive'
+        error: 'Room not found or inactive',
       };
     }
 
@@ -44,28 +47,28 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
       .eq('room_id', roomId)
       .eq('user_id', user.id)
       .maybeSingle();
-    
+
     if (membership) {
       return {
         canAccess: true,
         isMember: true,
         requiresJoin: false,
-        room
+        room,
       };
     }
 
     if (room.is_public) {
       const { data: memberCount } = await supabase.rpc('get_room_member_count', {
-        p_room_id: roomId
+        p_room_id: roomId,
       });
-      
+
       if ((memberCount || 0) >= (room.max_members || 10)) {
         return {
           canAccess: false,
           isMember: false,
           requiresJoin: false,
           room,
-          error: 'Room is full'
+          error: 'Room is full',
         };
       }
 
@@ -73,7 +76,7 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
         canAccess: true,
         isMember: false,
         requiresJoin: true,
-        room
+        room,
       };
     }
 
@@ -82,16 +85,15 @@ export const checkRoomAccess = async (roomId: string): Promise<RoomAccessResult>
       isMember: false,
       requiresJoin: false,
       room,
-      error: 'Room is private and requires invitation'
+      error: 'Room is private and requires invitation',
     };
-
   } catch (error: any) {
     console.error('Room access check error:', error);
     return {
       canAccess: false,
       isMember: false,
       requiresJoin: false,
-      error: error.message || 'Failed to check room access'
+      error: error.message || 'Failed to check room access',
     };
   }
 };
@@ -103,30 +105,29 @@ export const enterRoom = async (roomId: string): Promise<{ success: boolean; err
     if (!accessResult.canAccess) {
       return {
         success: false,
-        error: accessResult.error || 'Cannot access room'
+        error: accessResult.error || 'Cannot access room',
       };
     }
 
     if (accessResult.requiresJoin) {
       const { data, error } = await supabase.rpc('join_room_safe', {
-        p_room_identifier: roomId
+        p_room_identifier: roomId,
       });
-      
+
       if (error || !data) {
         return {
           success: false,
-          error: 'Failed to join room'
+          error: 'Failed to join room',
         };
       }
     }
 
     return { success: true };
-
   } catch (error: any) {
     console.error('Room entry error:', error);
     return {
       success: false,
-      error: error.message || 'Failed to enter room'
+      error: error.message || 'Failed to enter room',
     };
   }
 };

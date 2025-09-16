@@ -29,14 +29,22 @@ const JoinWithCodeModal: React.FC<JoinWithCodeModalProps> = ({ open, onClose, on
       // Expecting shape { room_id: string, valid: boolean } or an array of rows
       const result = Array.isArray(data) ? data[0] : data;
       if (!result || result.valid === false) {
-        toast({ title: 'Invalid or expired code', description: 'Please check and try again.', variant: 'destructive' });
+        toast({
+          title: 'Invalid or expired code',
+          description: 'Please check and try again.',
+          variant: 'destructive',
+        });
         return;
       }
       toast({ title: 'Success', description: 'You have joined the room.' });
       onJoined?.(result.room_id);
       onClose();
     } catch (err: any) {
-      toast({ title: 'Could not join', description: err.message ?? 'Please try again later.', variant: 'destructive' });
+      toast({
+        title: 'Could not join',
+        description: err.message ?? 'Please try again later.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -68,8 +76,14 @@ const JoinWithCodeModal: React.FC<JoinWithCodeModalProps> = ({ open, onClose, on
             className="w-full px-4 py-2 rounded-lg border bg-background"
           />
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border">Cancel</button>
-            <button type="submit" disabled={loading || !code} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-60">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !code}
+              className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-60"
+            >
               {loading ? 'Joining…' : 'Join'}
             </button>
           </div>

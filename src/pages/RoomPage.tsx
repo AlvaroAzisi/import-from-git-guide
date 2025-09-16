@@ -1,9 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Users, Copy, Crown, ArrowLeft, Paperclip, Settings as SettingsIcon } from 'lucide-react';
+import {
+  Send,
+  Users,
+  Copy,
+  Crown,
+  ArrowLeft,
+  Paperclip,
+  Settings as SettingsIcon,
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getRoom, getRoomMembers, getMessages, sendMessage, joinRoom, leaveRoom, isRoomMember, getRoomByCode, isValidUUID, type Room, type RoomMember, type Message } from '../lib/rooms';
+import {
+  getRoom,
+  getRoomMembers,
+  getMessages,
+  sendMessage,
+  joinRoom,
+  leaveRoom,
+  isRoomMember,
+  getRoomByCode,
+  isValidUUID,
+  type Room,
+  type RoomMember,
+  type Message,
+} from '../lib/rooms';
 import { uploadChatMedia } from '../lib/storage';
 // TODO adapted for new Supabase backend
 import { supabase } from '../integrations/supabase/client';
@@ -17,7 +38,7 @@ const RoomPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [room, setRoom] = useState<Room | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,7 +48,7 @@ const RoomPage: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,17 +61,17 @@ const RoomPage: React.FC = () => {
   useEffect(() => {
     const loadRoomData = async () => {
       if (!user) return;
-      
+
       const identifier = roomId || code;
       if (!identifier) return;
 
       try {
         setLoading(true);
-        
+
         // First, resolve the room - either by UUID or by code
         let resolvedRoomId: string;
         let roomData: Room | null = null;
-        
+
         if (roomId && isValidUUID(roomId)) {
           // Direct UUID route
           resolvedRoomId = roomId;
@@ -60,9 +81,9 @@ const RoomPage: React.FC = () => {
           roomData = await getRoomByCode(code);
           if (!roomData) {
             toast({
-              title: "Invalid room code",
+              title: 'Invalid room code',
               description: "This room code doesn't exist or has expired.",
-              variant: "destructive"
+              variant: 'destructive',
             });
             navigate('/home');
             return;
@@ -71,9 +92,9 @@ const RoomPage: React.FC = () => {
         } else {
           // Invalid identifier
           toast({
-            title: "Invalid room",
-            description: "The room identifier is not valid.",
-            variant: "destructive"
+            title: 'Invalid room',
+            description: 'The room identifier is not valid.',
+            variant: 'destructive',
           });
           navigate('/home');
           return;
@@ -81,9 +102,9 @@ const RoomPage: React.FC = () => {
 
         if (!roomData) {
           toast({
-            title: "Room not found",
+            title: 'Room not found',
             description: "This room doesn't exist or has been deleted.",
-            variant: "destructive"
+            variant: 'destructive',
           });
           navigate('/home');
           return;
@@ -93,7 +114,7 @@ const RoomPage: React.FC = () => {
         const [membersData, messagesData, membershipStatus] = await Promise.all([
           getRoomMembers(resolvedRoomId),
           getMessages(resolvedRoomId),
-          isRoomMember(resolvedRoomId)
+          isRoomMember(resolvedRoomId),
         ]);
 
         setRoom(roomData);
@@ -103,9 +124,9 @@ const RoomPage: React.FC = () => {
       } catch (error) {
         console.error('Error loading room data:', JSON.stringify(error, null, 2));
         toast({
-          title: "Error",
-          description: "Failed to load room data.",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to load room data.',
+          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -128,9 +149,9 @@ const RoomPage: React.FC = () => {
       } catch (error) {
         console.error('Error fetching members:', JSON.stringify(error, null, 2));
         toast({
-          title: "Error",
-          description: "Failed to update member list.",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to update member list.',
+          variant: 'destructive',
         });
       }
     };
@@ -144,7 +165,7 @@ const RoomPage: React.FC = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `room_id=eq.${actualRoomId}`
+          filter: `room_id=eq.${actualRoomId}`,
         },
         async (payload) => {
           // Safely handle the incoming message payload
@@ -161,9 +182,9 @@ const RoomPage: React.FC = () => {
               user_id: incomingMessage.sender_id || '',
               content: incomingMessage.content,
               created_at: incomingMessage.created_at,
-              profile: profileData || undefined
+              profile: profileData || undefined,
             };
-            setMessages(prev => [...prev, messageToAdd]);
+            setMessages((prev) => [...prev, messageToAdd]);
           } catch (error) {
             console.error('Error fetching profile for message:', JSON.stringify(error, null, 2));
           }
@@ -214,22 +235,22 @@ const RoomPage: React.FC = () => {
     try {
       setSendingMessage(true);
       const message = await sendMessage(room.id, newMessage);
-      
+
       if (message) {
         setNewMessage('');
       } else {
         toast({
-          title: "Error",
-          description: "Failed to send message.",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to send message.',
+          variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error sending message:', JSON.stringify(error, null, 2));
       toast({
-        title: "Error",
-        description: "Failed to send message.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to send message.',
+        variant: 'destructive',
       });
     } finally {
       setSendingMessage(false);
@@ -243,23 +264,23 @@ const RoomPage: React.FC = () => {
     try {
       setUploadingFile(true);
       const fileUrl = await uploadChatMedia(file, room.id, user.id);
-      
+
       if (fileUrl) {
         const message = await sendMessage(room.id, `📷 [Image](${fileUrl})`);
         if (!message) {
           toast({
-            title: "Error",
-            description: "Failed to send image.",
-            variant: "destructive"
+            title: 'Error',
+            description: 'Failed to send image.',
+            variant: 'destructive',
           });
         }
       }
     } catch (error: any) {
       console.error('Error uploading file:', JSON.stringify(error, null, 2));
       toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload image.",
-        variant: "destructive"
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload image.',
+        variant: 'destructive',
       });
     } finally {
       setUploadingFile(false);
@@ -276,15 +297,15 @@ const RoomPage: React.FC = () => {
       await joinRoom(room.id);
       setIsMember(true);
       toast({
-        title: "Joined room!",
-        description: "Welcome to the study room!"
+        title: 'Joined room!',
+        description: 'Welcome to the study room!',
       });
     } catch (error: any) {
       console.error('Join room error:', JSON.stringify(error, null, 2));
       toast({
-        title: "Failed to join",
-        description: error.message || "Could not join the room.",
-        variant: "destructive"
+        title: 'Failed to join',
+        description: error.message || 'Could not join the room.',
+        variant: 'destructive',
       });
     }
   };
@@ -295,16 +316,16 @@ const RoomPage: React.FC = () => {
     try {
       await leaveRoom(room.id);
       toast({
-        title: "Left room",
-        description: "You have left the study room."
+        title: 'Left room',
+        description: 'You have left the study room.',
       });
       navigate('/home');
     } catch (error) {
       console.error('Leave room error:', JSON.stringify(error, null, 2));
       toast({
-        title: "Error",
-        description: "Failed to leave room.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to leave room.',
+        variant: 'destructive',
       });
     }
   };
@@ -316,13 +337,13 @@ const RoomPage: React.FC = () => {
     navigator.clipboard.writeText(message);
 
     toast({
-      title: "Invite message copied!",
-      description: "Share this message with your friends.",
+      title: 'Invite message copied!',
+      description: 'Share this message with your friends.',
     });
   };
 
   const handleRoomUpdate = (updatedRoom: Partial<Room>) => {
-    setRoom(prev => {
+    setRoom((prev) => {
       if (!prev) return null;
       return {
         ...prev,
@@ -331,7 +352,7 @@ const RoomPage: React.FC = () => {
         id: prev.id, // ID should never change
         is_active: updatedRoom.is_active ?? prev.is_active,
         created_at: updatedRoom.created_at ?? prev.created_at,
-        updated_at: updatedRoom.updated_at ?? prev.updated_at
+        updated_at: updatedRoom.updated_at ?? prev.updated_at,
       } as Room;
     });
   };
@@ -343,7 +364,7 @@ const RoomPage: React.FC = () => {
   const renderMessage = (message: Message) => {
     const isOwn = message.user_id === user?.id;
     const isImage = message.content.includes('[Image]');
-    
+
     if (isImage) {
       const imageUrl = message.content.match(/\(([^)]+)\)/)?.[1];
       return (
@@ -353,16 +374,18 @@ const RoomPage: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}
         >
-          <div className={`max-w-xs lg:max-w-md ${isOwn ? 'bg-blue-500' : 'bg-white/20 dark:bg-gray-800/20'} rounded-2xl p-3 backdrop-blur-sm`}>
+          <div
+            className={`max-w-xs lg:max-w-md ${isOwn ? 'bg-blue-500' : 'bg-white/20 dark:bg-gray-800/20'} rounded-2xl p-3 backdrop-blur-sm`}
+          >
             {!isOwn && (
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                 {message.profile?.full_name || 'Unknown'}
               </p>
             )}
             {imageUrl && (
-              <img 
-                src={imageUrl} 
-                alt="Shared image" 
+              <img
+                src={imageUrl}
+                alt="Shared image"
                 className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => window.open(imageUrl, '_blank')}
               />
@@ -382,14 +405,18 @@ const RoomPage: React.FC = () => {
         animate={{ opacity: 1, x: 0 }}
         className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}
       >
-        <div className={`max-w-xs lg:max-w-md ${isOwn ? 'bg-blue-500 text-white' : 'bg-white/20 dark:bg-gray-800/20 text-gray-800 dark:text-gray-200'} rounded-2xl p-3 backdrop-blur-sm`}>
+        <div
+          className={`max-w-xs lg:max-w-md ${isOwn ? 'bg-blue-500 text-white' : 'bg-white/20 dark:bg-gray-800/20 text-gray-800 dark:text-gray-200'} rounded-2xl p-3 backdrop-blur-sm`}
+        >
           {!isOwn && (
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
               {message.profile?.full_name || 'Unknown'}
             </p>
           )}
           <p className="text-sm break-words">{message.content}</p>
-          <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          <p
+            className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
+          >
             {new Date(message.created_at).toLocaleTimeString()}
           </p>
         </div>
@@ -412,8 +439,12 @@ const RoomPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 text-center">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Room not found</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">This room doesn't exist or has been deleted.</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+            Room not found
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            This room doesn't exist or has been deleted.
+          </p>
           <button
             onClick={() => navigate('/home')}
             className="px-6 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
@@ -447,13 +478,15 @@ const RoomPage: React.FC = () => {
                 <p className="text-gray-600 dark:text-gray-400">{room.subject}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                 <Users className="w-4 h-4" />
-                <span>{members.length}/{room.max_members}</span>
+                <span>
+                  {members.length}/{room.max_members}
+                </span>
               </div>
-              
+
               <button
                 onClick={handleCopyInvite}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-500/30 dark:hover:bg-blue-500/20 transition-colors"
@@ -461,8 +494,8 @@ const RoomPage: React.FC = () => {
                 <Copy className="w-4 h-4" />
                 <span className="hidden sm:inline">Invite</span>
               </button>
-              
-              {(room.created_by === user?.id) && (
+
+              {room.created_by === user?.id && (
                 <button
                   onClick={() => setSettingsOpen(true)}
                   className="p-2 hover:bg-white/20 dark:hover:bg-gray-800/20 rounded-xl transition-colors"
@@ -472,7 +505,7 @@ const RoomPage: React.FC = () => {
                 </button>
               )}
               <AdminRoomRequestsPanel />
-              
+
               {isMember && room.created_by !== user?.id && (
                 <button
                   onClick={handleLeaveRoom}
@@ -492,7 +525,9 @@ const RoomPage: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 text-center"
           >
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">{room.is_public ? 'Join this study room?' : 'Request access to this private room?'}</h2>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+              {room.is_public ? 'Join this study room?' : 'Request access to this private room?'}
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{room.description}</p>
             {room.is_public ? (
               <button
@@ -519,12 +554,10 @@ const RoomPage: React.FC = () => {
                 {/* Messages */}
                 <div className="h-full flex flex-col">
                   <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    <AnimatePresence>
-                      {messages.map(renderMessage)}
-                    </AnimatePresence>
+                    <AnimatePresence>{messages.map(renderMessage)}</AnimatePresence>
                     <div ref={messagesEndRef} />
                   </div>
-                  
+
                   {/* Message Input */}
                   <div className="p-6 border-t border-white/20 dark:border-gray-700/20">
                     <div className="flex items-center gap-3">
@@ -535,7 +568,7 @@ const RoomPage: React.FC = () => {
                         onChange={handleFileUpload}
                         className="hidden"
                       />
-                      
+
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingFile}
@@ -547,7 +580,7 @@ const RoomPage: React.FC = () => {
                           <Paperclip className="w-5 h-5" />
                         )}
                       </button>
-                      
+
                       <input
                         type="text"
                         value={newMessage}
@@ -556,7 +589,7 @@ const RoomPage: React.FC = () => {
                         placeholder="Type your message..."
                         className="flex-1 px-4 py-3 bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 rounded-xl placeholder-gray-500 dark:placeholder-gray-400 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all"
                       />
-                      
+
                       <button
                         onClick={handleSendMessage}
                         disabled={sendingMessage || !newMessage.trim()}
@@ -583,7 +616,7 @@ const RoomPage: React.FC = () => {
               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">
                 Members ({members.length})
               </h3>
-              
+
               <div className="space-y-3">
                 {members.map((member) => (
                   <motion.div
@@ -593,7 +626,10 @@ const RoomPage: React.FC = () => {
                     className="flex items-center gap-3 p-3 bg-white/20 dark:bg-gray-800/20 rounded-xl"
                   >
                     <img
-                      src={member.profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.profile?.full_name || 'User')}&background=3b82f6&color=fff`}
+                      src={
+                        member.profile?.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(member.profile?.full_name || 'User')}&background=3b82f6&color=fff`
+                      }
                       alt={member.profile?.full_name || 'User'}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -605,9 +641,7 @@ const RoomPage: React.FC = () => {
                         {member.role === 'admin' ? 'Admin' : 'Member'}
                       </p>
                     </div>
-                    {member.role === 'admin' && (
-                      <Crown className="w-4 h-4 text-yellow-500" />
-                    )}
+                    {member.role === 'admin' && <Crown className="w-4 h-4 text-yellow-500" />}
                   </motion.div>
                 ))}
               </div>

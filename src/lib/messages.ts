@@ -18,12 +18,13 @@ export interface Message {
   } | null;
 }
 
-// TODO adapted for new Supabase backend - simplified message fetching  
+// TODO adapted for new Supabase backend - simplified message fetching
 export const getRoomMessages = async (roomId: string): Promise<Message[]> => {
   try {
     const { data, error } = await supabase
       .from('messages')
-      .select(`
+      .select(
+        `
         *,
         sender:profiles!sender_id(
           id,
@@ -31,7 +32,8 @@ export const getRoomMessages = async (roomId: string): Promise<Message[]> => {
           avatar_url,
           username
         )
-      `)
+      `
+      )
       .eq('conversation_id', roomId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true });
@@ -45,19 +47,23 @@ export const getRoomMessages = async (roomId: string): Promise<Message[]> => {
 };
 
 // TODO adapted for new Supabase backend - send message
-export const sendMessage = async (roomId: string, content: string, messageType: 'text' | 'image' | 'file' = 'text'): Promise<boolean> => {
+export const sendMessage = async (
+  roomId: string,
+  content: string,
+  messageType: 'text' | 'image' | 'file' = 'text'
+): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: roomId,
-        sender_id: user.id,
-        content,
-        message_type: messageType
-      });
+    const { error } = await supabase.from('messages').insert({
+      conversation_id: roomId,
+      sender_id: user.id,
+      content,
+      message_type: messageType,
+    });
 
     if (error) throw error;
     return true;

@@ -16,7 +16,7 @@ const RoomList = () => {
 
   return (
     <div className="p-4">
-      {rooms.map(room => (
+      {rooms.map((room) => (
         <div key={room.id} className="border p-4 mb-4 rounded">
           <h2 className="text-xl font-bold">{room.name}</h2>
           <p className="text-gray-600">{room.description || 'No description'}</p>

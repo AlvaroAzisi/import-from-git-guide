@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  UserPlus, 
-  UserMinus, 
-  MessageCircle, 
-  BookOpen,
-  Award,
-  Clock
-} from 'lucide-react';
+import { X, UserPlus, UserMinus, MessageCircle, BookOpen, Award, Clock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getProfileDetails, 
-  sendFriendRequest, 
+import {
+  getProfileDetails,
+  sendFriendRequest,
   removeFriend,
   canStartDM,
-  type ProfileDetails 
+  type ProfileDetails,
 } from '../lib/supabase-rpc';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -31,7 +23,7 @@ interface FloatingProfilePanelProps {
 
 /**
  * FloatingProfilePanel - Detailed profile view with actions for /temanku
- * 
+ *
  * Manual test steps:
  * 1. Click username in /temanku search results
  * 2. Panel should open centered with profile details
@@ -43,12 +35,12 @@ interface FloatingProfilePanelProps {
 export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
   isOpen,
   onClose,
-  userId
+  userId,
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [profile, setProfile] = useState<ProfileDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -58,7 +50,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
   useEffect(() => {
     const loadProfile = async () => {
       if (!isOpen || !userId) return;
-      
+
       setLoading(true);
       try {
         // TODO: DB/RLS: Varo will paste SQL for get_profile_details RPC
@@ -72,13 +64,12 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
         // Expected response: { can_dm: boolean, reason?: string }
         const dmCheck = await canStartDM(userId);
         setCanDM(dmCheck.can_dm);
-        
       } catch (error: any) {
         console.error('Error loading profile:', error);
         toast({
           title: 'Error',
           description: 'Failed to load profile details',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -112,19 +103,26 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
 
     const action = profile.friendship_status === 'accepted' ? 'remove' : 'add';
     setActionLoading('friend');
-    
+
     try {
       if (action === 'add') {
         // TODO: DB/RLS: Varo will paste SQL for send_friend_request RPC
         // Expected params: { to_user_id: string }
         // Expected response: { success: boolean, status: string, error?: string }
         const result = await sendFriendRequest(userId);
-        
+
         if (result.success) {
-          setProfile(prev => prev ? { ...prev, friendship_status: result.status as 'pending' | 'accepted' | 'none' | 'blocked' } : null);
+          setProfile((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  friendship_status: result.status as 'pending' | 'accepted' | 'none' | 'blocked',
+                }
+              : null
+          );
           toast({
             title: 'Friend Request Sent',
-            description: `Friend request sent to ${profile.full_name}`
+            description: `Friend request sent to ${profile.full_name}`,
           });
         } else {
           throw new Error(result.error || 'Failed to send friend request');
@@ -134,12 +132,12 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
         // Expected params: { friend_id: string }
         // Expected response: { success: boolean, error?: string }
         const result = await removeFriend(userId);
-        
+
         if (result.success) {
-          setProfile(prev => prev ? { ...prev, friendship_status: 'none' } : null);
+          setProfile((prev) => (prev ? { ...prev, friendship_status: 'none' } : null));
           toast({
             title: 'Friend Removed',
-            description: `Removed ${profile.full_name} from friends`
+            description: `Removed ${profile.full_name} from friends`,
           });
         } else {
           throw new Error(result.error || 'Failed to remove friend');
@@ -149,7 +147,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
       toast({
         title: 'Error',
         description: error.message || `Failed to ${action} friend`,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setActionLoading(null);
@@ -168,7 +166,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
       toast({
         title: 'Error',
         description: 'Failed to start conversation',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setActionLoading(null);
@@ -206,7 +204,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={handleBackdropClick}
         >
@@ -217,7 +215,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
             exit={{ opacity: 0 }}
             className="absolute inset-0"
           />
-          
+
           {/* Panel */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -236,7 +234,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
               >
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
-              
+
               {loading ? (
                 <div className="text-center">
                   <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 animate-pulse"></div>
@@ -248,17 +246,19 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
                   <Avatar className="w-16 h-16 mx-auto mb-4 border-4 border-white/20">
                     <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name} />
                     <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                      {profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      {profile.full_name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  
+
                   <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                     {profile.full_name}
                   </h3>
-                  
-                  <p className="text-blue-500 font-medium mb-2">
-                    @{profile.username}
-                  </p>
+
+                  <p className="text-blue-500 font-medium mb-2">@{profile.username}</p>
 
                   <div className="flex items-center justify-center gap-4 text-sm">
                     <div className="flex items-center gap-1">
@@ -300,7 +300,9 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
                 {/* Interests */}
                 {profile.interests && profile.interests.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Interests</h4>
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      Interests
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {profile.interests.map((interest: string, idx: number) => (
                         <Badge
@@ -364,25 +366,29 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
                   <div className="flex gap-3">
                     <Button
                       onClick={handleFriendAction}
-                      disabled={actionLoading === 'friend' || profile.friendship_status === 'pending'}
+                      disabled={
+                        actionLoading === 'friend' || profile.friendship_status === 'pending'
+                      }
                       className={`flex-1 ${
                         profile.friendship_status === 'accepted'
                           ? 'bg-red-500 hover:bg-red-600'
                           : profile.friendship_status === 'pending'
-                          ? 'bg-amber-500 hover:bg-amber-600'
-                          : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                            ? 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-500'
                       } text-white`}
                     >
                       {actionLoading === 'friend' ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
                         <>
-                          {React.createElement(getFriendButtonIcon(), { className: "w-4 h-4 mr-2" })}
+                          {React.createElement(getFriendButtonIcon(), {
+                            className: 'w-4 h-4 mr-2',
+                          })}
                           {getFriendButtonText()}
                         </>
                       )}
                     </Button>
-                    
+
                     <Button
                       onClick={handleStartDM}
                       disabled={!canDM || actionLoading === 'dm'}
