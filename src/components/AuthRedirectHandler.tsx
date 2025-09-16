@@ -38,11 +38,14 @@ export const AuthRedirectHandler: React.FC = () => {
           console.log('[AuthRedirectHandler] Redirecting to /home');
           navigate(ROUTES.HOME, { replace: true });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[AuthRedirectHandler] Profile creation failed:', error);
         toast({
           title: 'Profile Setup Failed',
-          description: error.message || 'Unable to set up your profile. Please try again.',
+          description:
+            error && typeof error === 'object' && 'message' in error
+              ? (error as { message?: string }).message || 'Unable to set up your profile. Please try again.'
+              : 'Unable to set up your profile. Please try again.',
           variant: 'destructive',
         });
       }

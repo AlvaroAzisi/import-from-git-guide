@@ -42,6 +42,6 @@ export const isPublicRoute = (path: string): boolean => {
 };
 
 export const extractRoomId = (path: string): string | null => {
-  const roomMatch = path.match(/\/(?:room|ruangku)\/([^\/]+)/);
+  const roomMatch = path.match(/\/(?:room|ruangku)\/([^/]+)/);
   return roomMatch ? roomMatch[1] : null;
 };

@@ -11,10 +11,14 @@ import {
   canStartDM,
   type ProfileDetails,
 } from '../lib/supabase-rpc';
-import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+
 import { Badge } from './ui/badge';
 
+import type { Room } from '../types/room';
+
+import { Button } from './ui/button'; // Fixed import statement
 interface FloatingProfilePanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -64,11 +68,14 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
         // Expected response: { can_dm: boolean, reason?: string }
         const dmCheck = await canStartDM(userId);
         setCanDM(dmCheck.can_dm);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error loading profile:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load profile details',
+          description:
+            error && typeof error === 'object' && 'message' in error
+              ? (error as { message?: string }).message || 'Failed to load profile details'
+              : 'Failed to load profile details',
           variant: 'destructive',
         });
       } finally {
@@ -143,10 +150,13 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
           throw new Error(result.error || 'Failed to remove friend');
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || `Failed to ${action} friend`,
+        description:
+          error && typeof error === 'object' && 'message' in error
+            ? (error as { message?: string }).message || `Failed to ${action} friend`
+            : `Failed to ${action} friend`,
         variant: 'destructive',
       });
     } finally {
@@ -162,7 +172,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
       // Navigate to DM chat
       navigate(`/chat/@${profile.username}`);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
         description: 'Failed to start conversation',
@@ -324,7 +334,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
                       Mutual Study Rooms ({profile.mutual_rooms.length})
                     </h4>
                     <div className="space-y-2">
-                      {profile.mutual_rooms.slice(0, 3).map((room: any) => (
+                      {profile.mutual_rooms.slice(0, 3).map((room: Room) => (
                         <div
                           key={room.id}
                           className="flex items-center gap-2 p-2 bg-white/20 dark:bg-gray-800/20 rounded-lg"

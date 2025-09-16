@@ -304,7 +304,7 @@ export const createOrUpdateProfile = async (
 export const signUpWithEmail = async (
   email: string,
   password: string
-): Promise<{ data: { user: any } | null; error: string | null }> => {
+): Promise<{ data: { user: User } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -320,10 +320,20 @@ export const signUpWithEmail = async (
       return { data: null, error: error.message || String(error) };
     }
 
-    return { data, error: null };
-  } catch (error: any) {
+    // Supabase returns { user, session } in data
+    if (data?.user) {
+      return { data: { user: data.user }, error: null };
+    }
+    return { data: null, error: null };
+  } catch (error: unknown) {
     console.error('[Auth] Email sign-up error:', error);
-    return { data: null, error: error.message || String(error) };
+    return {
+      data: null,
+      error:
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message?: string }).message || String(error)
+          : String(error),
+    };
   }
 };
 
@@ -333,7 +343,7 @@ export const signUpWithEmail = async (
 export const signInWithEmail = async (
   email: string,
   password: string
-): Promise<{ data: { user: any } | null; error: string | null }> => {
+): Promise<{ data: { user: User } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -346,22 +356,31 @@ export const signInWithEmail = async (
       return { data: null, error: error.message || String(error) };
     }
 
-    return { data, error: null };
-  } catch (error: any) {
+    if (data?.user) {
+      return { data: { user: data.user }, error: null };
+    }
+    return { data: null, error: null };
+  } catch (error: unknown) {
     console.error('[Auth] Email sign-in error:', error);
-    return { data: null, error: error.message || String(error) };
+    return {
+      data: null,
+      error:
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message?: string }).message || String(error)
+          : String(error),
+    };
   }
 };
 
 /**
  * Signs in with Google (redirect)
  */
-export const signInWithGoogle = async (): Promise<{ data: any; error: string | null }> => {
+export const signInWithGoogle = async (): Promise<{ data: { user: User } | null; error: string | null }> => {
   if (!supabase) throw new Error('Supabase client is not initialized');
   try {
     const redirectTo = `${window.location.origin}/home`;
     console.log(`[Auth] Signing in with Google, redirect: ${redirectTo}`);
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo },
     });
@@ -371,10 +390,17 @@ export const signInWithGoogle = async (): Promise<{ data: any; error: string | n
       return { data: null, error: error.message || String(error) };
     }
 
-    return { data, error: null };
-  } catch (error: any) {
+  // OAuth does not return user immediately, only provider and url
+  return { data: null, error: null };
+  } catch (error: unknown) {
     console.error('[Auth] Google sign-in error:', error);
-    return { data: null, error: error.message || String(error) };
+    return {
+      data: null,
+      error:
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message?: string }).message || String(error)
+          : String(error),
+    };
   }
 };
 

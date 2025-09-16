@@ -8,10 +8,12 @@ import {
   validateSignUpForm as validateForm,
 } from '../lib/auth';
 
+import type { User } from '@supabase/supabase-js';
+
 interface AuthPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (user: any) => void;
+  onSuccess: (user: User) => void;
 }
 
 const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => {
@@ -56,8 +58,12 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => 
         // Google OAuth will redirect, so we don't need to do anything here
         onClose();
       }
-    } catch (error: any) {
-      setGeneralError(error.message || 'Failed to sign in with Google');
+    } catch (error: unknown) {
+      setGeneralError(
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message?: string }).message || 'Failed to sign in with Google'
+          : 'Failed to sign in with Google'
+      );
     } finally {
       setLoading(false);
     }
@@ -121,8 +127,12 @@ const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => 
           }
         }
       }
-    } catch (error: any) {
-      setGeneralError(error.message);
+    } catch (error: unknown) {
+      setGeneralError(
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message?: string }).message || 'An error occurred'
+          : 'An error occurred'
+      );
     } finally {
       setLoading(false);
     }
