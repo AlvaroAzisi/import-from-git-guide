@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import TopBar from '../components/TopBar';
-import CreateRoomModal from '../components/CreateRoomModal';
+import CreateRoomModal from '../components/modals/CreateRoomModal';
 import { useSidebar } from '../contexts/SidebarContext';
 import { useRoomOperations } from '../lib/roomOperations';
 import { useToast } from '../hooks/useToast';

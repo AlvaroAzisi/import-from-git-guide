@@ -172,7 +172,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
       // Navigate to DM chat
       navigate(`/chat/@${profile.username}`);
       onClose();
-    } catch (error: unknown) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to start conversation',
