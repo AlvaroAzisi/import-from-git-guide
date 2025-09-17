@@ -1490,7 +1490,7 @@ ALTER TABLE ONLY "public"."user_streaks"
 
 
 
-CREATE POLICY "All users can view badges" ON "public"."badges" FOR SELECT USING (true);
+
 
 
 
@@ -1667,7 +1667,7 @@ ALTER TABLE "public"."subscriptions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_badges" ENABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."user_streaks" ENABLE ROW LEVEL SECURITY;
+
 
 
 
@@ -1928,3 +1928,5 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."rooms" TO "authenticated";
 
 
 RESET ALL;
+
+ ALL;
