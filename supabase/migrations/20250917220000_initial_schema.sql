@@ -209,52 +209,6 @@ $$;
 ALTER FUNCTION "public"."get_room_member_count"("p_room_id" "uuid") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."increment_friends_count"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-  -- Update both users' counts
-  UPDATE profiles
-  SET friends_count = COALESCE(friends_count, 0) + 1
-  WHERE id IN (NEW.from_user, NEW.to_user);
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."increment_friends_count"() OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."increment_messages_sent"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-  UPDATE profiles
-  SET messages_sent = COALESCE(messages_sent, 0) + 1
-  WHERE id = NEW.sender_id;
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."increment_messages_sent"() OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."increment_rooms_created"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    AS $$
-BEGIN
-  UPDATE profiles
-  SET rooms_created = COALESCE(rooms_created, 0) + 1
-  WHERE id = NEW.creator_id;
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."increment_rooms_created"() OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "public"."is_room_member_secure"("room_id" "uuid", "user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -977,6 +931,37 @@ CREATE TABLE IF NOT EXISTS "public"."badges" (
 ALTER TABLE "public"."badges" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."conversation_members" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "conversation_id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "role" "text" DEFAULT 'member'::"text",
+    "joined_at" timestamp with time zone DEFAULT "now"(),
+    "last_read_at" timestamp with time zone,
+    "is_muted" boolean DEFAULT false
+);
+
+
+ALTER TABLE "public"."conversation_members" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."conversations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "type" "public"."conversation_type" NOT NULL,
+    "name" "text",
+    "description" "text",
+    "avatar_url" "text",
+    "is_active" boolean DEFAULT true,
+    "created_by" "uuid",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "last_message_at" timestamp with time zone
+);
+
+
+ALTER TABLE "public"."conversations" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."friends" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "from_user" "uuid",
@@ -1086,7 +1071,8 @@ CREATE TABLE IF NOT EXISTS "public"."rooms" (
     "is_active" boolean DEFAULT true,
     "max_members" integer DEFAULT 10,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "creator_id" "uuid"
 );
 
 
@@ -1162,6 +1148,21 @@ ALTER TABLE ONLY "public"."badges"
 
 ALTER TABLE ONLY "public"."badges"
     ADD CONSTRAINT "badges_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."conversation_members"
+    ADD CONSTRAINT "conversation_members_conversation_id_user_id_key" UNIQUE ("conversation_id", "user_id");
+
+
+
+ALTER TABLE ONLY "public"."conversation_members"
+    ADD CONSTRAINT "conversation_members_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."conversations"
+    ADD CONSTRAINT "conversations_pkey" PRIMARY KEY ("id");
 
 
 
@@ -1242,6 +1243,10 @@ ALTER TABLE ONLY "public"."user_streaks"
 
 ALTER TABLE ONLY "public"."user_streaks"
     ADD CONSTRAINT "user_streaks_user_id_key" UNIQUE ("user_id");
+
+
+
+CREATE INDEX "idx_conversation_members_user_id" ON "public"."conversation_members" USING "btree" ("user_id");
 
 
 
@@ -1365,18 +1370,6 @@ CREATE INDEX "idx_user_streaks_user_id" ON "public"."user_streaks" USING "btree"
 
 
 
-CREATE OR REPLACE TRIGGER "trg_increment_friends_count" AFTER UPDATE ON "public"."friends" FOR EACH ROW WHEN (("new"."status" = 'accepted'::"text")) EXECUTE FUNCTION "public"."increment_friends_count"();
-
-
-
-CREATE OR REPLACE TRIGGER "trg_increment_messages_sent" AFTER INSERT ON "public"."messages" FOR EACH ROW EXECUTE FUNCTION "public"."increment_messages_sent"();
-
-
-
-CREATE OR REPLACE TRIGGER "trg_increment_rooms_created" AFTER INSERT ON "public"."rooms" FOR EACH ROW EXECUTE FUNCTION "public"."increment_rooms_created"();
-
-
-
 CREATE OR REPLACE TRIGGER "trigger_update_friends_count" AFTER INSERT OR DELETE OR UPDATE ON "public"."friends" FOR EACH ROW EXECUTE FUNCTION "public"."update_profile_stats"();
 
 
@@ -1414,6 +1407,21 @@ CREATE OR REPLACE TRIGGER "update_subscriptions_updated_at" BEFORE UPDATE ON "pu
 
 
 CREATE OR REPLACE TRIGGER "update_user_streaks_updated_at" BEFORE UPDATE ON "public"."user_streaks" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+ALTER TABLE ONLY "public"."conversation_members"
+    ADD CONSTRAINT "conversation_members_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."conversation_members"
+    ADD CONSTRAINT "conversation_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."conversations"
+    ADD CONSTRAINT "conversations_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id");
 
 
 
@@ -1457,6 +1465,11 @@ ALTER TABLE ONLY "public"."rooms"
 
 
 
+ALTER TABLE ONLY "public"."rooms"
+    ADD CONSTRAINT "rooms_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "public"."profiles"("id");
+
+
+
 ALTER TABLE ONLY "public"."subscriptions"
     ADD CONSTRAINT "subscriptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -1490,6 +1503,10 @@ CREATE POLICY "Creators can delete own rooms" ON "public"."rooms" FOR DELETE USI
 
 
 CREATE POLICY "Creators can update own rooms" ON "public"."rooms" FOR UPDATE USING (("auth"."uid"() = "created_by"));
+
+
+
+CREATE POLICY "Members can insert their own membership" ON "public"."conversation_members" FOR INSERT WITH CHECK (("user_id" = "auth"."uid"()));
 
 
 
@@ -1579,6 +1596,12 @@ CREATE POLICY "Users can update their own messages" ON "public"."messages" FOR U
 
 
 
+CREATE POLICY "Users can view conversations they are a member of" ON "public"."conversations" FOR SELECT USING (("id" IN ( SELECT "conversation_members"."conversation_id"
+   FROM "public"."conversation_members"
+  WHERE ("conversation_members"."user_id" = "auth"."uid"()))));
+
+
+
 CREATE POLICY "Users can view own memberships" ON "public"."room_members" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
 
 
@@ -1599,6 +1622,10 @@ CREATE POLICY "Users can view their own badges" ON "public"."user_badges" FOR SE
 
 
 
+CREATE POLICY "Users can view their own membership" ON "public"."conversation_members" FOR SELECT USING (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Users can view their own streaks" ON "public"."user_streaks" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
@@ -1608,6 +1635,12 @@ CREATE POLICY "Users can view their own subscriptions" ON "public"."subscription
 
 
 ALTER TABLE "public"."badges" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."conversation_members" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."conversations" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."friends" ENABLE ROW LEVEL SECURITY;
