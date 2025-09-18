@@ -1,22 +1,22 @@
 CREATE POLICY "All users can view badges" ON "public"."badges" FOR SELECT USING (true);
 ALTER TABLE "public"."badges" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Members can insert their own membership" ON "public"."conversation_members" FOR INSERT WITH CHECK (("user_id" = "auth"."uid"()));
-CREATE POLICY "Users can view their own membership" ON "public"."conversation_members" FOR SELECT USING (("user_id" = "auth"."uid"()));
-ALTER TABLE "public"."conversation_members" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Members can insert their own membership" ON "public"."conversation_participants" FOR INSERT WITH CHECK (("user_id" = "auth"."uid"()));
+CREATE POLICY "Users can view their own membership" ON "public"."conversation_participants" FOR SELECT USING (("user_id" = "auth"."uid"()));
+ALTER TABLE "public"."conversation_participants" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view conversations they are a member of" ON "public"."conversations" FOR SELECT USING (("id" IN ( SELECT "conversation_members"."conversation_id"
-   FROM "public"."conversation_members"
-  WHERE ("conversation_members"."user_id" = "auth"."uid"()))));
+CREATE POLICY "Users can view conversations they are a member of" ON "public"."conversations" FOR SELECT USING (("id" IN ( SELECT "conversation_participants"."conversation_id"
+   FROM "public"."conversation_participants"
+  WHERE ("conversation_participants"."user_id" = "auth"."uid"()))));
 ALTER TABLE "public"."conversations" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Participants can delete friend requests" ON "public"."friends" FOR DELETE TO "authenticated" USING ((("auth"."uid"() = "from_user") OR ("auth"."uid"() = "to_user")));
-CREATE POLICY "Participants can update friend requests" ON "public"."friends" FOR UPDATE TO "authenticated" USING ((("auth"."uid"() = "from_user") OR ("auth"."uid"() = "to_user"))) WITH CHECK ((("auth"."uid"() = "from_user") OR ("auth"."uid"() = "to_user")));
-CREATE POLICY "Users can read own friends" ON "public"."friends" FOR SELECT USING ((("auth"."uid"() = "from_user") OR ("auth"."uid"() = "to_user")));
-CREATE POLICY "Users can send friend requests" ON "public"."friends" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "from_user"));
+CREATE POLICY "Participants can delete friend requests" ON "public"."friends" FOR DELETE TO "authenticated" USING ((("auth"."uid"() = "user_id1") OR ("auth"."uid"() = "user_id2")));
+CREATE POLICY "Participants can update friend requests" ON "public"."friends" FOR UPDATE TO "authenticated" USING ((("auth"."uid"() = "user_id1") OR ("auth"."uid"() = "user_id2"))) WITH CHECK ((("auth"."uid"() = "user_id1") OR ("auth"."uid"() = "user_id2")));
+CREATE POLICY "Users can read own friends" ON "public"."friends" FOR SELECT USING ((("auth"."uid"() = "user_id1") OR ("auth"."uid"() = "user_id2")));
+CREATE POLICY "Users can send friend requests" ON "public"."friends" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "user_id1"));
 ALTER TABLE "public"."friends" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can update their own messages" ON "public"."messages" FOR UPDATE USING (("sender_id" = "auth"."uid"()));
+CREATE POLICY "Users can update their own messages" ON "public"."messages" FOR UPDATE USING (("user_id" = "auth"."uid"()));
 ALTER TABLE "public"."messages" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can update their notifications" ON "public"."notifications" FOR UPDATE USING (("user_id" = "auth"."uid"()));
@@ -49,7 +49,7 @@ CREATE POLICY "Anyone can view public rooms" ON "public"."rooms" FOR SELECT USIN
 CREATE POLICY "Creators can delete own rooms" ON "public"."rooms" FOR DELETE USING (("auth"."uid"() = "created_by"));
 CREATE POLICY "Creators can update own rooms" ON "public"."rooms" FOR UPDATE USING (("auth"."uid"() = "created_by"));
 CREATE POLICY "Users can create rooms" ON "public"."rooms" FOR INSERT WITH CHECK (("auth"."uid"() = "created_by"));
-CREATE POLICY "Users can read accessible rooms" ON "public"."rooms" FOR SELECT USING ((("is_public" = true) OR ("created_by" = "auth"."uid"())));
+CREATE POLICY "Users can read accessible rooms" ON "public"."rooms" FOR SELECT USING ((("privacy" = 'public') OR ("created_by" = "auth"."uid"())));
 CREATE POLICY "Users can update own rooms" ON "public"."rooms" FOR UPDATE USING (("created_by" = "auth"."uid"()));
 ALTER TABLE "public"."rooms" ENABLE ROW LEVEL SECURITY;
 
