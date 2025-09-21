@@ -260,91 +260,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- RLS Policies
-
--- profiles table
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (TRUE);
-CREATE POLICY "Users can update their own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can delete their own profile." ON public.profiles FOR DELETE USING (auth.uid() = id);
-
--- rooms table
-ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public rooms are viewable by everyone." ON public.rooms FOR SELECT USING (is_public = TRUE);
-CREATE POLICY "Users can create rooms." ON public.rooms FOR INSERT WITH CHECK (auth.uid() = owner_id);
-CREATE POLICY "Owners can update their rooms." ON public.rooms FOR UPDATE USING (auth.uid() = owner_id);
-CREATE POLICY "Owners can delete their rooms." ON public.rooms FOR DELETE USING (auth.uid() = owner_id);
--- Allow members to view private rooms they are part of
-CREATE POLICY "Members can view private rooms they belong to." ON public.rooms FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())
-);
-
--- room_members table
-ALTER TABLE public.room_members ENABLE ROW LEVEL SECURITY;
--- Allow any authenticated user to view members of rooms they belong to
-CREATE POLICY "Authenticated users can view room members if they can view the room" ON public.room_members FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.rooms WHERE id = room_members.room_id AND (is_public = TRUE OR EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())))
-);
-
--- Allow room owners/admins to insert new members
-CREATE POLICY "Room owners/admins can insert members" ON public.room_members FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
-
--- Allow room owners/admins to update member roles
-CREATE POLICY "Room owners/admins can update members" ON public.room_members FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
-
--- Allow users to remove themselves from a room
-CREATE POLICY "Users can remove themselves from a room" ON public.room_members FOR DELETE USING (auth.uid() = user_id);
-
--- Allow room owners/admins to remove any member
-CREATE POLICY "Room owners/admins can remove any member" ON public.room_members FOR DELETE USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
-
--- messages table
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Room members can view messages in their room." ON public.messages FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = messages.room_id AND user_id = auth.uid())
-);
-CREATE POLICY "Room members can send messages." ON public.messages FOR INSERT WITH CHECK (
-    auth.uid() = sender_id AND
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = messages.room_id AND user_id = auth.uid())
-);
-CREATE POLICY "Sender can update their own messages." ON public.messages FOR UPDATE USING (auth.uid() = sender_id);
-CREATE POLICY "Sender can delete their own messages." ON public.messages FOR DELETE USING (auth.uid() = sender_id);
-
--- friend_requests table
-ALTER TABLE public.friend_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can send friend requests." ON public.friend_requests FOR INSERT WITH CHECK (auth.uid() = sender_id);
-CREATE POLICY "Users can view their own sent and received friend requests." ON public.friend_requests FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
-CREATE POLICY "Users can update their own received friend requests (accept/reject/block)." ON public.friend_requests FOR UPDATE USING (auth.uid() = receiver_id);
-CREATE POLICY "Users can delete their own sent friend requests (cancel)." ON public.friend_requests FOR DELETE USING (auth.uid() = sender_id);
-
--- badges table
-ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Badges are viewable by everyone." ON public.badges FOR SELECT USING (TRUE);
-
--- user_badges table
-ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own awarded badges." ON public.user_badges FOR SELECT USING (auth.uid() = user_id);
--- User badges should only be inserted by functions/triggers, not directly by users
-CREATE POLICY "Allow function to insert user badges." ON public.user_badges FOR INSERT WITH CHECK (TRUE); -- Handled by function
-
--- subscriptions table
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own subscriptions." ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own subscriptions (e.g., cancel)." ON public.subscriptions FOR UPDATE USING (auth.uid() = user_id);
--- Insertions handled by payment/webhook functions
-
--- notifications table
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own notifications." ON public.notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own notifications (e.g., mark as read)." ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
--- Insertions handled by functions/triggers
-
 -- Function to increment user XP and handle leveling
 CREATE OR REPLACE FUNCTION public.increment_user_xp(p_user_id UUID, p_xp_amount INT, p_reason TEXT)
 RETURNS VOID AS $$
@@ -423,8 +338,8 @@ BEGIN
         VALUES (p_user_id, badge_id_to_award, NOW());
     END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;ject('success', FALSE, 'error', 'Cannot join private room without an invite or being the owner.', 'code', 'PRIVATE_ROOM');
-    END IF;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
     -- Capacity check
     SELECT COUNT(*) INTO member_count FROM public.room_members WHERE room_id = target_room_id;
@@ -467,91 +382,6 @@ BEGIN
     WHERE room_id = p_room_id AND user_id = current_user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- RLS Policies
-
--- profiles table
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (TRUE);
-CREATE POLICY "Users can update their own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can delete their own profile." ON public.profiles FOR DELETE USING (auth.uid() = id);
-
--- rooms table
-ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public rooms are viewable by everyone." ON public.rooms FOR SELECT USING (is_public = TRUE);
-CREATE POLICY "Users can create rooms." ON public.rooms FOR INSERT WITH CHECK (auth.uid() = owner_id);
-CREATE POLICY "Owners can update their rooms." ON public.rooms FOR UPDATE USING (auth.uid() = owner_id);
-CREATE POLICY "Owners can delete their rooms." ON public.rooms FOR DELETE USING (auth.uid() = owner_id);
--- Allow members to view private rooms they are part of
-CREATE POLICY "Members can view private rooms they belong to." ON public.rooms FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())
-);
-
--- room_members table
-ALTER TABLE public.room_members ENABLE ROW LEVEL SECURITY;
--- Allow any authenticated user to view members of rooms they belong to
-CREATE POLICY "Authenticated users can view room members if they can view the room" ON public.room_members FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.rooms WHERE id = room_members.room_id AND (is_public = TRUE OR EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())))
-);
-
--- Allow room owners/admins to insert new members
-CREATE POLICY "Room owners/admins can insert members" ON public.room_members FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
-
--- Allow room owners/admins to update member roles
-CREATE POLICY "Room owners/admins can update members" ON public.room_members FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
-
--- Allow users to remove themselves from a room
-CREATE POLICY "Users can remove themselves from a room" ON public.room_members FOR DELETE USING (auth.uid() = user_id);
-
--- Allow room owners/admins to remove any member
-CREATE POLICY "Room owners/admins can remove any member" ON public.room_members FOR DELETE USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
-
--- messages table
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Room members can view messages in their room." ON public.messages FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = messages.room_id AND user_id = auth.uid())
-);
-CREATE POLICY "Room members can send messages." ON public.messages FOR INSERT WITH CHECK (
-    auth.uid() = sender_id AND
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = messages.room_id AND user_id = auth.uid())
-);
-CREATE POLICY "Sender can update their own messages." ON public.messages FOR UPDATE USING (auth.uid() = sender_id);
-CREATE POLICY "Sender can delete their own messages." ON public.messages FOR DELETE USING (auth.uid() = sender_id);
-
--- friend_requests table
-ALTER TABLE public.friend_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can send friend requests." ON public.friend_requests FOR INSERT WITH CHECK (auth.uid() = sender_id);
-CREATE POLICY "Users can view their own sent and received friend requests." ON public.friend_requests FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
-CREATE POLICY "Users can update their own received friend requests (accept/reject/block)." ON public.friend_requests FOR UPDATE USING (auth.uid() = receiver_id);
-CREATE POLICY "Users can delete their own sent friend requests (cancel)." ON public.friend_requests FOR DELETE USING (auth.uid() = sender_id);
-
--- badges table
-ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Badges are viewable by everyone." ON public.badges FOR SELECT USING (TRUE);
-
--- user_badges table
-ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own awarded badges." ON public.user_badges FOR SELECT USING (auth.uid() = user_id);
--- User badges should only be inserted by functions/triggers, not directly by users
-CREATE POLICY "Allow function to insert user badges." ON public.user_badges FOR INSERT WITH CHECK (TRUE); -- Handled by function
-
--- subscriptions table
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own subscriptions." ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own subscriptions (e.g., cancel)." ON public.subscriptions FOR UPDATE USING (auth.uid() = user_id);
--- Insertions handled by payment/webhook functions
-
--- notifications table
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own notifications." ON public.notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own notifications (e.g., mark as read)." ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
--- Insertions handled by functions/triggers
 
 -- Function to increment user XP and handle leveling
 CREATE OR REPLACE FUNCTION public.increment_user_xp(p_user_id UUID, p_xp_amount INT, p_reason TEXT)
