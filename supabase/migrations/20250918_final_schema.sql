@@ -164,23 +164,36 @@ CREATE OR REPLACE FUNCTION public.create_room_and_join(
     p_is_public BOOLEAN,
     max_members_count INT DEFAULT 50
 )
-RETURNS UUID AS $$
+RETURNS TABLE(room JSON, membership JSON) AS $
 DECLARE
     new_room_id UUID;
     owner_id UUID := auth.uid();
+    room_record RECORD;
+    member_record RECORD;
+    generated_short_code TEXT;
 BEGIN
     IF owner_id IS NULL THEN
         RAISE EXCEPTION 'User not authenticated.';
     END IF;
 
-    INSERT INTO public.rooms (name, description, owner_id, is_public, max_members)
-    VALUES (room_name, room_description, owner_id, p_is_public, max_members_count)
+    -- Generate a unique short code
+    LOOP
+        generated_short_code := upper(substring(md5(random()::text) from 1 for 6));
+        EXIT WHEN NOT EXISTS (SELECT 1 FROM public.rooms WHERE short_code = generated_short_code);
+    END LOOP;
+
+    INSERT INTO public.rooms (name, description, owner_id, is_public, max_members, short_code)
+    VALUES (room_name, room_description, owner_id, p_is_public, max_members_count, generated_short_code)
     RETURNING id INTO new_room_id;
 
     INSERT INTO public.room_members (room_id, user_id, role)
     VALUES (new_room_id, owner_id, 'owner');
 
-    RETURN new_room_id;
+    -- Fetch the newly created room and membership data
+    SELECT * INTO room_record FROM public.rooms WHERE id = new_room_id;
+    SELECT * INTO member_record FROM public.room_members WHERE room_id = new_room_id AND user_id = owner_id;
+
+    RETURN QUERY SELECT row_to_json(room_record), row_to_json(member_record);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -269,8 +282,216 @@ CREATE POLICY "Members can view private rooms they belong to." ON public.rooms F
 -- room_members table
 ALTER TABLE public.room_members ENABLE ROW LEVEL SECURITY;
 -- Allow any authenticated user to view members of rooms they belong to
-CREATE POLICY "Authenticated users can view room members if they are a member" ON public.room_members FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid())
+CREATE POLICY "Authenticated users can view room members if they can view the room" ON public.room_members FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.rooms WHERE id = room_members.room_id AND (is_public = TRUE OR EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())))
+);
+
+-- Allow room owners/admins to insert new members
+CREATE POLICY "Room owners/admins can insert members" ON public.room_members FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+);
+
+-- Allow room owners/admins to update member roles
+CREATE POLICY "Room owners/admins can update members" ON public.room_members FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+);
+
+-- Allow users to remove themselves from a room
+CREATE POLICY "Users can remove themselves from a room" ON public.room_members FOR DELETE USING (auth.uid() = user_id);
+
+-- Allow room owners/admins to remove any member
+CREATE POLICY "Room owners/admins can remove any member" ON public.room_members FOR DELETE USING (
+    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = room_members.room_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+);
+
+-- messages table
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Room members can view messages in their room." ON public.messages FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = messages.room_id AND user_id = auth.uid())
+);
+CREATE POLICY "Room members can send messages." ON public.messages FOR INSERT WITH CHECK (
+    auth.uid() = sender_id AND
+    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = messages.room_id AND user_id = auth.uid())
+);
+CREATE POLICY "Sender can update their own messages." ON public.messages FOR UPDATE USING (auth.uid() = sender_id);
+CREATE POLICY "Sender can delete their own messages." ON public.messages FOR DELETE USING (auth.uid() = sender_id);
+
+-- friend_requests table
+ALTER TABLE public.friend_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can send friend requests." ON public.friend_requests FOR INSERT WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "Users can view their own sent and received friend requests." ON public.friend_requests FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+CREATE POLICY "Users can update their own received friend requests (accept/reject/block)." ON public.friend_requests FOR UPDATE USING (auth.uid() = receiver_id);
+CREATE POLICY "Users can delete their own sent friend requests (cancel)." ON public.friend_requests FOR DELETE USING (auth.uid() = sender_id);
+
+-- badges table
+ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Badges are viewable by everyone." ON public.badges FOR SELECT USING (TRUE);
+
+-- user_badges table
+ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own awarded badges." ON public.user_badges FOR SELECT USING (auth.uid() = user_id);
+-- User badges should only be inserted by functions/triggers, not directly by users
+CREATE POLICY "Allow function to insert user badges." ON public.user_badges FOR INSERT WITH CHECK (TRUE); -- Handled by function
+
+-- subscriptions table
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own subscriptions." ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own subscriptions (e.g., cancel)." ON public.subscriptions FOR UPDATE USING (auth.uid() = user_id);
+-- Insertions handled by payment/webhook functions
+
+-- notifications table
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own notifications." ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own notifications (e.g., mark as read)." ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+-- Insertions handled by functions/triggers
+
+-- Function to increment user XP and handle leveling
+CREATE OR REPLACE FUNCTION public.increment_user_xp(p_user_id UUID, p_xp_amount INT, p_reason TEXT)
+RETURNS VOID AS $$
+DECLARE
+    current_xp INT;
+    current_level INT;
+    xp_for_next_level INT;
+BEGIN
+    -- Update XP in profiles table
+    UPDATE public.profiles
+    SET xp = xp + p_xp_amount,
+        updated_at = NOW()
+    WHERE id = p_user_id
+    RETURNING xp, level INTO current_xp, current_level;
+
+    -- Simple leveling system: 100 XP per level
+    xp_for_next_level := current_level * 100;
+
+    IF current_xp >= xp_for_next_level THEN
+        UPDATE public.profiles
+        SET level = level + 1,
+            updated_at = NOW()
+        WHERE id = p_user_id;
+        -- Optionally, award a badge for leveling up
+        -- SELECT public.award_badge(p_user_id, 'Level Up!'); -- This would require the badge to exist
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to update user streak
+CREATE OR REPLACE FUNCTION public.update_user_daily_streak(p_user_id UUID)
+RETURNS VOID AS $$
+DECLARE
+    last_streak_date DATE;
+    today DATE := CURRENT_DATE;
+BEGIN
+    SELECT streak_last_updated INTO last_streak_date
+    FROM public.profiles
+    WHERE id = p_user_id;
+
+    IF last_streak_date IS NULL OR last_streak_date < today - INTERVAL '1 day' THEN
+        -- Reset streak if not updated yesterday
+        UPDATE public.profiles
+        SET streak_count = 1,
+            streak_last_updated = today,
+            updated_at = NOW()
+        WHERE id = p_user_id;
+    ELSIF last_streak_date = today - INTERVAL '1 day' THEN
+        -- Increment streak if updated yesterday
+        UPDATE public.profiles
+        SET streak_count = streak_count + 1,
+            streak_last_updated = today,
+            updated_at = NOW()
+        WHERE id = p_user_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to award a badge to a user
+CREATE OR REPLACE FUNCTION public.award_badge(p_user_id UUID, p_badge_name TEXT)
+RETURNS VOID AS $$
+DECLARE
+    badge_id_to_award UUID;
+BEGIN
+    SELECT id INTO badge_id_to_award
+    FROM public.badges
+    WHERE name = p_badge_name;
+
+    IF badge_id_to_award IS NULL THEN
+        RAISE EXCEPTION 'Badge with name % not found.', p_badge_name;
+    END IF;
+
+    -- Check if user already has the badge
+    IF NOT EXISTS (SELECT 1 FROM public.user_badges WHERE user_id = p_user_id AND badge_id = badge_id_to_award) THEN
+        INSERT INTO public.user_badges (user_id, badge_id, awarded_at)
+        VALUES (p_user_id, badge_id_to_award, NOW());
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;ject('success', FALSE, 'error', 'Cannot join private room without an invite or being the owner.', 'code', 'PRIVATE_ROOM');
+    END IF;
+
+    -- Capacity check
+    SELECT COUNT(*) INTO member_count FROM public.room_members WHERE room_id = target_room_id;
+    IF member_count >= max_members_allowed THEN
+        RETURN json_build_object('success', FALSE, 'error', 'Room is full.', 'code', 'ROOM_FULL');
+    END IF;
+
+    -- Insert new member
+    INSERT INTO public.room_members (room_id, user_id, role)
+    VALUES (target_room_id, current_user_id, 'member');
+
+    -- Fetch new membership data
+    SELECT * INTO member_record FROM public.room_members WHERE room_id = target_room_id AND user_id = current_user_id;
+    RETURN json_build_object('success', TRUE, 'message', 'Successfully joined room.', 'code', 'JOINED', 'membership', row_to_json(member_record));
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to leave a room
+CREATE OR REPLACE FUNCTION public.leave_room(p_room_id UUID)
+RETURNS VOID AS $$
+DECLARE
+    current_user_id UUID := auth.uid();
+    member_role public.room_member_role;
+BEGIN
+    IF current_user_id IS NULL THEN
+        RAISE EXCEPTION 'User not authenticated.';
+    END IF;
+
+    SELECT role INTO member_role FROM public.room_members WHERE room_id = p_room_id AND user_id = current_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'User is not a member of this room.';
+    END IF;
+
+    IF member_role = 'owner' THEN
+        RAISE EXCEPTION 'Room owner cannot leave the room directly. Transfer ownership or delete the room.';
+    END IF;
+
+    DELETE FROM public.room_members
+    WHERE room_id = p_room_id AND user_id = current_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- RLS Policies
+
+-- profiles table
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (TRUE);
+CREATE POLICY "Users can update their own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can delete their own profile." ON public.profiles FOR DELETE USING (auth.uid() = id);
+
+-- rooms table
+ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public rooms are viewable by everyone." ON public.rooms FOR SELECT USING (is_public = TRUE);
+CREATE POLICY "Users can create rooms." ON public.rooms FOR INSERT WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Owners can update their rooms." ON public.rooms FOR UPDATE USING (auth.uid() = owner_id);
+CREATE POLICY "Owners can delete their rooms." ON public.rooms FOR DELETE USING (auth.uid() = owner_id);
+-- Allow members to view private rooms they are part of
+CREATE POLICY "Members can view private rooms they belong to." ON public.rooms FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())
+);
+
+-- room_members table
+ALTER TABLE public.room_members ENABLE ROW LEVEL SECURITY;
+-- Allow any authenticated user to view members of rooms they belong to
+CREATE POLICY "Authenticated users can view room members if they can view the room" ON public.room_members FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.rooms WHERE id = room_members.room_id AND (is_public = TRUE OR EXISTS (SELECT 1 FROM public.room_members WHERE room_id = rooms.id AND user_id = auth.uid())))
 );
 
 -- Allow room owners/admins to insert new members
