@@ -242,29 +242,11 @@ export const getFriendshipStatus = async (
   }
 };
 
-export const createGroup = async (name: string, description?: string): Promise<{ success: boolean; error?: string; groupId?: string }> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    const { data: conversationData, error: conversationError } = await supabase
-      .from('conversations')
-      .insert([{ name, description, type: 'group', created_by: user.id }])
-      .select()
-      .single();
-
-    if (conversationError) throw conversationError;
-
-    const { error: memberError } = await supabase
-      .from('conversation_members')
-      .insert([{ conversation_id: conversationData.id, user_id: user.id, role: 'admin' }]);
-
-    if (memberError) throw memberError;
-
-    return { success: true, groupId: conversationData.id };
-  } catch (error: any) {
-    console.error('Create group error:', error);
-    return { success: false, error: error.message };
-  }
+export const createGroup = async (_name: string, _description?: string): Promise<{ success: boolean; error?: string; groupId?: string }> => {
+  // Feature disabled - conversations table not in current schema
+  return { 
+    success: false, 
+    error: 'Group creation feature is currently disabled' 
+  };
 };
 

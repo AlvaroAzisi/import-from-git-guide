@@ -73,7 +73,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ isOpen, onClose, onSu
           title: t('common.success'),
           description: 'Room created successfully!',
         });
-        if (onSuccess) onSuccess(result.data);
+        if (onSuccess && result.room) onSuccess(result.room);
         onClose();
       } else {
         toast({

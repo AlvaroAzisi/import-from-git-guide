@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { JoinRoomModal } from './JoinRoomModal';
+import { JoinRoomModal } from './modals/JoinRoomModal';
 import { Button } from './ui/button';
 
 export const JoinRoomButton: React.FC = () => {

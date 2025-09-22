@@ -12,7 +12,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, activeC
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
   useEffect(() => {
-    const channel = supabase.channel('users', { configs: { presence: { key: 'user_id' } } });
+    const channel = supabase.channel('users', { config: { presence: { key: 'user_id' } } });
 
     channel.on('presence', { event: 'sync' }, () => {
       const newState = channel.presenceState();

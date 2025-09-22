@@ -1,5 +1,5 @@
-import { supabase } from '../integrations/supabase/client';
-import type { UserProfile } from './auth';
+// import { supabase } from '../integrations/supabase/client';
+// import type { UserProfile } from './auth';
 
 export interface StudyStats {
   hoursStudied: number;
@@ -12,7 +12,7 @@ export interface AnalyticsData {
   // Add more analytics data as needed
 }
 
-export const getStudyStats = async (userId: string): Promise<StudyStats | null> => {
+export const getStudyStats = async (): Promise<StudyStats | null> => {
   try {
     // For now, return mock data. In a real scenario, this would query the database
     // to aggregate study session data for the given user.
@@ -27,7 +27,7 @@ export const getStudyStats = async (userId: string): Promise<StudyStats | null> 
   }
 };
 
-export const getAnalyticsData = async (userId: string): Promise<AnalyticsData | null> => {
+export const getAnalyticsData = async (): Promise<AnalyticsData | null> => {
   try {
     // For now, return mock data. In a real scenario, this would query the database
     // for detailed analytics, possibly from a dedicated analytics table or aggregated views.

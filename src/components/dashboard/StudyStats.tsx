@@ -15,7 +15,7 @@ const StudyStats: React.FC = memo(() => {
     const fetchStats = async () => {
       if (!user) return;
       setLoading(true);
-      const fetchedStats = await getStudyStats(user.id);
+      const fetchedStats = await getStudyStats();
       if (fetchedStats) {
         setStats(fetchedStats);
       }

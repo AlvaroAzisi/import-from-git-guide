@@ -15,7 +15,7 @@ const USERNAME_MIN = 3;
 const USERNAME_MAX = 30;
 const USERNAME_RE = /^[A-Za-z0-9_]+$/;
 
-const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
+export const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
   const raw = (input || fallback || '').toString();
   // remove disallowed chars (keep letters, numbers, underscore)
   let username = raw.replace(/[^A-Za-z0-9_]/g, '');
@@ -113,7 +113,7 @@ export interface UserProfile {
   website?: string | null;
   created_at: string | null;
   updated_at: string | null;
-  is_pro: boolean | null; // Add this line
+  is_pro?: boolean;
 }
 
 export const getCurrentUser = async (): Promise<User | null> => {

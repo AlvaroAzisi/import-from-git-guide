@@ -11,7 +11,7 @@ const AnalyticsChart: React.FC = memo(() => {
     const fetchAnalytics = async () => {
       if (!user) return;
       setLoading(true);
-      const fetchedData = await getAnalyticsData(user.id);
+      const fetchedData = await getAnalyticsData();
       if (fetchedData) {
         setAnalyticsData(fetchedData);
       }

@@ -193,7 +193,15 @@ export class RoomManager {
 
   static async leaveRoom(roomId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase.rpc('leave_room', { p_room_id: roomId });
+      // Use direct deletion instead of RPC since leave_room function not defined
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('room_members')
+        .delete()
+        .eq('room_id', roomId)
+        .eq('user_id', user.id);
       if (error) throw error;
       return { success: true };
     } catch (error: any) {
