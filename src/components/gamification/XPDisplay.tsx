@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getUserGamificationStats } from '../../lib/gamification';
+import { useAuth } from '../../hooks/useAuth';
 
 const XPDisplay: React.FC = () => {
-  const xp = 1250;
-  const level = 12;
+  const { user } = useAuth();
+  const [xp, setXp] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+      setLoading(true);
+      const stats = await getUserGamificationStats(user.id);
+      if (stats) {
+        setXp(stats.xp);
+        setLevel(stats.level);
+      }
+      setLoading(false);
+    };
+    fetchStats();
+  }, [user]);
+
+  if (loading) {
+    return <div>Loading XP...</div>;
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
