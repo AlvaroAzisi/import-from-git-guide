@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { getStudyStats } from '../../lib/dashboard';
 import { useAuth } from '../../hooks/useAuth';
 
-const StudyStats: React.FC = () => {
+const StudyStats: React.FC = memo(() => {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     hoursStudied: 0,
@@ -47,6 +47,6 @@ const StudyStats: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default StudyStats;

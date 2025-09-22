@@ -2,6 +2,11 @@ import { supabase } from '../integrations/supabase/client';
 import type { Room } from '../types/room';
 import type { UserProfile } from './auth';
 
+/**
+ * Searches for public rooms by name or description.
+ * @param query The search query.
+ * @returns A promise that resolves to an array of rooms.
+ */
 export const searchRooms = async (query: string): Promise<Room[]> => {
   try {
     const { data, error } = await supabase
@@ -19,6 +24,11 @@ export const searchRooms = async (query: string): Promise<Room[]> => {
   }
 };
 
+/**
+ * Searches for users by username or full name.
+ * @param query The search query.
+ * @returns A promise that resolves to an array of user profiles.
+ */
 export const searchFriends = async (query: string): Promise<UserProfile[]> => {
   try {
     const { data, error } = await supabase

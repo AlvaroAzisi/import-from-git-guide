@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { getAnalyticsData } from '../../lib/dashboard';
+import React, { useState, useEffect, memo } from 'react';
+import { getAnalyticsData, AnalyticsData } from '../../lib/dashboard';
 import { useAuth } from '../../hooks/useAuth';
 
-const AnalyticsChart: React.FC = () => {
+const AnalyticsChart: React.FC = memo(() => {
   const { user } = useAuth();
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const AnalyticsChart: React.FC = () => {
           <div>
             <p className="text-gray-800">Daily Study Time:</p>
             <ul>
-              {analyticsData.dailyStudyTime.map((data: any) => (
+              {analyticsData.dailyStudyTime.map((data) => (
                 <li key={data.date}>{data.date}: {data.minutes} minutes</li>
               ))}
             </ul>
@@ -43,6 +43,6 @@ const AnalyticsChart: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default AnalyticsChart;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useToast } from '../../hooks/useToast';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -6,10 +7,15 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   const [query, setQuery] = React.useState('');
+  const { toast } = useToast();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query);
+    toast({
+      title: 'Search Initiated',
+      description: `Searching for "${query}"`,
+    });
   };
 
   return (

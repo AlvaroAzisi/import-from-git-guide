@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PricingTable from '../../components/payments/PricingTable';
 import SubscriptionDetails from '../../components/payments/SubscriptionDetails';
-import { getSubscriptionStatus } from '../../lib/payments';
+import { getSubscriptionStatus, Subscription } from '../../lib/payments';
 import { useAuth } from '../../hooks/useAuth';
 
 const PaymentsPage: React.FC = () => {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
