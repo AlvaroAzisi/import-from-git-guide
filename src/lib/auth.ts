@@ -113,6 +113,7 @@ export interface UserProfile {
   website?: string | null;
   created_at: string | null;
   updated_at: string | null;
+  is_pro: boolean | null; // Add this line
 }
 
 export const getCurrentUser = async (): Promise<User | null> => {

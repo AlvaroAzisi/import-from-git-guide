@@ -1,6 +1,27 @@
 import React from 'react';
+import { upgradeToPro } from '../../lib/payments';
+import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 
 const PricingTable: React.FC = () => {
+  const { user, refreshProfile } = useAuth();
+  const { toast } = useToast();
+
+  const handleUpgrade = async () => {
+    if (!user) {
+      toast({ title: 'Error', description: 'Please log in to upgrade.', variant: 'destructive' });
+      return;
+    }
+
+    const { success, error } = await upgradeToPro(user.id);
+    if (success) {
+      toast({ title: 'Success', description: 'Successfully upgraded to Pro!' });
+      refreshProfile(); // Refresh user profile to update is_pro status
+    } else {
+      toast({ title: 'Error', description: error || 'Failed to upgrade.', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -24,7 +45,10 @@ const PricingTable: React.FC = () => {
           <li>Unlimited Rooms</li>
           <li>Analytics</li>
         </ul>
-        <button className="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+        <button
+          onClick={handleUpgrade}
+          className="mt-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+        >
           Upgrade to Pro
         </button>
       </div>

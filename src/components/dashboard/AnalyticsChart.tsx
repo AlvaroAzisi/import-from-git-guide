@@ -1,11 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getAnalyticsData } from '../../lib/dashboard';
+import { useAuth } from '../../hooks/useAuth';
 
 const AnalyticsChart: React.FC = () => {
+  const { user } = useAuth();
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!user) return;
+      setLoading(true);
+      const fetchedData = await getAnalyticsData(user.id);
+      if (fetchedData) {
+        setAnalyticsData(fetchedData);
+      }
+      setLoading(false);
+    };
+    fetchAnalytics();
+  }, [user]);
+
+  if (loading) {
+    return <div>Loading analytics...</div>;
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-4">Study Analytics (Pro)</h2>
       <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-        <p className="text-gray-500">Chart will be displayed here.</p>
+        {analyticsData ? (
+          <div>
+            <p className="text-gray-800">Daily Study Time:</p>
+            <ul>
+              {analyticsData.dailyStudyTime.map((data: any) => (
+                <li key={data.date}>{data.date}: {data.minutes} minutes</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-gray-500">No analytics data available.</p>
+        )}
       </div>
     </div>
   );

@@ -1,11 +1,13 @@
 import React from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ProFeatureProps {
   children: React.ReactNode;
 }
 
 const ProFeature: React.FC<ProFeatureProps> = ({ children }) => {
-  const isPro = false; // Mock value
+  const { profile } = useAuth();
+  const isPro = profile?.is_pro; // Use the actual is_pro status from the user profile
 
   if (!isPro) {
     return (
