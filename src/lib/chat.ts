@@ -1,9 +1,9 @@
-// TODO: Disabled – depends on old schema (conversations, group_messages)
+import { supabase } from '../integrations/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+
 export interface Conversation {
   id: string;
-  type: 'direct' | 'group' | 'room';
-  name?: string;
-  last_message_at?: string;
+  name: string;
 }
 
 export interface ChatMessage {
@@ -11,25 +11,66 @@ export interface ChatMessage {
   content: string;
   created_at: string;
   sender_id: string;
+  profiles: { username: string; avatar_url: string; };
 }
 
-// Placeholder functions - disabled
-export const getConversations = async () => {
-  return { data: [], error: null };
+export const getConversations = async (): Promise<{ data: Conversation[] | null; error: any }> => {
+  const { data: userResponse } = await supabase.auth.getUser();
+  if (!userResponse.user) {
+    return { data: null, error: 'Not authenticated' };
+  }
+
+  const { data, error } = await supabase
+    .from('room_members')
+    .select('rooms(*)')
+    .eq('user_id', userResponse.user.id);
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  const conversations = data.map(item => item.rooms as Conversation).filter(Boolean);
+  return { data: conversations, error: null };
 };
 
-export const getConversation = async (_id: string) => {
-  return { data: null, error: 'Feature disabled' };
+export const sendMessage = async (roomId: string, content: string): Promise<{ data: any | null; error: any }> => {
+  const { data: userResponse } = await supabase.auth.getUser();
+  if (!userResponse.user) {
+    return { data: null, error: 'Not authenticated' };
+  }
+
+  const { data, error } = await supabase
+    .from('messages')
+    .insert([{ room_id: roomId, content, sender_id: userResponse.user.id }])
+    .select();
+
+  return { data, error };
 };
 
-export const createDMConversation = async (_userId: string) => {
-  return null;
-};
+export const subscribeToMessages = (
+  roomId: string,
+  onMessage: (message: ChatMessage) => void
+): RealtimeChannel => {
+  const channel = supabase
+    .channel(`messages:${roomId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
+      async (payload) => {
+        const newMessageId = payload.new.id;
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*, profiles(username, avatar_url)')
+          .eq('id', newMessageId)
+          .single();
+        if (error) {
+          console.error('Error fetching new message:', error);
+        } else {
+          onMessage(data as ChatMessage);
+        }
+      }
+    )
+    .subscribe();
 
-export const createDirectConversation = async (_userId: string) => {
-  return null;
-};
-
-export const sendMessage = async (_conversationId: string, _content: string) => {
-  return { data: null, error: 'Feature disabled' };
+  return channel;
 };

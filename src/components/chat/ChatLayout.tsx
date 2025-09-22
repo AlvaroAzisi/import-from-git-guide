@@ -1,17 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { ChatSidebar } from './ChatSidebar';
+import { ChatWindow } from './ChatWindow';
+import { getConversations } from '../../lib/chat';
+import type { Conversation } from '../../lib/chat';
 
-// TODO: Disabled – depends on old schema (conversations, group_messages)
 export const ChatLayout: React.FC = () => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      setLoading(true);
+      const { data, error } = await getConversations();
+      if (error) {
+        console.error('Error fetching conversations:', error);
+      } else if (data) {
+        setConversations(data);
+        if (data.length > 0) {
+          setActiveConversation(data[0]);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchConversations();
+  }, []);
+
+  if (loading) {
+    return <div>Loading chat...</div>;
+  }
+
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-          Chat Feature Coming Soon
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Chat functionality is being rebuilt for the new backend architecture.
-        </p>
-      </div>
+    <div className="h-screen flex">
+      <ChatSidebar
+        conversations={conversations}
+        activeConversation={activeConversation}
+        onConversationSelect={setActiveConversation}
+      />
+      <ChatWindow conversation={activeConversation} />
     </div>
   );
 };
+
+export default ChatLayout;
