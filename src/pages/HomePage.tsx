@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-import RoomList from '../components/RoomList';
+import RoomList from '../components/rooms/RoomList';
 import CreateRoomModal from '../components/modals/CreateRoomModal';
 import { useToast } from '../hooks/useToast';
 
