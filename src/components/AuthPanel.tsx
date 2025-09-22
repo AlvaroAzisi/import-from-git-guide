@@ -14,10 +14,11 @@ interface AuthPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: User) => void;
+  initialMode?: 'login' | 'signup';
 }
 
-const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthPanel: React.FC<AuthPanelProps> = ({ isOpen, onClose, onSuccess, initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
