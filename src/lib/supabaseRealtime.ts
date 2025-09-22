@@ -36,7 +36,7 @@ export function subscribeToRoomMessages(roomId: string, onInsert: (row: any) => 
   return subscribeToTableInserts(
     `messages-room-${roomId}`,
     'messages',
-    `room_id=eq.${roomId}`,
+    `conversation_id=eq.${roomId}`,
     onInsert
   );
 }

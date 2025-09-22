@@ -264,7 +264,7 @@ export const isRoomMember = async (roomId: string): Promise<boolean> => {
       .select('id')
       .eq('room_id', roomId)
       .eq('user_id', user.user.id)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       // PGRST116 is "no rows returned"

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { sendMessage, subscribeToMessages } from '../../lib/chat';
 import type { Conversation, ChatMessage } from '../../lib/chat';
 import MessageComposer from './MessageComposer';
-import MessageBubble from './MessageBubble';
+import { MessageBubble } from './MessageBubble';
 import { supabase } from '../../integrations/supabase/client';
 
 interface ChatWindowProps {
@@ -21,7 +21,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
       const { data, error } = await supabase
         .from('messages')
         .select('*, profiles(username, avatar_url)')
-        .eq('room_id', conversation.id)
+        .eq('conversation_id', conversation.id)
         .order('created_at', { ascending: true });
 
       if (error) {
