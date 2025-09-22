@@ -190,4 +190,26 @@ export class RoomManager {
       return { error: error.message };
     }
   }
+
+  static async leaveRoom(roomId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.rpc('leave_room', { p_room_id: roomId });
+      if (error) throw error;
+      return { success: true };
+    } catch (error: any) {
+      console.error('Leave room error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deleteRoom(roomId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.from('rooms').delete().eq('id', roomId);
+      if (error) throw error;
+      return { success: true };
+    } catch (error: any) {
+      console.error('Delete room error:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
