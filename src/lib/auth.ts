@@ -16,33 +16,30 @@ const USERNAME_MAX = 30;
 const USERNAME_RE = /^[A-Za-z0-9_]+$/;
 
 export const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
+  // 1. Normalize to lowercase and remove invalid chars
   let username = (input || '').toString().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-  // 1. Handle empty/invalid input
+  // 2. Strip leading digits
+  username = username.replace(/^[0-9]+/, '');
+
+  // 3. If empty, return fallback with random suffix
   if (!username) {
     return `${fallback}${Math.random().toString(36).slice(2, 6)}`;
   }
 
-  // 3. Ensure regex compliance (no leading digits)
-  username = username.replace(/^[0-9]+/, '');
-
-  // 2. Pad to min length
-  if (username.length < USERNAME_MIN) {
-    username = `${username}${fallback}`.slice(0, USERNAME_MAX); // Pad and ensure not too long
-    if (username.length < USERNAME_MIN) {
-        // if still too short, just make it a valid user
-        username = `user${Math.random().toString(36).slice(2, 5)}`;
-    }
+  // 4. Pad username until it meets USERNAME_MIN
+  while (username.length < USERNAME_MIN) {
+    username += fallback;
   }
 
-  // Trim to max length
+  // 5. Trim to USERNAME_MAX
   if (username.length > USERNAME_MAX) {
     username = username.slice(0, USERNAME_MAX);
   }
 
-  // Final check for empty string after trimming
-  if (!username) {
-      return `${fallback}${Math.random().toString(36).slice(2, 6)}`;
+  // 6. Final check if still too short (e.g., if fallback was empty)
+  if (username.length < USERNAME_MIN) {
+    return `${fallback}${Math.random().toString(36).slice(2, 6)}`;
   }
 
   return username;
