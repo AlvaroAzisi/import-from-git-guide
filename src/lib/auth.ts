@@ -16,32 +16,34 @@ const USERNAME_MAX = 30;
 const USERNAME_RE = /^[A-Za-z0-9_]+$/;
 
 export const makeSafeUsername = (input: string | undefined, fallback = 'user') => {
-  const raw = (input || fallback || '').toString();
-  // remove disallowed chars (keep letters, numbers, underscore)
-  let username = raw.replace(/[^A-Za-z0-9_]/g, '');
+  let username = (input || '').toString().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-  // normalize to lowercase for consistency (optional)
-  username = username.toLowerCase();
+  // 1. Handle empty/invalid input
+  if (!username) {
+    return `${fallback}${Math.random().toString(36).slice(2, 6)}`;
+  }
 
-  // trim/pad to length
-  if (username.length > USERNAME_MAX) username = username.slice(0, USERNAME_MAX);
+  // 3. Ensure regex compliance (no leading digits)
+  username = username.replace(/^[0-9]+/, '');
+
+  // 2. Pad to min length
   if (username.length < USERNAME_MIN) {
-    username = (username + fallback).slice(0, USERNAME_MIN);
+    username = `${username}${fallback}`.slice(0, USERNAME_MAX); // Pad and ensure not too long
+    if (username.length < USERNAME_MIN) {
+        // if still too short, just make it a valid user
+        username = `user${Math.random().toString(36).slice(2, 5)}`;
+    }
   }
 
-  // final guard: if empty after sanitization
-  if (!username) username = `${fallback}${Math.random().toString(36).slice(2, 6)}`;
-
-  // ensure regex compliance — fallback to a safe base if somehow still invalid
-  username = username.replace(/^[^a-z0-9_]+/i, ''); // remove leading invalid if any
-  if (!USERNAME_RE.test(username)) {
-    username =
-      username.replace(/[^a-z0-9_]/gi, '') || `user${Math.random().toString(36).slice(2, 5)}`;
+  // Trim to max length
+  if (username.length > USERNAME_MAX) {
+    username = username.slice(0, USERNAME_MAX);
   }
 
-  // re-enforce length bounds
-  if (username.length < USERNAME_MIN) username = `${username}user`.slice(0, USERNAME_MIN);
-  if (username.length > USERNAME_MAX) username = username.slice(0, USERNAME_MAX);
+  // Final check for empty string after trimming
+  if (!username) {
+      return `${fallback}${Math.random().toString(36).slice(2, 6)}`;
+  }
 
   return username;
 };
