@@ -70,17 +70,12 @@ const ProfilePage: React.FC = () => {
   // 1) Fetch or create profile on mount
   useEffect(() => {
     const init = async () => {
-      console.log('[ProfilePage] Initializing...', { authLoading, user: user?.id });
-      if (authLoading) return;
-      if (!user) {
-        console.log('[ProfilePage] No user, setting localLoading to false');
+      if (authLoading || !user || profile) {
         setLocalLoading(false);
         return;
       }
       try {
-        console.log('[ProfilePage] Upserting profile for user:', user.id);
         await upsertProfile(user);
-        console.log('[ProfilePage] Profile upsert complete');
       } catch (err) {
         console.error('[ProfilePage] Error upserting profile:', err);
       } finally {
@@ -88,7 +83,7 @@ const ProfilePage: React.FC = () => {
       }
     };
     init();
-  }, [authLoading, user]);
+  }, [authLoading, user, profile]);
 
   // 2) Sync editForm & stats when context profile changes
   useEffect(() => {

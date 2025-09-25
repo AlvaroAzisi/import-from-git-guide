@@ -3,7 +3,7 @@ import { supabase } from '../integrations/supabase/client';
 
 export interface Message {
   id: string;
-  conversation_id: string; // TODO adapted for new Supabase backend - keeping current schema
+  room_id: string; // TODO adapted for new Supabase backend - keeping current schema
   sender_id: string | null;
   content: string;
   message_type: 'text' | 'image' | 'file' | null;
@@ -34,7 +34,7 @@ export const getRoomMessages = async (roomId: string): Promise<Message[]> => {
         )
       `
       )
-      .eq('conversation_id', roomId)
+      .eq('room_id', roomId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true });
 
@@ -59,7 +59,7 @@ export const sendMessage = async (
     if (!user) throw new Error('User not authenticated');
 
     const { error } = await supabase.from('messages').insert({
-      conversation_id: roomId,
+      room_id: roomId,
       sender_id: user.id,
       content,
       message_type: messageType,

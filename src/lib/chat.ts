@@ -41,7 +41,7 @@ export const sendMessage = async (roomId: string, content: string): Promise<{ da
 
   const { data, error } = await supabase
     .from('messages')
-    .insert([{ conversation_id: roomId, content, sender_id: userResponse.user.id }])
+    .insert([{ room_id: roomId, content, sender_id: userResponse.user.id }])
     .select();
 
   return { data, error };
@@ -55,7 +55,7 @@ export const subscribeToMessages = (
     .channel(`messages:${roomId}`)
     .on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${roomId}` },
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
       async (payload) => {
         const newMessageId = payload.new.id;
         const { data, error } = await supabase
