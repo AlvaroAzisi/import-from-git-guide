@@ -1,10 +1,9 @@
 import React from 'react';
-import { upgradeToPro } from '../../lib/payments';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 
 const PricingTable: React.FC = () => {
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const handleUpgrade = async () => {
@@ -13,13 +12,7 @@ const PricingTable: React.FC = () => {
       return;
     }
 
-    const { success, error } = await upgradeToPro(user.id);
-    if (success) {
-      toast({ title: 'Success', description: 'Successfully upgraded to Pro!' });
-      refreshProfile(); // Refresh user profile to update is_pro status
-    } else {
-      toast({ title: 'Error', description: error || 'Failed to upgrade.', variant: 'destructive' });
-    }
+    toast({ title: 'Info', description: 'Payment features are not yet implemented.' });
   };
 
   return (

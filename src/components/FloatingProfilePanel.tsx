@@ -15,10 +15,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 
 import { Badge } from './ui/badge';
-
-import type { Room } from '../types/room';
-
-import { Button } from './ui/button'; // Fixed import statement
+import { Button } from './ui/button';
 interface FloatingProfilePanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -334,7 +331,7 @@ export const FloatingProfilePanel: React.FC<FloatingProfilePanelProps> = ({
                       Mutual Study Rooms ({profile.mutual_rooms.length})
                     </h4>
                     <div className="space-y-2">
-                      {profile.mutual_rooms.slice(0, 3).map((room: Room) => (
+                      {profile.mutual_rooms.slice(0, 3).map((room: any) => (
                         <div
                           key={room.id}
                           className="flex items-center gap-2 p-2 bg-white/20 dark:bg-gray-800/20 rounded-lg"

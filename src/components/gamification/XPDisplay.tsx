@@ -12,7 +12,7 @@ const XPDisplay: React.FC = () => {
     const fetchStats = async () => {
       if (!user) return;
       setLoading(true);
-      const stats = await getUserGamificationStats(user.id);
+      const stats = await getUserGamificationStats();
       if (stats) {
         setXp(stats.xp);
         setLevel(stats.level);

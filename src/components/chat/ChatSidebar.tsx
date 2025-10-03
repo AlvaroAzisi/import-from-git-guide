@@ -3,12 +3,14 @@ import type { Conversation } from '../../lib/chat';
 import { supabase } from '../../integrations/supabase/client';
 
 interface ChatSidebarProps {
-  conversations: Conversation[];
+  conversations?: Conversation[];
   activeConversation: Conversation | null;
   onConversationSelect: (conversation: Conversation) => void;
+  minimized?: boolean;
+  onToggleMinimized?: () => void;
 }
 
-export const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, activeConversation, onConversationSelect }) => {
+export const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations = [], activeConversation, onConversationSelect }) => {
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
   useEffect(() => {

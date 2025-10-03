@@ -16,12 +16,12 @@ const SubscriptionDetails: React.FC<SubscriptionDetailsProps> = ({ subscription 
     if (!user) return;
 
     if (window.confirm('Are you sure you want to cancel your subscription?')) {
-      const { success, error } = await cancelSubscription(user.id);
-      if (success) {
+      const result = await cancelSubscription();
+      if (result) {
         toast({ title: 'Success', description: 'Subscription cancelled.' });
         refreshProfile(); // Refresh user profile to update is_pro status
       } else {
-        toast({ title: 'Error', description: error || 'Failed to cancel subscription.', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to cancel subscription.', variant: 'destructive' });
       }
     }
   };

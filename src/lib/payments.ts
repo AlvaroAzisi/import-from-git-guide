@@ -13,6 +13,11 @@ export const getUserSubscription = async (): Promise<Subscription | null> => {
   return null;
 };
 
+export const getSubscriptionStatus = async (_userId: string): Promise<Subscription | null> => {
+  // Feature disabled
+  return null;
+};
+
 export const upgradeSubscription = async (): Promise<boolean> => {
   // Feature disabled
   return false;

@@ -3,17 +3,17 @@ import { supabase } from '../integrations/supabase/client';
 
 export interface Message {
   id: string;
-  room_id: string; // TODO adapted for new Supabase backend - keeping current schema
+  conversation_id: string;
   sender_id: string | null;
   content: string;
-  message_type: 'text' | 'image' | 'file' | null;
+  message_type: 'text' | 'image' | 'file' | 'system' | null;
   created_at: string;
   is_edited: boolean | null;
   is_deleted: boolean | null;
   sender?: {
     id: string;
     full_name: string;
-    avatar_url: string;
+    avatar_url: string | null;
     username: string;
   } | null;
 }
@@ -34,12 +34,12 @@ export const getRoomMessages = async (roomId: string): Promise<Message[]> => {
         )
       `
       )
-      .eq('room_id', roomId)
+      .eq('conversation_id', roomId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true });
 
     if (error) throw error;
-    return (data || []) as Message[];
+    return data || [];
   } catch (error) {
     console.error('Get room messages error:', error);
     return [];
@@ -59,7 +59,7 @@ export const sendMessage = async (
     if (!user) throw new Error('User not authenticated');
 
     const { error } = await supabase.from('messages').insert({
-      room_id: roomId,
+      conversation_id: roomId,
       sender_id: user.id,
       content,
       message_type: messageType,

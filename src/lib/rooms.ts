@@ -32,6 +32,7 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       is_public: room.is_public ?? true,
       max_members: room.max_members || 10,
       short_code: room.short_code,
+      join_code: room.join_code,
     }));
   } catch (error) {
     console.error('Error in getRooms:', error);
@@ -75,6 +76,7 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
           is_public: data.is_public ?? true,
           max_members: data.max_members || 10,
           short_code: data.short_code,
+          join_code: data.join_code,
         }
       : null;
   } catch (error) {
@@ -305,6 +307,7 @@ export const getRoomByCode = async (code: string): Promise<Room | null> => {
           is_public: data.is_public ?? true,
           max_members: data.max_members || 10,
           short_code: data.short_code,
+          join_code: data.join_code,
         }
       : null;
   } catch (error) {

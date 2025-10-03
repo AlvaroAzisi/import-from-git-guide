@@ -11,7 +11,7 @@ const StreakDisplay: React.FC = () => {
     const fetchStats = async () => {
       if (!user) return;
       setLoading(true);
-      const stats = await getUserGamificationStats(user.id);
+      const stats = await getUserGamificationStats();
       if (stats) {
         setStreak(stats.streak_count);
       }

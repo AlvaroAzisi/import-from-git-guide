@@ -29,6 +29,7 @@ const RegistrationPage = () => {
         isOpen={open}
         onClose={handleClose}
         initialMode='signup'
+        onSuccess={() => navigate('/home', { replace: true })}
       />
     </div>
   );

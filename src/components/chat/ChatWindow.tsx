@@ -7,6 +7,8 @@ import { supabase } from '../../integrations/supabase/client';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
+  onBack?: () => void;
+  onToggleInfo?: () => void;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {

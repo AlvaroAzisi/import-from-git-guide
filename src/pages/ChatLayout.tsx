@@ -4,6 +4,12 @@ import Sidebar from '../components/Sidebar';
 import { ChatSidebar } from '../components/chat/ChatSidebar';
 import { ChatWindow } from '../components/chat/ChatWindow';
 
+interface Conversation {
+  id: string;
+  name: string;
+  type?: string;
+}
+
 export type ActiveChat = {
   id: string;
   type: 'friend' | 'group';
@@ -28,11 +34,10 @@ const ChatLayout: React.FC = () => {
           <ChatSidebar
             activeConversation={
               activeChat
-                ? {
+                ? ({
                     id: activeChat.id,
-                    type: activeChat.type === 'friend' ? 'direct' : 'group',
                     name: activeChat.name,
-                  }
+                  } as Conversation)
                 : null
             }
             onConversationSelect={(chat: any) =>
@@ -50,14 +55,10 @@ const ChatLayout: React.FC = () => {
         <main className="col-span-12 md:col-span-8 lg:col-span-9">
           {activeChat ? (
             <ChatWindow
-              conversation={{
+              conversation={({
                 id: activeChat.id,
-                type: activeChat.type === 'friend' ? 'dm' : 'group',
                 name: activeChat.name,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              }}
+              } as Conversation)}
               onBack={() => setActiveChat(null)}
               onToggleInfo={() => {}}
             />
