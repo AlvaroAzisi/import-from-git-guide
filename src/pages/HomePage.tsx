@@ -11,31 +11,31 @@ const HomePage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = React.useState(false);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-[1600px] 2xl:max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 2xl:px-12 3xl:px-16 4xl:px-24 py-6 md:py-8 lg:py-10 2xl:py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-8"
+        className="space-y-6 md:space-y-8 2xl:space-y-10"
       >
         {/* Welcome Section */}
-        <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="backdrop-blur-md bg-background/40 dark:bg-background/40 rounded-2xl md:rounded-3xl border border-border/20 shadow-lg p-6 md:p-8 2xl:p-10">
+          <h1 className="text-2xl md:text-3xl 2xl:text-4xl font-bold text-foreground mb-3 md:mb-4">
             Welcome back, {profile?.username || user?.email}!
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm md:text-base 2xl:text-lg text-muted-foreground">
             Find study rooms to join or create your own to start collaborating.
           </p>
         </div>
 
         {/* Rooms List */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+        <div className="space-y-4 md:space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl md:text-2xl 2xl:text-3xl font-semibold text-foreground">
               Your Study Rooms
             </h2>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
+              className="px-4 md:px-6 py-2 md:py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all text-sm md:text-base"
             >
               Create Room
             </button>

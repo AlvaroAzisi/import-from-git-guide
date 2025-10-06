@@ -29,45 +29,49 @@ const ChatLayout: React.FC = () => {
       <TopBar onMenuClick={() => setSidebarOpen(true)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onCreateRoom={() => {}} />
 
-      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
-        <aside className="col-span-12 md:col-span-4 lg:col-span-3">
-          <ChatSidebar
-            activeConversation={
-              activeChat
-                ? ({
-                    id: activeChat.id,
-                    name: activeChat.name,
-                  } as Conversation)
-                : null
-            }
-            onConversationSelect={(chat: any) =>
-              setActiveChat({
-                id: chat.id,
-                type: chat.type === 'dm' ? 'friend' : 'group',
-                name: chat.name || chat.other_user?.full_name || 'Unknown',
-              })
-            }
-            minimized={false}
-            onToggleMinimized={() => {}}
-          />
-        </aside>
-
-        <main className="col-span-12 md:col-span-8 lg:col-span-9">
-          {activeChat ? (
-            <ChatWindow
-              conversation={({
-                id: activeChat.id,
-                name: activeChat.name,
-              } as Conversation)}
-              onBack={() => setActiveChat(null)}
-              onToggleInfo={() => {}}
+      <div className="max-w-[1600px] 2xl:max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8 2xl:px-12 3xl:px-16 4xl:px-24 py-4 md:py-6 2xl:py-8">
+        <div className="grid grid-cols-12 gap-4 md:gap-6 2xl:gap-8 h-[calc(100vh-8rem)]">
+          <aside className="col-span-12 md:col-span-4 lg:col-span-3 2xl:col-span-3">
+            <ChatSidebar
+              activeConversation={
+                activeChat
+                  ? ({
+                      id: activeChat.id,
+                      name: activeChat.name,
+                    } as Conversation)
+                  : null
+              }
+              onConversationSelect={(chat: any) =>
+                setActiveChat({
+                  id: chat.id,
+                  type: chat.type === 'dm' ? 'friend' : 'group',
+                  name: chat.name || chat.other_user?.full_name || 'Unknown',
+                })
+              }
+              minimized={false}
+              onToggleMinimized={() => {}}
             />
-          ) : (
-            <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
-              Select a conversation to start messaging
-            </div>
-          )}
-        </main>
+          </aside>
+
+          <main className="col-span-12 md:col-span-8 lg:col-span-9 2xl:col-span-9">
+            {activeChat ? (
+              <ChatWindow
+                conversation={({
+                  id: activeChat.id,
+                  name: activeChat.name,
+                } as Conversation)}
+                onBack={() => setActiveChat(null)}
+                onToggleInfo={() => {}}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center backdrop-blur-md bg-background/30 rounded-2xl border border-border/20">
+                <p className="text-sm md:text-base 2xl:text-lg text-muted-foreground">
+                  Select a conversation to start messaging
+                </p>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );

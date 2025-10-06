@@ -99,11 +99,16 @@ export const AppLayout: React.FC = () => {
           onToggleMinimized={toggleSidebar}
         />
 
-        {/* Main Content with smooth recentering */}
+        {/* Main Content with smooth recentering and responsive width */}
         <main
-          className={`flex-1 transition-all duration-300 ease-in-out ${
-            isOpen ? (isMinimized ? 'lg:ml-20' : 'lg:ml-80') : 'ml-0 max-w-7xl mx-auto'
-          }`}
+          className={`
+            flex-1 
+            transition-all 
+            duration-300 
+            ease-in-out
+            ${isOpen ? (isMinimized ? 'lg:ml-20' : 'lg:ml-80') : 'ml-0'}
+            ${!isOpen && 'max-w-[1600px] 2xl:max-w-screen-2xl mx-auto'}
+          `}
         >
           <Outlet />
         </main>
