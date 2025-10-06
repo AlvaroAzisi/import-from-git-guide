@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { MessageCircle } from 'lucide-react';
 import type { Conversation } from '../../lib/chat';
 import { supabase } from '../../integrations/supabase/client';
 
@@ -37,28 +39,58 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations = [], ac
   }, []);
 
   return (
-    <div className="w-1/4 bg-gray-100 p-4">
-      <h2 className="text-lg font-bold mb-4">Conversations</h2>
-      <ul>
-        {conversations.map(convo => (
-          <li
+    <div className="w-1/4 backdrop-blur-md bg-background/40 border-r border-border/50 p-6">
+      <h2 className="text-lg font-bold mb-6 text-foreground flex items-center gap-2">
+        <MessageCircle className="w-5 h-5 text-primary" />
+        Conversations
+      </h2>
+      <div className="space-y-2">
+        {conversations.map((convo, index) => (
+          <motion.div
             key={convo.id}
-            className={`p-2 cursor-pointer rounded-md ${
-              activeConversation?.id === convo.id ? 'bg-blue-200' : 'hover:bg-gray-200'
-            }`}
-            onClick={() => onConversationSelect(convo)}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
           >
-            <div className="flex items-center">
-              {onlineUsers.includes(convo.id) ? (
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-              ) : (
-                <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
-              )}
-              {convo.name}
-            </div>
-          </li>
+            <motion.div
+              whileHover={{ scale: 1.02, x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              className={`group p-3 cursor-pointer rounded-xl transition-all duration-300 ${
+                activeConversation?.id === convo.id
+                  ? 'bg-primary/20 border border-primary/30 shadow-md'
+                  : 'backdrop-blur-sm bg-card/30 hover:bg-card/50 border border-border/30 hover:border-border/50'
+              }`}
+              onClick={() => onConversationSelect(convo)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-foreground">
+                      {convo.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  {onlineUsers.includes(convo.id) && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full border-2 border-background"
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-medium truncate transition-colors ${
+                    activeConversation?.id === convo.id
+                      ? 'text-primary'
+                      : 'text-foreground group-hover:text-primary'
+                  }`}>
+                    {convo.name}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
