@@ -91,9 +91,9 @@ export interface UserProfile {
   email: string;
   avatar_url?: string | null;
   bio?: string | null;
-  xp: number | null;
-  level: number | null;
-  streak: number | null;
+  xp?: number | null;
+  level?: number | null;
+  streak?: number | null;
   rooms_joined: number | null;
   rooms_created: number | null;
   messages_sent: number | null;

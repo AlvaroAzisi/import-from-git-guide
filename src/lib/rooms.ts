@@ -26,6 +26,7 @@ export const getRooms = async (limit: number = 10): Promise<Room[]> => {
       description: room.description || '',
       subject: room.subject || '',
       created_by: room.created_by,
+      creator_id: room.created_by, // Map for type compatibility
       created_at: room.created_at,
       updated_at: room.updated_at,
       is_active: room.is_active ?? true,
@@ -70,6 +71,7 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
           description: data.description || '',
           subject: data.subject || '',
           created_by: data.created_by,
+          creator_id: data.created_by, // Map for type compatibility
           created_at: data.created_at,
           updated_at: data.updated_at,
           is_active: data.is_active ?? true,
@@ -301,6 +303,7 @@ export const getRoomByCode = async (code: string): Promise<Room | null> => {
           description: data.description || '',
           subject: data.subject || '',
           created_by: data.created_by,
+          creator_id: data.created_by, // Map for type compatibility
           created_at: data.created_at,
           updated_at: data.updated_at,
           is_active: data.is_active ?? true,

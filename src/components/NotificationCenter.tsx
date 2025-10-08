@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, UserPlus, MessageCircle, Users, X } from 'lucide-react';
+import { Bell, UserPlus, MessageCircle, Users, X, Check, XCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { useNavigate } from 'react-router-dom';
+import { acceptFriendRequest, rejectFriendRequest } from '../lib/friendRequests';
+import { useToast } from '../hooks/useToast';
 
 export const NotificationCenter: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [processingNotification, setProcessingNotification] = useState<string | null>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
 
   const getNotificationIcon = (type: string) => {
@@ -29,14 +33,90 @@ export const NotificationCenter: React.FC = () => {
   const handleNotificationClick = async (notification: any) => {
     await markAsRead(notification.id);
     
-    // Navigate based on notification type
-    if (notification.type === 'friend_request') {
-      navigate('/temanku');
-    } else if (notification.type === 'message' && notification.data?.conversation_id) {
-      navigate(`/chat/${notification.data.conversation_id}`);
+    // Navigate based on notification type (don't close panel for friend requests)
+    if (notification.type !== 'friend_request') {
+      if (notification.type === 'message' && notification.data?.conversation_id) {
+        navigate(`/chat/${notification.data.conversation_id}`);
+      } else {
+        navigate('/temanku');
+      }
+      setIsOpen(false);
     }
+  };
+
+  const handleAcceptFriendRequest = async (notification: any) => {
+    const friendshipId = notification.data?.friendship_id;
     
-    setIsOpen(false);
+    if (!friendshipId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid friend request',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setProcessingNotification(notification.id);
+    
+    try {
+      const { error } = await acceptFriendRequest(friendshipId);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Friend request accepted!',
+      });
+
+      await markAsRead(notification.id);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to accept friend request',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingNotification(null);
+    }
+  };
+
+  const handleRejectFriendRequest = async (notification: any) => {
+    const friendshipId = notification.data?.friendship_id;
+    
+    if (!friendshipId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid friend request',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setProcessingNotification(notification.id);
+    
+    try {
+      const { error } = await rejectFriendRequest(friendshipId);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast({
+        title: 'Friend request rejected',
+      });
+
+      await markAsRead(notification.id);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reject friend request',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingNotification(null);
+    }
   };
 
   return (
@@ -115,10 +195,10 @@ export const NotificationCenter: React.FC = () => {
                         key={notification.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`p-4 hover:bg-muted/30 cursor-pointer transition-colors ${
+                        className={`p-4 transition-colors ${
                           !notification.is_read ? 'bg-primary/5' : ''
-                        }`}
-                        onClick={() => handleNotificationClick(notification)}
+                        } ${notification.type !== 'friend_request' ? 'hover:bg-muted/30 cursor-pointer' : ''}`}
+                        onClick={() => notification.type !== 'friend_request' && handleNotificationClick(notification)}
                       >
                         <div className="flex gap-3">
                           <div className="flex-shrink-0 mt-1">
@@ -133,6 +213,33 @@ export const NotificationCenter: React.FC = () => {
                                 {notification.content}
                               </p>
                             )}
+                            
+                            {/* Friend Request Actions */}
+                            {notification.type === 'friend_request' && (
+                              <div className="flex gap-2 mt-3">
+                                <button
+                                  onClick={() => handleAcceptFriendRequest(notification)}
+                                  disabled={processingNotification === notification.id}
+                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+                                >
+                                  {processingNotification === notification.id ? (
+                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  ) : (
+                                    <Check className="w-3 h-3" />
+                                  )}
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() => handleRejectFriendRequest(notification)}
+                                  disabled={processingNotification === notification.id}
+                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-all disabled:opacity-50"
+                                >
+                                  <XCircle className="w-3 h-3" />
+                                  Decline
+                                </button>
+                              </div>
+                            )}
+                            
                             <p className="text-xs text-muted-foreground mt-1">
                               {notification.created_at ? new Date(notification.created_at).toLocaleDateString([], {
                                 month: 'short',
