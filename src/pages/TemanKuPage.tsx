@@ -252,9 +252,15 @@ const TemanKuPage: React.FC = () => {
                   {getFriendshipStatusIcon(friendshipStatuses[user.id] || 'none')}
                   {getFriendshipStatusText(friendshipStatuses[user.id] || 'none')}
                 </button>
-                <button className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 text-gray-600 dark:text-gray-400 p-2 rounded-2xl hover:bg-white/30 dark:hover:bg-gray-800/30 transition-all duration-300">
-                  <MessageCircle className="w-4 h-4" />
-                </button>
+                {friendshipStatuses[user.id] === 'accepted' && (
+                  <button
+                    onClick={() => window.location.href = `/chat/${user.id}`}
+                    className="bg-primary text-primary-foreground p-2 rounded-2xl hover:opacity-90 transition-all duration-300"
+                    title="Send message"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

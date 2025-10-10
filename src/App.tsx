@@ -16,6 +16,7 @@ import LoginPage from './pages/LoginPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/Toaster';
+import ChatPageWithFriends from './pages/ChatPage';
 
 function App() {
   const { user, loading } = useAuth();
@@ -58,7 +59,8 @@ function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="rooms" element={<RoomsPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="chat" element={<ChatPage />} />
+          <Route path="chat" element={<ChatPageWithFriends />} />
+          <Route path="chat/:userId" element={<ChatPageWithFriends />} />
           <Route path="chat/@:username" element={<ChatPage />} />
           <Route path="chat/group/:groupId" element={<ChatPage />} />
           <Route path="temanku" element={<TemanKuPage />} />

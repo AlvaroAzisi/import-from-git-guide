@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFriendRequests, acceptFriendRequest, rejectFriendRequest } from '../../lib/friends';
-import type { FriendRequest } from '../../lib/friends';
+import { getFriendRequests, acceptFriendRequest, rejectFriendRequest, type FriendRequest } from '../../lib/friendRequests';
 import { useToast } from '../../hooks/useToast';
 
 const FriendRequestList: React.FC = () => {
@@ -71,10 +70,10 @@ const FriendRequestList: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <img
                   className="w-10 h-10 rounded-full object-cover"
-                  src={request.user_profile?.avatar_url || `https://i.pravatar.cc/150?u=${request.user_id}`}
-                  alt={request.user_profile?.username}
+                  src={request.sender?.avatar_url || `https://i.pravatar.cc/150?u=${request.from_user}`}
+                  alt={request.sender?.username}
                 />
-                <span>{request.user_profile?.username}</span>
+                <span>{request.sender?.username || 'Unknown'}</span>
               </div>
               <div>
                 <button

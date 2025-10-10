@@ -107,13 +107,13 @@ export const sendFriendRequest = async (toUserId: string) => {
 
     await supabase
       .from('notifications')
-      .insert([{
+      .insert({
         user_id: toUserId,
         type: 'friend_request',
         title: 'New Friend Request',
         content: `${profile?.full_name || 'Someone'} sent you a friend request`,
         data: { from_user_id: user.id, friendship_id: data.id },
-      }]);
+      });
 
     return { data, error: null };
   } catch (error: any) {
@@ -156,13 +156,13 @@ export const acceptFriendRequest = async (friendshipId: string) => {
       // Notify the requester that their request was accepted
       await supabase
         .from('notifications')
-        .insert([{
+        .insert({
           user_id: data.from_user || '',
-          type: 'system' as const,
+          type: 'system',
           title: 'Friend Request Accepted',
           content: `${profile?.full_name || 'Someone'} accepted your friend request`,
           data: { accepted_by: user.id },
-        }]);
+        });
     }
 
     return { data, error: null };

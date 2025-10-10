@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { createGroup } from '../../lib/friends';
 import { useToast } from '../../hooks/useToast';
+
+// Group creation disabled - using placeholder
+const createGroup = async (_name: string, _description?: string) => ({
+  success: false,
+  error: 'Group creation feature is currently disabled'
+});
 
 interface CreateGroupFormProps {
   onSuccess?: () => void;
