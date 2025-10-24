@@ -1,28 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { Navigate } from 'react-router-dom';
-import { Search, Users, UserPlus, MessageCircle, UserCheck, UserX, Clock } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Search, Users, UserPlus, MessageCircle, UserCheck, Clock, Inbox } from 'lucide-react';
 import { searchUsers } from '../lib/auth';
-import { sendFriendRequest, getFriendshipStatus } from '../lib/friends';
+import { sendFriendRequest, getFriendshipStatus, getRecommendations, getPendingFriendRequests, respondToFriendRequest } from '../lib/friends';
 import { useToast } from '../hooks/useToast';
 import { FloatingProfilePanel } from '../components/FloatingProfilePanel';
+import { FriendRequestsInbox } from '../components/friends/FriendRequestsInbox';
 import type { UserProfile } from '../lib/auth';
+import type { FriendRequest, RecommendedUser } from '../lib/friends';
 
 const TemanKuPage: React.FC = () => {
-  // ✅ All hooks called at the top level FIRST
   const { user, profile, loading } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedUser[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showRequestsInbox, setShowRequestsInbox] = useState(false);
+
+  // Load recommendations on mount
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      if (!user) return;
+      
+      setLoadingRecommendations(true);
+      try {
+        const recs = await getRecommendations(20);
+        setRecommendations(recs);
+        
+        // Get friendship statuses for recommendations
+        const statuses: Record<string, string> = {};
+        for (const rec of recs) {
+          statuses[rec.id] = await getFriendshipStatus(rec.id);
+        }
+        setFriendshipStatuses(prev => ({ ...prev, ...statuses }));
+      } catch (error) {
+        console.error('Error loading recommendations:', error);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+
+    loadRecommendations();
+  }, [user?.id]);
+
+  // Load friend requests
+  useEffect(() => {
+    const loadFriendRequests = async () => {
+      if (!user) return;
+      
+      try {
+        const requests = await getPendingFriendRequests();
+        setFriendRequests(requests);
+      } catch (error) {
+        console.error('Error loading friend requests:', error);
+      }
+    };
+
+    loadFriendRequests();
+  }, [user?.id]);
 
   // Search users
-  React.useEffect(() => {
+  useEffect(() => {
     const searchUsersDebounced = async () => {
       if (searchQuery.trim().length < 2) {
         setUsers([]);
@@ -33,7 +81,6 @@ const TemanKuPage: React.FC = () => {
       try {
         const searchResult = await searchUsers(searchQuery);
         const results = searchResult.data ?? [];
-        // Filter out current user
         const filteredResults = results.filter((u: UserProfile) => u.id !== user?.id);
         setUsers(filteredResults);
 
@@ -42,7 +89,7 @@ const TemanKuPage: React.FC = () => {
         for (const u of filteredResults) {
           statuses[u.id] = await getFriendshipStatus(u.id);
         }
-        setFriendshipStatuses(statuses);
+        setFriendshipStatuses(prev => ({ ...prev, ...statuses }));
       } catch (error) {
         console.error('Search error:', error);
       } finally {
@@ -73,7 +120,11 @@ const TemanKuPage: React.FC = () => {
   const handleSendFriendRequest = async (friendId: string) => {
     try {
       await sendFriendRequest(friendId);
-      setFriendshipStatuses((prev) => ({ ...prev, [friendId]: 'pending' }));
+      setFriendshipStatuses((prev) => ({ ...prev, [friendId]: 'request_sent' }));
+      
+      // Update recommendations to remove this user
+      setRecommendations(prev => prev.filter(u => u.id !== friendId));
+      
       toast({
         title: t('common.success'),
         description: 'Friend request sent successfully!',
@@ -87,14 +138,43 @@ const TemanKuPage: React.FC = () => {
     }
   };
 
+  const handleRespondToRequest = async (requestId: string, accept: boolean, requesterId: string) => {
+    try {
+      await respondToFriendRequest(requestId, accept);
+      
+      // Remove from requests list
+      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+      
+      // Update status
+      if (accept) {
+        setFriendshipStatuses(prev => ({ ...prev, [requesterId]: 'friend' }));
+        toast({
+          title: t('common.success'),
+          description: "You're now friends! Start a chat.",
+        });
+      } else {
+        toast({
+          title: t('common.success'),
+          description: 'Friend request declined',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: t('common.error'),
+        description: error.message || 'Failed to respond to friend request',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getFriendshipStatusIcon = (status: string) => {
     switch (status) {
-      case 'accepted':
+      case 'friend':
         return <UserCheck className="w-4 h-4" />;
-      case 'pending':
+      case 'request_sent':
         return <Clock className="w-4 h-4" />;
-      case 'blocked':
-        return <UserX className="w-4 h-4" />;
+      case 'request_received':
+        return <Inbox className="w-4 h-4" />;
       default:
         return <UserPlus className="w-4 h-4" />;
     }
@@ -102,19 +182,22 @@ const TemanKuPage: React.FC = () => {
 
   const getFriendshipStatusText = (status: string) => {
     switch (status) {
-      case 'accepted':
+      case 'friend':
         return t('friends.accepted');
-      case 'pending':
-        return t('friends.pending');
-      case 'blocked':
-        return 'Blocked';
+      case 'request_sent':
+        return 'Requested';
+      case 'request_received':
+        return 'Respond';
       default:
         return t('friends.addFriend');
     }
   };
 
+  const displayedUsers = searchQuery.length >= 2 ? users : recommendations;
+  const isLoading = searchQuery.length >= 2 ? loadingUsers : loadingRecommendations;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -122,11 +205,24 @@ const TemanKuPage: React.FC = () => {
         transition={{ duration: 0.8 }}
         className="text-center mb-8"
       >
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-          {t('friends.title')}
-        </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Connect with fellow students who share your subjects and study goals
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold">
+            {t('friends.title')}
+          </h1>
+          {friendRequests.length > 0 && (
+            <button
+              onClick={() => setShowRequestsInbox(true)}
+              className="relative p-3 bg-primary hover:opacity-90 text-primary-foreground rounded-2xl shadow-lg transition-all duration-300"
+            >
+              <Inbox className="w-6 h-6" />
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                {friendRequests.length}
+              </span>
+            </button>
+          )}
+        </div>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          {searchQuery.length >= 2 ? 'Search results' : 'Recommended study buddies for you'}
         </p>
       </motion.div>
 
@@ -150,7 +246,7 @@ const TemanKuPage: React.FC = () => {
       </motion.div>
 
       {/* User Cards Grid */}
-      {loadingUsers ? (
+      {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
@@ -168,9 +264,9 @@ const TemanKuPage: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : users.length > 0 ? (
+      ) : displayedUsers.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {users.map((user, index) => (
+          {displayedUsers.map((user, index) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0, y: 20 }}
@@ -238,23 +334,23 @@ const TemanKuPage: React.FC = () => {
                 <button
                   onClick={() => handleSendFriendRequest(user.id)}
                   disabled={
-                    friendshipStatuses[user.id] === 'pending' ||
-                    friendshipStatuses[user.id] === 'accepted'
+                    friendshipStatuses[user.id] === 'request_sent' ||
+                    friendshipStatuses[user.id] === 'friend'
                   }
                   className={`flex-1 py-2 px-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    friendshipStatuses[user.id] === 'accepted'
+                    friendshipStatuses[user.id] === 'friend'
                       ? 'bg-emerald-500 text-white'
-                      : friendshipStatuses[user.id] === 'pending'
+                      : friendshipStatuses[user.id] === 'request_sent'
                         ? 'bg-amber-500 text-white'
-                        : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-lg'
+                        : 'bg-primary hover:opacity-90 text-primary-foreground hover:shadow-lg'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {getFriendshipStatusIcon(friendshipStatuses[user.id] || 'none')}
                   {getFriendshipStatusText(friendshipStatuses[user.id] || 'none')}
                 </button>
-                {friendshipStatuses[user.id] === 'accepted' && (
+                {friendshipStatuses[user.id] === 'friend' && (
                   <button
-                    onClick={() => window.location.href = `/chat/${user.id}`}
+                    onClick={() => navigate(`/chat/${user.id}`)}
                     className="bg-primary text-primary-foreground p-2 rounded-2xl hover:opacity-90 transition-all duration-300"
                     title="Send message"
                   >
@@ -290,6 +386,14 @@ const TemanKuPage: React.FC = () => {
           </div>
         </motion.div>
       )}
+
+      {/* Friend Requests Inbox */}
+      <FriendRequestsInbox
+        requests={friendRequests}
+        isOpen={showRequestsInbox}
+        onClose={() => setShowRequestsInbox(false)}
+        onRespond={handleRespondToRequest}
+      />
 
       {/* Floating Profile Panel */}
       <FloatingProfilePanel

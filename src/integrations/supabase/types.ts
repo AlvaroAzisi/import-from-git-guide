@@ -130,6 +130,129 @@ export type Database = {
           },
         ]
       }
+      direct_chats: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_chats_user_a_fkey"
+            columns: ["user_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_chats_user_b_fkey"
+            columns: ["user_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      direct_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string | null
+          id: string
+          sender: string | null
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          sender?: string | null
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          sender?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "direct_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_sender_fkey"
+            columns: ["sender"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      friend_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          recipient: string
+          requester: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          recipient: string
+          requester: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          recipient?: string
+          requester?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friend_requests_recipient_fkey"
+            columns: ["recipient"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friend_requests_requester_fkey"
+            columns: ["requester"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friends: {
         Row: {
           created_at: string | null
@@ -163,6 +286,42 @@ export type Database = {
           {
             foreignKeyName: "friends_to_user_fkey"
             columns: ["to_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      friendships: {
+        Row: {
+          created_at: string | null
+          friend_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          friend_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          friend_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_friend_id_fkey"
+            columns: ["friend_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -283,6 +442,7 @@ export type Database = {
           is_deleted: boolean | null
           is_online_visible: boolean | null
           is_verified: boolean | null
+          last_active_at: string | null
           last_seen_at: string | null
           level: number | null
           location: string | null
@@ -311,6 +471,7 @@ export type Database = {
           is_deleted?: boolean | null
           is_online_visible?: boolean | null
           is_verified?: boolean | null
+          last_active_at?: string | null
           last_seen_at?: string | null
           level?: number | null
           location?: string | null
@@ -339,6 +500,7 @@ export type Database = {
           is_deleted?: boolean | null
           is_online_visible?: boolean | null
           is_verified?: boolean | null
+          last_active_at?: string | null
           last_seen_at?: string | null
           level?: number | null
           location?: string | null
@@ -596,26 +758,36 @@ export type Database = {
           room: Json
         }[]
       }
+      find_or_create_direct_chat: {
+        Args: { p_user_a: string; p_user_b: string }
+        Returns: string
+      }
       get_or_create_dm_conversation: {
         Args: { other_user_id: string }
         Returns: string
       }
-      get_room_member_count: {
-        Args: { p_room_id: string }
-        Returns: number
-      }
+      get_room_member_count: { Args: { p_room_id: string }; Returns: number }
       is_room_member_secure: {
         Args: { room_id: string; user_id: string }
         Returns: boolean
       }
-      join_room_safe: {
-        Args: { p_room_identifier: string }
-        Returns: Json
+      join_room_safe: { Args: { p_room_identifier: string }; Returns: Json }
+      recommendations_for_user: {
+        Args: { p_limit?: number; p_user: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          full_name: string
+          id: string
+          interests: string[]
+          last_active_at: string
+          level: number
+          score: number
+          username: string
+          xp: number
+        }[]
       }
-      refresh_popular_rooms: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      refresh_popular_rooms: { Args: never; Returns: undefined }
       validate_join_code: {
         Args: { p_code: string }
         Returns: {
