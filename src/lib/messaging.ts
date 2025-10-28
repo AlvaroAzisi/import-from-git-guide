@@ -1,4 +1,5 @@
 import { supabase } from '../integrations/supabase/client';
+import { logError } from './errorHandler';
 
 export interface Message {
   id: string;
@@ -34,7 +35,7 @@ export const checkFriendship = async (userId1: string, userId2: string): Promise
   });
 
   if (error) {
-    console.error('Error checking friendship:', error);
+    logError('checkFriendship', error);
     return false;
   }
 
@@ -49,7 +50,7 @@ export const getOrCreateConversation = async (otherUserId: string): Promise<stri
     });
 
     if (error) {
-      console.error('Error getting/creating conversation:', error);
+      logError('getOrCreateConversation', error);
       throw error;
     }
 
@@ -87,7 +88,7 @@ export const fetchMessages = async (
     .limit(limit);
 
   if (error) {
-    console.error('Error fetching messages:', error);
+    logError('fetchMessages', error);
     return [];
   }
 
@@ -105,7 +106,7 @@ export const sendMessage = async (
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
-    console.error('User not authenticated');
+    logError('sendMessage', 'User not authenticated');
     return null;
   }
 
@@ -142,7 +143,7 @@ export const sendMessage = async (
     .single();
 
   if (error) {
-    console.error('Error sending message:', error);
+    logError('sendMessage', error);
     return null;
   }
 

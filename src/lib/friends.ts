@@ -1,5 +1,6 @@
 import { supabase } from '../integrations/supabase/client';
 import type { UserProfile } from './auth';
+import { logError } from './errorHandler';
 
 export interface Friend extends UserProfile {
   friendship_created_at: string;
@@ -92,7 +93,7 @@ export const getFriends = async (): Promise<Friend[]> => {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error fetching friends:', error);
+      logError('getFriends', error);
       return [];
     }
 
@@ -105,7 +106,7 @@ export const getFriends = async (): Promise<Friend[]> => {
 
     return friends;
   } catch (error) {
-    console.error('Error in getFriends:', error);
+    logError('getFriends:catch', error);
     return [];
   }
 };
@@ -131,7 +132,7 @@ export const getFriendshipStatus = async (userId: string): Promise<'self' | 'fri
     
     return 'none';
   } catch (error) {
-    console.error('Error in getFriendshipStatus:', error);
+    logError('getFriendshipStatus', error);
     return 'none';
   }
 };
@@ -185,7 +186,7 @@ export const sendFriendRequest = async (toUserId: string, message?: string) => {
 
     return { data, error: null };
   } catch (error: any) {
-    console.error('Error in sendFriendRequest:', error);
+    logError('sendFriendRequest', error);
     throw error;
   }
 };

@@ -1,6 +1,7 @@
 // TODO adapted for new Supabase backend
 import { supabase } from '../integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { logError } from './errorHandler';
 
 /**
  * DB constraints:
@@ -124,13 +125,13 @@ export const getCurrentUser = async (): Promise<User | null> => {
     } = await supabase.auth.getUser();
 
     if (error) {
-      console.error('[Auth] Get current user failed:', error);
+      logError('getCurrentUser', error);
       return null;
     }
 
     return user ?? null;
   } catch (error: any) {
-    console.error('[Auth] Get current user failed:', error);
+    logError('getCurrentUser:catch', error);
     return null;
   }
 };
@@ -154,7 +155,7 @@ export const createOrUpdateProfile = async (
       .maybeSingle();
 
     if (getErr) {
-      console.error('[Auth] createOrUpdateProfile: get existing profile error', getErr);
+      logError('createOrUpdateProfile:getExisting', getErr);
       return { data: null, error: getErr.message || String(getErr) };
     }
 

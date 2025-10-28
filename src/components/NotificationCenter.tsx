@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, UserPlus, MessageCircle, Users, X, Check, XCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -6,6 +6,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useNavigate } from 'react-router-dom';
 import { acceptFriendRequest, rejectFriendRequest } from '../lib/friendRequests';
 import { useToast } from '../hooks/useToast';
+import { validateNotification, type ValidatedNotification } from '../lib/notificationValidator';
 
 export const NotificationCenter: React.FC = () => {
   const { user } = useAuth();
@@ -14,6 +15,13 @@ export const NotificationCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [processingNotification, setProcessingNotification] = useState<string | null>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
+
+  // Validate all notifications to prevent malicious payloads
+  const validatedNotifications = useMemo(() => {
+    return notifications
+      .map(n => validateNotification(n))
+      .filter((n): n is ValidatedNotification => n !== null);
+  }, [notifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -30,12 +38,12 @@ export const NotificationCenter: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: ValidatedNotification) => {
     await markAsRead(notification.id);
     
     // Navigate based on notification type (don't close panel for friend requests)
     if (notification.type !== 'friend_request') {
-      if (notification.type === 'message' && notification.data?.conversation_id) {
+      if (notification.type === 'message' && notification.data && 'conversation_id' in notification.data) {
         navigate(`/chat/${notification.data.conversation_id}`);
       } else {
         navigate('/temanku');
@@ -44,13 +52,24 @@ export const NotificationCenter: React.FC = () => {
     }
   };
 
-  const handleAcceptFriendRequest = async (notification: any) => {
-    const friendshipId = notification.data?.friendship_id;
-    
-    if (!friendshipId) {
+  const handleAcceptFriendRequest = async (notification: ValidatedNotification) => {
+    // Validate notification type and data structure
+    if (notification.type !== 'friend_request' || !notification.data || !('friendship_id' in notification.data)) {
       toast({
         title: 'Error',
         description: 'Invalid friend request',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const friendshipId = notification.data.friendship_id;
+    
+    // Additional UUID validation
+    if (!friendshipId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(friendshipId)) {
+      toast({
+        title: 'Error',
+        description: 'Invalid request ID',
         variant: 'destructive',
       });
       return;
@@ -82,13 +101,24 @@ export const NotificationCenter: React.FC = () => {
     }
   };
 
-  const handleRejectFriendRequest = async (notification: any) => {
-    const friendshipId = notification.data?.friendship_id;
-    
-    if (!friendshipId) {
+  const handleRejectFriendRequest = async (notification: ValidatedNotification) => {
+    // Validate notification type and data structure
+    if (notification.type !== 'friend_request' || !notification.data || !('friendship_id' in notification.data)) {
       toast({
         title: 'Error',
         description: 'Invalid friend request',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const friendshipId = notification.data.friendship_id;
+    
+    // Additional UUID validation
+    if (!friendshipId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(friendshipId)) {
+      toast({
+        title: 'Error',
+        description: 'Invalid request ID',
         variant: 'destructive',
       });
       return;
@@ -183,14 +213,14 @@ export const NotificationCenter: React.FC = () => {
 
               {/* Notifications List */}
               <div className="overflow-y-auto max-h-[500px]">
-                {notifications.length === 0 ? (
+                {validatedNotifications.length === 0 ? (
                   <div className="p-8 text-center">
                     <Bell className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                     <p className="text-muted-foreground">No notifications yet</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/20">
-                    {notifications.map((notification) => (
+                    {validatedNotifications.map((notification) => (
                       <motion.div
                         key={notification.id}
                         initial={{ opacity: 0, x: -20 }}
