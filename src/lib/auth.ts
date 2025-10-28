@@ -476,6 +476,17 @@ export const updateProfile = async (
   updates: Partial<UserProfile>
 ): Promise<{ data: UserProfile | null; error: string | null }> => {
   try {
+    // Input validation
+    if (updates.bio && updates.bio.length > 500) {
+      return { data: null, error: 'Bio is too long (maximum 500 characters)' };
+    }
+    if (updates.location && updates.location.length > 100) {
+      return { data: null, error: 'Location is too long (maximum 100 characters)' };
+    }
+    if (updates.website && updates.website.length > 200) {
+      return { data: null, error: 'Website URL is too long (maximum 200 characters)' };
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date().toISOString(),

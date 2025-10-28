@@ -109,12 +109,21 @@ export const sendMessage = async (
     return null;
   }
 
+  // Input validation
+  const trimmedContent = content.trim();
+  if (!trimmedContent) {
+    throw new Error('Message cannot be empty');
+  }
+  if (trimmedContent.length > 5000) {
+    throw new Error('Message is too long (maximum 5000 characters)');
+  }
+
   const { data, error } = await supabase
     .from('messages')
     .insert({
       conversation_id: conversationId,
       sender_id: user.id,
-      content,
+      content: trimmedContent,
       message_type: 'text',
     })
     .select(`

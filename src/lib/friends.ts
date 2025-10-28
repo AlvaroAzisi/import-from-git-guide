@@ -82,7 +82,6 @@ export const getFriends = async (): Promise<Friend[]> => {
           username,
           full_name,
           avatar_url,
-          email,
           status,
           bio,
           xp,
@@ -148,6 +147,15 @@ export const sendFriendRequest = async (toUserId: string, message?: string) => {
 
     if (user.id === toUserId) {
       throw new Error('Cannot send friend request to yourself');
+    }
+
+    // Input validation for message
+    if (message) {
+      const trimmedMessage = message.trim();
+      if (trimmedMessage.length > 500) {
+        throw new Error('Friend request message is too long (maximum 500 characters)');
+      }
+      message = trimmedMessage;
     }
 
     // Check if friendship already exists
@@ -303,12 +311,21 @@ export const sendDirectMessage = async (chatId: string, content: string) => {
       throw new Error('Not authenticated');
     }
 
+    // Input validation
+    const trimmedContent = content.trim();
+    if (!trimmedContent) {
+      throw new Error('Message cannot be empty');
+    }
+    if (trimmedContent.length > 5000) {
+      throw new Error('Message is too long (maximum 5000 characters)');
+    }
+
     const { data, error } = await supabase
       .from('direct_messages')
       .insert({
         chat_id: chatId,
         sender: user.id,
-        content
+        content: trimmedContent
       })
       .select()
       .single();

@@ -745,6 +745,10 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
+      award_badge: {
+        Args: { p_badge_name: string; p_user_id: string }
+        Returns: undefined
+      }
       create_room_and_join: {
         Args: {
           p_description?: string
@@ -767,6 +771,10 @@ export type Database = {
         Returns: string
       }
       get_room_member_count: { Args: { p_room_id: string }; Returns: number }
+      increment_user_xp: {
+        Args: { p_reason?: string; p_user_id: string; p_xp_amount?: number }
+        Returns: undefined
+      }
       is_room_member_secure: {
         Args: { room_id: string; user_id: string }
         Returns: boolean
@@ -788,6 +796,10 @@ export type Database = {
         }[]
       }
       refresh_popular_rooms: { Args: never; Returns: undefined }
+      update_user_daily_streak: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       validate_join_code: {
         Args: { p_code: string }
         Returns: {
