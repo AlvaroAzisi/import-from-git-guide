@@ -95,6 +95,7 @@ export interface RoomMember {
   joined_at: string;
   profile?: {
     id: string;
+    username?: string;
     full_name: string;
     avatar_url?: string | null;
   };
@@ -104,10 +105,12 @@ export interface Message {
   id: string;
   room_id: string;
   user_id: string;
+  sender_id: string;
   content: string;
   created_at: string;
   profile?: {
     id: string;
+    username?: string;
     full_name: string;
     avatar_url?: string | null;
   };
@@ -120,7 +123,7 @@ export const getRoomMembers = async (roomId: string): Promise<RoomMember[]> => {
       .select(
         `
         *,
-        profile:profiles(id, full_name, avatar_url)
+        profile:profiles(id, username, full_name, avatar_url)
       `
       )
       .eq('room_id', roomId);
@@ -151,7 +154,7 @@ export const getMessages = async (roomId: string): Promise<Message[]> => {
       .select(
         `
         *,
-        profile:profiles(id, full_name, avatar_url)
+        profile:profiles(id, username, full_name, avatar_url)
       `
       )
       .eq('conversation_id', roomId)
@@ -166,6 +169,7 @@ export const getMessages = async (roomId: string): Promise<Message[]> => {
       id: message.id,
       room_id: roomId,
       user_id: message.sender_id || '',
+      sender_id: message.sender_id || '',
       content: message.content,
       created_at: message.created_at,
       profile: message.profile || undefined,
@@ -192,7 +196,7 @@ export const sendMessage = async (roomId: string, content: string): Promise<Mess
       .select(
         `
         *,
-        profile:profiles(id, full_name, avatar_url)
+        profile:profiles(id, username, full_name, avatar_url)
       `
       )
       .single();
@@ -206,6 +210,7 @@ export const sendMessage = async (roomId: string, content: string): Promise<Mess
       id: data.id,
       room_id: roomId,
       user_id: data.sender_id || '',
+      sender_id: data.sender_id || '',
       content: data.content,
       created_at: data.created_at,
       profile: data.profile || undefined,
@@ -323,3 +328,68 @@ export const isValidUUID = (str: string): boolean => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
 };
+
+export async function updateRoomSettings(
+  roomId: string,
+  updates: Partial<{
+    name: string;
+    description: string;
+    subject: string;
+    is_public: boolean;
+  }>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('rooms').update(updates).eq('id', roomId);
+
+    if (error) {
+      console.error('Error updating room:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in updateRoomSettings:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function regenerateRoomCode(
+  roomId: string
+): Promise<{ success: boolean; code?: string; error?: string }> {
+  try {
+    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    const { error } = await supabase
+      .from('rooms')
+      .update({ short_code: newCode, join_code: newCode })
+      .eq('id', roomId);
+
+    if (error) {
+      console.error('Error regenerating code:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, code: newCode };
+  } catch (error: any) {
+    console.error('Error in regenerateRoomCode:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteRoom(
+  roomId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('rooms').delete().eq('id', roomId);
+
+    if (error) {
+      console.error('Error deleting room:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in deleteRoom:', error);
+    return { success: false, error: error.message };
+  }
+}

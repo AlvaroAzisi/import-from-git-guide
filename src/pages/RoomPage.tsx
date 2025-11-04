@@ -180,6 +180,7 @@ const RoomPage: React.FC = () => {
               id: incomingMessage.id,
               room_id: actualRoomId,
               user_id: incomingMessage.sender_id || '',
+              sender_id: incomingMessage.sender_id || '',
               content: incomingMessage.content,
               created_at: incomingMessage.created_at,
               profile: profileData || undefined,
