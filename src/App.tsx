@@ -1,22 +1,35 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoadingError } from './components/LoadingError';
 import { AuthRedirectHandler } from './components/AuthRedirectHandler';
-import { AppLayout } from './layouts/AppLayout';
-import LandingPage from './pages/LandingPage';
+import { useAuth } from './contexts/AuthContext';
+import { Toaster } from './components/Toaster';
+
+// Route Components
+import { EntryRedirect } from './routes/EntryRedirect';
+import { NotFound } from './routes/NotFound';
+import { RootLayout } from './routes/RootLayout';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
+// Public Pages
+import LoginPage from './pages/LoginPage';
+import RegistrationPage from './pages/RegistrationPage';
+import PublicProfilePage from './pages/PublicProfilePage';
+import RoomPage from './pages/RoomPage';
+import { ForgotPasswordPage } from './routes/auth/ForgotPasswordPage';
+
+// Protected Pages
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
-import RoomsPage from './pages/RoomsPage';
 import SettingsPage from './pages/SettingsPage';
 import TemanKuPage from './pages/TemanKuPage';
 import RuangkuPage from './pages/RuangkuPage';
-import RoomPage from './pages/RoomPage';
-import PublicProfilePage from './pages/PublicProfilePage';
 import ChatPage from './pages/ChatPage';
-import LoginPage from './pages/LoginPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { useAuth } from './contexts/AuthContext';
-import { Toaster } from './components/Toaster';
-import ChatPageWithFriends from './pages/ChatPage';
+
+// New Route Pages
+import { ChatListPage } from './routes/chat/ChatListPage';
+import { ChatRedirectPage } from './routes/chat/ChatRedirectPage';
+import { RoomListPage } from './routes/rooms/RoomListPage';
+import { OnboardingPage } from './routes/onboarding/OnboardingPage';
 
 function App() {
   const { user, loading } = useAuth();
@@ -41,44 +54,70 @@ function App() {
       <Toaster />
 
       <Routes>
-        {/* Landing: if already signed in, send to /home */}
-        <Route path="/" element={user ? <Navigate to="/home" replace /> : <LandingPage />} />
-
+        {/* 🌐 PUBLIC ROUTES */}
+        
+        {/* Root - Entry point redirect */}
+        <Route path="/" element={<EntryRedirect />} />
+        
+        {/* Authentication */}
+        <Route path="/auth/login" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
+        <Route path="/auth/register" element={user ? <Navigate to="/home" replace /> : <RegistrationPage />} />
+        <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
+        
+        {/* Legacy login/register routes */}
         <Route path="/login" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
+        <Route path="/register" element={user ? <Navigate to="/home" replace /> : <RegistrationPage />} />
+        
+        {/* Public profile */}
+        <Route path="/@:username" element={<PublicProfilePage />} />
+        
+        {/* Join room via code (public access) */}
+        <Route path="/join/:code" element={<RoomPage />} />
 
-        {/* Protected screens */}
+        {/* 🔐 PROTECTED ROUTES */}
         <Route
-          path="/*"
           element={
             <ProtectedRoute>
-              <AppLayout />
+              <RootLayout />
             </ProtectedRoute>
           }
         >
-          <Route path="home" element={<HomePage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="rooms" element={<RoomsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="chat" element={<ChatPageWithFriends />} />
-          <Route path="chat/:userId" element={<ChatPageWithFriends />} />
-          <Route path="chat/@:username" element={<ChatPage />} />
-          <Route path="chat/group/:groupId" element={<ChatPage />} />
-          <Route path="temanku" element={<TemanKuPage />} />
-          <Route path="ruangku/:roomId" element={<RuangkuPage />} />
-          {/* Redirects for old routes */}
-          <Route path="rooms/:roomId" element={<Navigate to={`/ruangku/${window.location.pathname.split('/').pop()}`} replace />} />
-          <Route path="room/:roomId" element={<Navigate to={`/ruangku/${window.location.pathname.split('/').pop()}`} replace />} />
-          <Route path="join/:code" element={<RoomPage />} />
+          {/* Main Navigation */}
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/temanku" element={<TemanKuPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          
+          {/* Chat System */}
+          <Route path="/chat" element={<ChatListPage />} />
+          <Route path="/chat/:userId" element={<ChatPage />} />
+          <Route path="/chat/@:username" element={<ChatRedirectPage />} />
+          <Route path="/chat/group/:groupId" element={<ChatPage />} />
+          
+          {/* Room System */}
+          <Route path="/ruangku" element={<RoomListPage />} />
+          <Route path="/ruangku/:roomId" element={<RuangkuPage />} />
+          
+          {/* Onboarding (optional) */}
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          
+          {/* Legacy Redirects */}
+          <Route 
+            path="/rooms/:roomId" 
+            element={<Navigate to={`/ruangku/${window.location.pathname.split('/').pop()}`} replace />} 
+          />
+          <Route 
+            path="/room/:roomId" 
+            element={<Navigate to={`/ruangku/${window.location.pathname.split('/').pop()}`} replace />} 
+          />
+          <Route 
+            path="/rooms" 
+            element={<Navigate to="/ruangku" replace />} 
+          />
         </Route>
 
-        {/* Public profile pages */}
-        <Route path="/@:username" element={<PublicProfilePage />} />
-
-        {/* Catch-all: if signed in, go home; otherwise go landing */}
-        <Route
-          path="*"
-          element={user ? <Navigate to="/home" replace /> : <Navigate to="/" replace />}
-        />
+        {/* 404 NOT FOUND */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
