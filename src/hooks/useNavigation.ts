@@ -38,7 +38,7 @@ export const useNavigation = () => {
   };
 
   const navigateToRoom = (roomId: string, replace = false) => {
-    safeNavigate(ROUTES.ROOM(roomId), { replace });
+    safeNavigate(ROUTES.RUANGKU(roomId), { replace });
   };
 
   const navigateToHome = (replace = false) => {

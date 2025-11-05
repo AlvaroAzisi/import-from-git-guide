@@ -65,7 +65,9 @@ function App() {
           <Route path="chat/group/:groupId" element={<ChatPage />} />
           <Route path="temanku" element={<TemanKuPage />} />
           <Route path="ruangku/:roomId" element={<RuangkuPage />} />
-          <Route path="room/:roomId" element={<RoomPage />} />
+          {/* Redirects for old routes */}
+          <Route path="rooms/:roomId" element={<Navigate to={`/ruangku/${window.location.pathname.split('/').pop()}`} replace />} />
+          <Route path="room/:roomId" element={<Navigate to={`/ruangku/${window.location.pathname.split('/').pop()}`} replace />} />
           <Route path="join/:code" element={<RoomPage />} />
         </Route>
 

@@ -51,7 +51,7 @@ const RoomList: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
-            <Link to={`/rooms/${room.id}`}>
+            <Link to={`/ruangku/${room.id}`}>
               <motion.div
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
