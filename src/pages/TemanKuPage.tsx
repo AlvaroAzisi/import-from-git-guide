@@ -1,408 +1,274 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
-import { useLanguage } from '../hooks/useLanguage';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Search, Users, UserPlus, MessageCircle, UserCheck, Clock, Inbox } from 'lucide-react';
-import { searchUsers } from '../lib/auth';
-import { sendFriendRequest, getFriendshipStatus, getRecommendations, getPendingFriendRequests, respondToFriendRequest } from '../lib/friends';
+import { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { Search, Users, UserPlus } from 'lucide-react';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { UserCard } from '../components/friends/UserCard';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/useToast';
-import { FloatingProfilePanel } from '../components/FloatingProfilePanel';
-import { FriendRequestsInbox } from '../components/friends/FriendRequestsInbox';
-import type { UserProfile } from '../lib/auth';
-import type { FriendRequest, RecommendedUser } from '../lib/friends';
+import {
+  sendFriendRequest,
+  getFriends,
+  fetchRecommendedFriends,
+  getFriendshipStatus,
+  searchUsers,
+  type Friend,
+  type RecommendedUser,
+} from '../lib/friendHelpers';
+import { supabase } from '../integrations/supabase/client';
 
-const TemanKuPage: React.FC = () => {
-  const { user, profile, loading } = useAuth();
-  const { t } = useLanguage();
-  const { toast } = useToast();
+type TabType = 'discover' | 'friends';
+
+export default function TemanKuPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [activeTab, setActiveTab] = useState<TabType>('discover');
   const [searchQuery, setSearchQuery] = useState('');
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedUser[]>([]);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [searchResults, setSearchResults] = useState<RecommendedUser[]>([]);
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [showRequestsInbox, setShowRequestsInbox] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Load recommendations on mount
   useEffect(() => {
-    const loadRecommendations = async () => {
-      if (!user) return;
-      
-      setLoadingRecommendations(true);
-      try {
-        const recs = await getRecommendations(20);
-        setRecommendations(recs);
-        
-        // Get friendship statuses for recommendations
-        const statuses: Record<string, string> = {};
-        for (const rec of recs) {
-          statuses[rec.id] = await getFriendshipStatus(rec.id);
-        }
-        setFriendshipStatuses(prev => ({ ...prev, ...statuses }));
-      } catch (error) {
-        console.error('Error loading recommendations:', error);
-      } finally {
-        setLoadingRecommendations(false);
-      }
-    };
+    if (!user?.id) return;
 
-    loadRecommendations();
+    loadData();
+
+    // Subscribe to friend changes
+    const friendsChannel = supabase
+      .channel('friends-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friends',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          loadFriends();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to friend request changes
+    const requestsChannel = supabase
+      .channel('friend-requests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friend_requests',
+          filter: `sender_id=eq.${user.id}`,
+        },
+        () => {
+          loadRecommendations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(friendsChannel);
+      supabase.removeChannel(requestsChannel);
+    };
   }, [user?.id]);
 
-  // Load friend requests
   useEffect(() => {
-    const loadFriendRequests = async () => {
-      if (!user) return;
-      
-      try {
-        const requests = await getPendingFriendRequests();
-        setFriendRequests(requests);
-      } catch (error) {
-        console.error('Error loading friend requests:', error);
-      }
-    };
-
-    loadFriendRequests();
-  }, [user?.id]);
-
-  // Search users
-  useEffect(() => {
-    const searchUsersDebounced = async () => {
-      if (searchQuery.trim().length < 2) {
-        setUsers([]);
-        return;
-      }
-
-      setLoadingUsers(true);
-      try {
-        const searchResult = await searchUsers(searchQuery);
-        const results = searchResult.data ?? [];
-        const filteredResults = results.filter((u: UserProfile) => u.id !== user?.id);
-        setUsers(filteredResults);
-
-        // Get friendship statuses
-        const statuses: Record<string, string> = {};
-        for (const u of filteredResults) {
-          statuses[u.id] = await getFriendshipStatus(u.id);
-        }
-        setFriendshipStatuses(prev => ({ ...prev, ...statuses }));
-      } catch (error) {
-        console.error('Search error:', error);
-      } finally {
-        setLoadingUsers(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(searchUsersDebounced, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, user?.id]);
-
-  // ✅ Early returns AFTER all hooks
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="backdrop-blur-md bg-white/30 rounded-3xl border border-white/20 shadow-lg p-8">
-          <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/" replace />;
-  }
-
-  const handleSendFriendRequest = async (friendId: string) => {
-    try {
-      await sendFriendRequest(friendId);
-      setFriendshipStatuses((prev) => ({ ...prev, [friendId]: 'request_sent' }));
-      
-      // Update recommendations to remove this user
-      setRecommendations(prev => prev.filter(u => u.id !== friendId));
-      
-      toast({
-        title: t('common.success'),
-        description: 'Friend request sent successfully!',
-      });
-    } catch (error: any) {
-      toast({
-        title: t('common.error'),
-        description: error.message || 'Failed to send friend request',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleRespondToRequest = async (requestId: string, accept: boolean, requesterId: string) => {
-    try {
-      await respondToFriendRequest(requestId, accept);
-      
-      // Remove from requests list
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-      
-      // Update status
-      if (accept) {
-        setFriendshipStatuses(prev => ({ ...prev, [requesterId]: 'friend' }));
-        toast({
-          title: t('common.success'),
-          description: "You're now friends! Start a chat.",
-        });
+    const delaySearch = setTimeout(() => {
+      if (searchQuery.trim()) {
+        handleSearch();
       } else {
-        toast({
-          title: t('common.success'),
-          description: 'Friend request declined',
-        });
+        setSearchResults([]);
       }
-    } catch (error: any) {
+    }, 300);
+
+    return () => clearTimeout(delaySearch);
+  }, [searchQuery]);
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([loadRecommendations(), loadFriends()]);
+    setLoading(false);
+  };
+
+  const loadRecommendations = async () => {
+    if (!user?.id) return;
+
+    const data = await fetchRecommendedFriends(user.id);
+    setRecommendations(data);
+
+    // Load friendship statuses
+    const statuses: Record<string, string> = {};
+    for (const rec of data) {
+      const status = await getFriendshipStatus(user.id, rec.id);
+      statuses[rec.id] = status;
+    }
+    setFriendshipStatuses(statuses);
+  };
+
+  const loadFriends = async () => {
+    if (!user?.id) return;
+
+    const data = await getFriends(user.id);
+    setFriends(data);
+  };
+
+  const handleSearch = async () => {
+    if (!user?.id || !searchQuery.trim()) return;
+
+    const results = await searchUsers(searchQuery, user.id);
+    setSearchResults(results);
+
+    // Load friendship statuses for search results
+    const statuses: Record<string, string> = {};
+    for (const result of results) {
+      const status = await getFriendshipStatus(user.id, result.id);
+      statuses[result.id] = status;
+    }
+    setFriendshipStatuses((prev) => ({ ...prev, ...statuses }));
+  };
+
+  const handleAddFriend = async (friendId: string) => {
+    if (!user?.id) return;
+
+    const { error } = await sendFriendRequest(user.id, friendId);
+
+    if (error) {
       toast({
-        title: t('common.error'),
-        description: error.message || 'Failed to respond to friend request',
+        title: 'Error',
+        description: (error as any).message || 'Failed to send friend request',
         variant: 'destructive',
       });
+      return;
     }
+
+    toast({
+      title: 'Friend request sent 🚀',
+      description: "They'll see it in their notifications!",
+    });
+
+    // Update status locally
+    setFriendshipStatuses((prev) => ({
+      ...prev,
+      [friendId]: 'pending_sent',
+    }));
   };
 
-  const getFriendshipStatusIcon = (status: string) => {
-    switch (status) {
-      case 'friend':
-        return <UserCheck className="w-4 h-4" />;
-      case 'request_sent':
-        return <Clock className="w-4 h-4" />;
-      case 'request_received':
-        return <Inbox className="w-4 h-4" />;
-      default:
-        return <UserPlus className="w-4 h-4" />;
-    }
-  };
-
-  const getFriendshipStatusText = (status: string) => {
-    switch (status) {
-      case 'friend':
-        return t('friends.accepted');
-      case 'request_sent':
-        return 'Requested';
-      case 'request_received':
-        return 'Respond';
-      default:
-        return t('friends.addFriend');
-    }
-  };
-
-  const displayedUsers = searchQuery.length >= 2 ? users : recommendations;
-  const isLoading = searchQuery.length >= 2 ? loadingUsers : loadingRecommendations;
+  const displayUsers =
+    activeTab === 'discover'
+      ? searchQuery.trim()
+        ? searchResults
+        : recommendations
+      : friends.map((f) => f.friend!);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-center mb-8"
-      >
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <h1 className="text-4xl md:text-5xl font-bold">
-            {t('friends.title')}
-          </h1>
-          {friendRequests.length > 0 && (
-            <button
-              onClick={() => setShowRequestsInbox(true)}
-              className="relative p-3 bg-primary hover:opacity-90 text-primary-foreground rounded-2xl shadow-lg transition-all duration-300"
-            >
-              <Inbox className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                {friendRequests.length}
-              </span>
-            </button>
-          )}
-        </div>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          {searchQuery.length >= 2 ? 'Search results' : 'Recommended study buddies for you'}
-        </p>
-      </motion.div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-foreground mb-2">TemanKu</h1>
+        <p className="text-muted-foreground">Let's learn together! 🎓</p>
+      </div>
 
-      {/* Search and Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-6 mb-8"
-      >
+      {/* Search bar */}
+      <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
             type="text"
-            placeholder="Search by name or username..."
+            placeholder="Search by username or interests..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 border border-white/20 dark:border-gray-700/20 rounded-2xl placeholder-gray-500 dark:placeholder-gray-400 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-transparent transition-all duration-300"
+            className="pl-10"
           />
         </div>
-      </motion.div>
+      </div>
 
-      {/* User Cards Grid */}
-      {isLoading ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-6">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-2xl"></div>
-                  <div className="flex-1">
-                    <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-2/3"></div>
-                  </div>
-                </div>
-                <div className="h-16 bg-gray-300 dark:bg-gray-600 rounded mb-4"></div>
-                <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : displayedUsers.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedUsers.map((user, index) => (
-            <motion.div
-              key={user.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-6 hover:shadow-xl transition-all duration-300 group"
-            >
-              {/* User Header */}
-              <div className="flex items-start gap-4 mb-4">
-                <div className="relative">
-                  <img
-                    src={
-                      user.avatar_url ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=3b82f6&color=fff`
-                    }
-                    alt={user.full_name}
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-white/20 dark:border-gray-700/20 cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() => setSelectedUserId(user.id)}
-                  />
-                </div>
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6">
+        <Button
+          variant={activeTab === 'discover' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('discover')}
+          className="gap-2"
+        >
+          <UserPlus className="w-4 h-4" />
+          Find Friends
+        </Button>
+        <Button
+          variant={activeTab === 'friends' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('friends')}
+          className="gap-2"
+        >
+          <Users className="w-4 h-4" />
+          My Friends ({friends.length})
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/temanku/requests')}
+          className="ml-auto"
+        >
+          Requests
+        </Button>
+      </div>
 
-                <div className="flex-1">
-                  <button
-                    onClick={() => setSelectedUserId(user.id)}
-                    className="font-bold text-gray-800 dark:text-gray-200 text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors hover:underline"
-                  >
-                    {user.full_name}
-                  </button>
-                  <p className="text-blue-500 text-sm">@{user.username}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-blue-500 font-medium">
-                      Level {Math.floor((user.xp ?? 0) / 1000) + 1}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {user.xp ?? 0} XP
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bio */}
-              {user.bio && (
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed">
-                  {user.bio}
+      {/* User grid */}
+      {loading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading...</div>
+      ) : displayUsers.length === 0 ? (
+        <Card className="p-12 text-center bg-card/50 backdrop-blur-sm border-border/50">
+          <div className="max-w-sm mx-auto">
+            {activeTab === 'discover' ? (
+              <>
+                <UserPlus className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {searchQuery.trim()
+                    ? 'No users found'
+                    : 'No recommendations yet'}
+                </h3>
+                <p className="text-muted-foreground">
+                  {searchQuery.trim()
+                    ? 'Try a different search term'
+                    : 'Explore more rooms to find study partners!'}
                 </p>
-              )}
-
-              {/* Interests */}
-              {user.interests && Array.isArray(user.interests) && user.interests.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {user.interests.slice(0, 3).map((interest: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium"
-                    >
-                      {interest.trim()}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleSendFriendRequest(user.id)}
-                  disabled={
-                    friendshipStatuses[user.id] === 'request_sent' ||
-                    friendshipStatuses[user.id] === 'friend'
-                  }
-                  className={`flex-1 py-2 px-4 rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    friendshipStatuses[user.id] === 'friend'
-                      ? 'bg-emerald-500 text-white'
-                      : friendshipStatuses[user.id] === 'request_sent'
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-primary hover:opacity-90 text-primary-foreground hover:shadow-lg'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {getFriendshipStatusIcon(friendshipStatuses[user.id] || 'none')}
-                  {getFriendshipStatusText(friendshipStatuses[user.id] || 'none')}
-                </button>
-                {friendshipStatuses[user.id] === 'friend' && (
-                  <button
-                    onClick={() => navigate(`/chat/${user.id}`)}
-                    className="bg-primary text-primary-foreground p-2 rounded-2xl hover:opacity-90 transition-all duration-300"
-                    title="Send message"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : searchQuery.length >= 2 ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-          <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 max-w-md mx-auto">
-            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">
-              No users found
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Try searching with different keywords.
-            </p>
+              </>
+            ) : (
+              <>
+                <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  No friends yet
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Start building your study network!
+                </p>
+                <Button onClick={() => setActiveTab('discover')}>Find Friends</Button>
+              </>
+            )}
           </div>
-        </motion.div>
+        </Card>
       ) : (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-          <div className="backdrop-blur-md bg-white/30 dark:bg-gray-900/30 rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-lg p-8 max-w-md mx-auto">
-            <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">
-              Start searching
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Enter at least 2 characters to search for study buddies.
-            </p>
-          </div>
-        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AnimatePresence mode="popLayout">
+            {displayUsers.map((user) => (
+              <UserCard
+                key={user.id}
+                profile={user}
+                relationshipStatus={
+                  activeTab === 'friends'
+                    ? 'friends'
+                    : (friendshipStatuses[user.id] as any) || 'none'
+                }
+                onAdd={handleAddFriend}
+                showMessageButton={activeTab === 'friends'}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
       )}
-
-      {/* Friend Requests Inbox */}
-      <FriendRequestsInbox
-        requests={friendRequests}
-        isOpen={showRequestsInbox}
-        onClose={() => setShowRequestsInbox(false)}
-        onRespond={handleRespondToRequest}
-      />
-
-      {/* Floating Profile Panel */}
-      <FloatingProfilePanel
-        isOpen={!!selectedUserId}
-        onClose={() => setSelectedUserId(null)}
-        userId={selectedUserId || ''}
-      />
     </div>
   );
-};
-
-export default TemanKuPage;
+}
