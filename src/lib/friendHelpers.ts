@@ -2,8 +2,8 @@ import { supabase } from '../integrations/supabase/client';
 
 export interface FriendRequest {
   id: string;
-  requester: string;
-  recipient: string;
+  sender_id: string;
+  receiver_id: string;
   status: 'pending' | 'accepted' | 'declined';
   message?: string | null;
   created_at: string | null;
@@ -24,7 +24,7 @@ export interface FriendRequest {
 }
 
 export interface Friend {
-  id: number;
+  id: string;
   user_id: string;
   friend_id: string;
   created_at: string;
@@ -55,14 +55,14 @@ export interface RecommendedUser {
 /**
  * Send a friend request to another user
  */
-export async function sendFriendRequest(senderId: string, receiverId: string) {
+export async function sendFriendRequest(senderId: string, receiverId: string, message?: string) {
   try {
     // Check if request already exists
     const { data: existingRequest } = await supabase
       .from('friend_requests')
       .select('*')
-      .eq('requester', senderId)
-      .eq('recipient', receiverId)
+      .eq('sender_id', senderId)
+      .eq('receiver_id', receiverId)
       .eq('status', 'pending')
       .maybeSingle();
 
@@ -70,12 +70,12 @@ export async function sendFriendRequest(senderId: string, receiverId: string) {
       return { data: null, error: new Error('Friend request already sent') };
     }
 
-    // Check if already friends (using old schema)
+    // Check if already friends
     const { data: existingFriend } = await supabase
       .from('friends')
       .select('*')
-      .or(`and(from_user.eq.${senderId},to_user.eq.${receiverId}),and(from_user.eq.${receiverId},to_user.eq.${senderId})`)
-      .eq('status', 'accepted')
+      .eq('user_id', senderId)
+      .eq('friend_id', receiverId)
       .maybeSingle();
 
     if (existingFriend) {
@@ -84,7 +84,7 @@ export async function sendFriendRequest(senderId: string, receiverId: string) {
 
     const { data, error } = await supabase
       .from('friend_requests')
-      .insert([{ requester: senderId, recipient: receiverId }])
+      .insert([{ sender_id: senderId, receiver_id: receiverId, message } as any])
       .select()
       .single();
 
@@ -97,6 +97,7 @@ export async function sendFriendRequest(senderId: string, receiverId: string) {
 
 /**
  * Respond to a friend request (accept or decline)
+ * Note: Trigger will automatically create mutual friendships on accept
  */
 export async function respondFriendRequest(
   requestId: string,
@@ -106,22 +107,17 @@ export async function respondFriendRequest(
   try {
     const status = action === 'accept' ? 'accepted' : 'declined';
 
-    // Update friend request status
+    // Update friend request status (trigger handles friendship creation & notifications)
     const { data: request, error: updateError } = await supabase
       .from('friend_requests')
       .update({ status })
       .eq('id', requestId)
-      .eq('recipient', currentUserId)
+      .eq('receiver_id', currentUserId)
       .select()
       .single();
 
     if (updateError) {
       return { data: null, error: updateError };
-    }
-
-    // If accepted, create mutual friendship using old friends schema
-    if (action === 'accept' && request) {
-      await createFriendPair(request.requester, request.recipient);
     }
 
     return { data: request, error: null };
@@ -132,13 +128,14 @@ export async function respondFriendRequest(
 }
 
 /**
- * Create mutual friendship between two users (using old friends schema)
+ * Create mutual friendship between two users (called manually if needed)
+ * Note: Usually triggered automatically by friend_request acceptance
  */
 export async function createFriendPair(userId: string, friendId: string) {
   try {
     const { error } = await supabase.from('friends').insert([
-      { from_user: userId, to_user: friendId, status: 'accepted' },
-      { from_user: friendId, to_user: userId, status: 'accepted' },
+      { user_id: userId, friend_id: friendId } as any,
+      { user_id: friendId, friend_id: userId } as any,
     ]);
 
     if (error) {
@@ -163,7 +160,7 @@ export async function getPendingRequests(userId: string): Promise<FriendRequest[
       .select(
         `
         *,
-        sender:requester (
+        sender:sender_id (
           id,
           username,
           full_name,
@@ -173,7 +170,7 @@ export async function getPendingRequests(userId: string): Promise<FriendRequest[
         )
       `
       )
-      .eq('recipient', userId)
+      .eq('receiver_id', userId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
@@ -186,7 +183,7 @@ export async function getPendingRequests(userId: string): Promise<FriendRequest[
 }
 
 /**
- * Get all friends for current user (using old friends schema)
+ * Get all friends for current user
  */
 export async function getFriends(userId: string): Promise<Friend[]> {
   try {
@@ -195,7 +192,7 @@ export async function getFriends(userId: string): Promise<Friend[]> {
       .select(
         `
         *,
-        friend:to_user (
+        friend:friend_id (
           id,
           username,
           full_name,
@@ -207,8 +204,7 @@ export async function getFriends(userId: string): Promise<Friend[]> {
         )
       `
       )
-      .eq('from_user', userId)
-      .eq('status', 'accepted')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -238,19 +234,19 @@ export async function fetchRecommendedFriends(userId: string): Promise<Recommend
 }
 
 /**
- * Check friendship status between two users (using old friends schema)
+ * Check friendship status between two users
  */
 export async function getFriendshipStatus(
   userId: string,
   otherUserId: string
 ): Promise<'none' | 'pending_sent' | 'pending_received' | 'friends'> {
   try {
-    // Check if friends (using old schema)
+    // Check if friends
     const { data: friendData } = await supabase
       .from('friends')
       .select('*')
-      .or(`and(from_user.eq.${userId},to_user.eq.${otherUserId}),and(from_user.eq.${otherUserId},to_user.eq.${userId})`)
-      .eq('status', 'accepted')
+      .eq('user_id', userId)
+      .eq('friend_id', otherUserId)
       .maybeSingle();
 
     if (friendData) return 'friends';
@@ -259,8 +255,8 @@ export async function getFriendshipStatus(
     const { data: sentRequest } = await supabase
       .from('friend_requests')
       .select('*')
-      .eq('requester', userId)
-      .eq('recipient', otherUserId)
+      .eq('sender_id', userId)
+      .eq('receiver_id', otherUserId)
       .eq('status', 'pending')
       .maybeSingle();
 
@@ -270,8 +266,8 @@ export async function getFriendshipStatus(
     const { data: receivedRequest } = await supabase
       .from('friend_requests')
       .select('*')
-      .eq('requester', otherUserId)
-      .eq('recipient', userId)
+      .eq('sender_id', otherUserId)
+      .eq('receiver_id', userId)
       .eq('status', 'pending')
       .maybeSingle();
 
@@ -285,17 +281,23 @@ export async function getFriendshipStatus(
 }
 
 /**
- * Remove a friend (using old friends schema)
+ * Remove a friend (both directions)
  */
 export async function removeFriend(userId: string, friendId: string) {
   try {
     // Remove both directions of friendship
-    const { error } = await supabase
+    await supabase
       .from('friends')
       .delete()
-      .or(`and(from_user.eq.${userId},to_user.eq.${friendId}),and(from_user.eq.${friendId},to_user.eq.${userId})`);
+      .eq('user_id', userId)
+      .eq('friend_id', friendId);
 
-    if (error) throw error;
+    await supabase
+      .from('friends')
+      .delete()
+      .eq('user_id', friendId)
+      .eq('friend_id', userId);
+
     return { error: null };
   } catch (error) {
     console.error('Error removing friend:', error);
