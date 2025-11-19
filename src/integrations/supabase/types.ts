@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_members: {
         Row: {
           conversation_id: string
@@ -213,40 +252,40 @@ export type Database = {
           created_at: string | null
           id: string
           message: string | null
-          recipient: string
-          requester: string
-          status: string
+          receiver_id: string
+          sender_id: string
+          status: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           message?: string | null
-          recipient: string
-          requester: string
-          status?: string
+          receiver_id: string
+          sender_id: string
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           message?: string | null
-          recipient?: string
-          requester?: string
-          status?: string
+          receiver_id?: string
+          sender_id?: string
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "friend_requests_recipient_fkey"
-            columns: ["recipient"]
+            foreignKeyName: "friend_requests_receiver_id_fkey"
+            columns: ["receiver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "friend_requests_requester_fkey"
-            columns: ["requester"]
+            foreignKeyName: "friend_requests_sender_id_fkey"
+            columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -254,45 +293,6 @@ export type Database = {
         ]
       }
       friends: {
-        Row: {
-          created_at: string | null
-          from_user: string | null
-          id: string
-          status: string | null
-          to_user: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          from_user?: string | null
-          id?: string
-          status?: string | null
-          to_user?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          from_user?: string | null
-          id?: string
-          status?: string | null
-          to_user?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "friends_from_user_fkey"
-            columns: ["from_user"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "friends_to_user_fkey"
-            columns: ["to_user"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      friendships: {
         Row: {
           created_at: string | null
           friend_id: string
@@ -313,14 +313,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "friendships_friend_id_fkey"
+            foreignKeyName: "friends_friend_id_fkey"
             columns: ["friend_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "friendships_user_id_fkey"
+            foreignKeyName: "friends_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -689,6 +689,64 @@ export type Database = {
           },
         ]
       }
+      user_reports: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          report_type: string
+          reported_id: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          report_type: string
+          reported_id: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          report_type?: string
+          reported_id?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -766,9 +824,18 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: boolean
       }
+      are_friends_v2: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
       award_badge: {
         Args: { p_badge_name: string; p_user_id: string }
         Returns: undefined
+      }
+      check_dm_limit: { Args: { p_user_id: string }; Returns: boolean }
+      check_friend_request_rate_limit: {
+        Args: { p_sender_id: string }
+        Returns: boolean
       }
       create_room_and_join: {
         Args: {
@@ -808,6 +875,20 @@ export type Database = {
         Returns: boolean
       }
       join_room_safe: { Args: { p_room_identifier: string }; Returns: Json }
+      recommend_friends: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          full_name: string
+          id: string
+          interests: string[]
+          level: number
+          score: number
+          username: string
+          xp: number
+        }[]
+      }
       recommendations_for_user: {
         Args: { p_limit?: number; p_user: string }
         Returns: {

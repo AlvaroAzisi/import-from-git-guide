@@ -1,135 +1,277 @@
 import { supabase } from '../integrations/supabase/client';
-import type { UserProfile } from './auth';
 import { logError } from './errorHandler';
+import type { Tables, TablesInsert } from '../integrations/supabase/types';
 
-export interface Friend extends UserProfile {
-  friendship_created_at: string;
-}
+// ============================================================================
+// TYPES
+// ============================================================================
 
-export interface FriendRequest {
-  id: string;
-  requester: string;
-  recipient: string;
-  message?: string | null;
-  status: string;
-  created_at: string | null;
-  updated_at: string | null;
-  requester_profile?: FriendRequestProfile;
-  recipient_profile?: FriendRequestProfile;
-}
+export type FriendRequest = Tables<'friend_requests'> & {
+  sender?: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url?: string | null;
+  };
+  receiver?: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url?: string | null;
+  };
+};
 
-export interface DirectChat {
-  id: string;
-  user_a: string;
-  user_b: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface DirectMessageProfile {
-  id: string;
-  username: string;
-  full_name: string;
-  avatar_url: string | null;
-}
-
-export interface DirectMessage {
-  id: string;
-  chat_id: string;
-  sender: string | null;
-  content: string;
-  created_at: string | null;
-  sender_profile?: DirectMessageProfile | null;
-}
-
-export interface FriendRequestProfile {
-  id: string;
-  username: string;
-  full_name: string;
-  avatar_url: string | null;
-  bio: string | null;
-  interests: string[] | null;
-  xp: number | null;
-  level: number | null;
-}
+export type Friendship = Tables<'friends'> & {
+  friend_profile?: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url?: string | null;
+    bio?: string | null;
+    xp?: number | null;
+    level?: number | null;
+    interests?: string[] | null;
+  };
+};
 
 export interface RecommendedUser {
   id: string;
   username: string;
   full_name: string;
-  avatar_url: string | null;
-  bio: string | null;
-  interests: string[];
-  last_active_at: string | null;
-  xp: number | null;
-  level: number | null;
-  score: number;
+  avatar_url?: string | null;
+  bio?: string | null;
+  xp?: number | null;
+  level?: number | null;
+  interests?: string[] | null;
+  score?: number;
 }
 
-// Get all accepted friends for current user
-export const getFriends = async (): Promise<Friend[]> => {
+export type FriendshipStatus =
+  | 'none'
+  | 'pending_sent'
+  | 'pending_received'
+  | 'friends'
+  | 'blocked';
+
+// ============================================================================
+// FRIEND REQUESTS
+// ============================================================================
+
+export const sendFriendRequest = async (
+  receiverId: string,
+  message?: string
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    if (user.id === receiverId) {
+      return { success: false, error: 'Cannot send friend request to yourself' };
+    }
+
+    const payload: TablesInsert<'friend_requests'> = {
+      sender_id: user.id,
+      receiver_id: receiverId,
+      message: message || null,
+      status: 'pending',
+    };
+
+    const { error } = await supabase.from('friend_requests').insert(payload);
+
+    if (error) {
+      if (error.message.includes('Rate limit')) {
+        return { success: false, error: 'Too many requests. Please wait before sending more.' };
+      }
+      if (error.message.includes('blocked')) {
+        return { success: false, error: 'Cannot send request to this user' };
+      }
+      if (error.message.includes('duplicate')) {
+        return { success: false, error: 'Friend request already sent' };
+      }
+      logError('sendFriendRequest', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    logError('sendFriendRequest', error);
+    return { success: false, error: error.message || 'Failed to send friend request' };
+  }
+};
+
+export const respondToFriendRequest = async (
+  requestId: string,
+  accept: boolean
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase
+      .from('friend_requests')
+      .update({ status: accept ? 'accepted' : 'declined' })
+      .eq('id', requestId)
+      .eq('receiver_id', user.id);
+
+    if (error) {
+      logError('respondToFriendRequest', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    logError('respondToFriendRequest', error);
+    return { success: false, error: error.message || 'Failed to respond to friend request' };
+  }
+};
+
+export const getPendingFriendRequests = async (): Promise<FriendRequest[]> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) return [];
 
-    // Query friendships table
     const { data, error } = await supabase
-      .from('friendships')
-      .select(`
-        created_at,
-        friend:profiles!friendships_friend_id_fkey(
+      .from('friend_requests')
+      .select(
+        `
+        *,
+        sender:profiles!friend_requests_sender_id_fkey(
+          id,
+          username,
+          full_name,
+          avatar_url
+        )
+      `
+      )
+      .eq('receiver_id', user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logError('getPendingFriendRequests', error);
+      return [];
+    }
+
+    return (data || []).map((req: any) => ({
+      ...req,
+      sender: Array.isArray(req.sender) ? req.sender[0] : req.sender,
+    })) as FriendRequest[];
+  } catch (error) {
+    logError('getPendingFriendRequests', error);
+    return [];
+  }
+};
+
+// ============================================================================
+// FRIENDSHIPS
+// ============================================================================
+
+export const getFriends = async (): Promise<Friendship[]> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('friends')
+      .select(
+        `
+        *,
+        friend_profile:profiles!friends_friend_id_fkey(
           id,
           username,
           full_name,
           avatar_url,
-          status,
           bio,
           xp,
           level,
           interests
         )
-      `)
-      .eq('user_id', user.id);
+      `
+      )
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
     if (error) {
       logError('getFriends', error);
       return [];
     }
 
-    const friends: Friend[] = (data || [])
-      .map((item: any) => ({
-        ...(item.friend || {}),
-        friendship_created_at: item.created_at,
-      }))
-      .filter(f => f.id);
-
-    return friends;
+    return (data || []).map((friendship: any) => ({
+      ...friendship,
+      friend_profile: Array.isArray(friendship.friend_profile)
+        ? friendship.friend_profile[0]
+        : friendship.friend_profile,
+    })) as Friendship[];
   } catch (error) {
-    logError('getFriends:catch', error);
+    logError('getFriends', error);
     return [];
   }
 };
 
-// Get friendship status between current user and another user
-export const getFriendshipStatus = async (userId: string): Promise<'self' | 'friend' | 'request_sent' | 'request_received' | 'none'> => {
+export const getFriendshipStatus = async (otherUserId: string): Promise<FriendshipStatus> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) return 'none';
-    if (user.id === userId) return 'self';
 
-    // Check all statuses in parallel
-    const [friendRes, sentRes, recvRes] = await Promise.all([
-      supabase.from('friendships').select('*').eq('user_id', user.id).eq('friend_id', userId).maybeSingle(),
-      supabase.from('friend_requests').select('*').eq('requester', user.id).eq('recipient', userId).eq('status', 'pending').maybeSingle(),
-      supabase.from('friend_requests').select('*').eq('requester', userId).eq('recipient', user.id).eq('status', 'pending').maybeSingle()
-    ]);
+    // Check if blocked
+    const { data: blocked } = await supabase
+      .from('blocked_users')
+      .select('id')
+      .or(`and(blocker_id.eq.${user.id},blocked_id.eq.${otherUserId}),and(blocker_id.eq.${otherUserId},blocked_id.eq.${user.id})`)
+      .maybeSingle();
 
-    if (friendRes.data) return 'friend';
-    if (sentRes.data) return 'request_sent';
-    if (recvRes.data) return 'request_received';
-    
+    if (blocked) return 'blocked';
+
+    // Check friendship
+    const { data: friendship } = await supabase
+      .from('friends')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('friend_id', otherUserId)
+      .maybeSingle();
+
+    if (friendship) return 'friends';
+
+    // Check pending requests
+    const { data: sentRequest } = await supabase
+      .from('friend_requests')
+      .select('id')
+      .eq('sender_id', user.id)
+      .eq('receiver_id', otherUserId)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (sentRequest) return 'pending_sent';
+
+    const { data: receivedRequest } = await supabase
+      .from('friend_requests')
+      .select('id')
+      .eq('sender_id', otherUserId)
+      .eq('receiver_id', user.id)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (receivedRequest) return 'pending_received';
+
     return 'none';
   } catch (error) {
     logError('getFriendshipStatus', error);
@@ -137,256 +279,160 @@ export const getFriendshipStatus = async (userId: string): Promise<'self' | 'fri
   }
 };
 
-// Send a friend request
-export const sendFriendRequest = async (toUserId: string, message?: string) => {
+export const removeFriend = async (friendId: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
-      throw new Error('Not authenticated');
+      return { success: false, error: 'Not authenticated' };
     }
 
-    if (user.id === toUserId) {
-      throw new Error('Cannot send friend request to yourself');
-    }
-
-    // Input validation for message
-    if (message) {
-      const trimmedMessage = message.trim();
-      if (trimmedMessage.length > 500) {
-        throw new Error('Friend request message is too long (maximum 500 characters)');
-      }
-      message = trimmedMessage;
-    }
-
-    // Check if friendship already exists
-    const status = await getFriendshipStatus(toUserId);
-    
-    if (status === 'friend') {
-      throw new Error('Already friends');
-    }
-    
-    if (status === 'request_sent') {
-      throw new Error('Friend request already sent');
-    }
-
-    // Send friend request using new schema
-    const { data, error } = await supabase
-      .from('friend_requests')
-      .insert({
-        requester: user.id,
-        recipient: toUserId,
-        message: message || null,
-        status: 'pending',
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { data, error: null };
-  } catch (error: any) {
-    logError('sendFriendRequest', error);
-    throw error;
-  }
-};
-
-// Respond to friend request (accept or decline)
-export const respondToFriendRequest = async (requestId: string, accept: boolean) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
-
-    const status = accept ? 'accepted' : 'declined';
-    const { data, error } = await supabase
-      .from('friend_requests')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', requestId)
-      .eq('recipient', user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { data, error: null };
-  } catch (error: any) {
-    console.error('Error in respondToFriendRequest:', error);
-    throw error;
-  }
-};
-
-// Get pending friend requests for current user
-export const getPendingFriendRequests = async (): Promise<FriendRequest[]> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return [];
-
-    const { data, error } = await supabase
-      .from('friend_requests')
-      .select(`
-        *,
-        requester_profile:profiles!friend_requests_requester_fkey(
-          id,
-          username,
-          full_name,
-          avatar_url,
-          bio,
-          interests,
-          xp,
-          level
-        )
-      `)
-      .eq('recipient', user.id)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+    // Delete both directions of the friendship
+    const { error } = await supabase
+      .from('friends')
+      .delete()
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
     if (error) {
-      console.error('Error fetching friend requests:', error);
-      return [];
+      logError('removeFriend', error);
+      return { success: false, error: error.message };
     }
 
-    return data || [];
-  } catch (error) {
-    console.error('Error in getPendingFriendRequests:', error);
-    return [];
+    return { success: true };
+  } catch (error: any) {
+    logError('removeFriend', error);
+    return { success: false, error: error.message || 'Failed to remove friend' };
   }
 };
 
-// Get user recommendations
+// ============================================================================
+// RECOMMENDATIONS
+// ============================================================================
+
 export const getRecommendations = async (limit = 20): Promise<RecommendedUser[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) return [];
 
-    const { data, error } = await supabase.rpc('recommendations_for_user', {
-      p_user: user.id,
-      p_limit: limit
+    const { data, error } = await supabase.rpc('recommend_friends', {
+      p_user_id: user.id,
+      p_limit: limit,
     });
 
     if (error) {
-      console.error('Error fetching recommendations:', error);
+      logError('getRecommendations', error);
       return [];
     }
 
-    return data || [];
+    return (data || []) as RecommendedUser[];
   } catch (error) {
-    console.error('Error in getRecommendations:', error);
+    logError('getRecommendations', error);
     return [];
   }
 };
 
-// Find or create direct chat
-export const findOrCreateDirectChat = async (otherUserId: string): Promise<string> => {
+// ============================================================================
+// SEARCH
+// ============================================================================
+
+export const searchUsers = async (query: string): Promise<RecommendedUser[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase.rpc('find_or_create_direct_chat', {
-      p_user_a: user.id,
-      p_user_b: otherUserId
-    });
+    if (!user) return [];
 
-    if (error) throw error;
+    const searchQuery = query.trim();
+    if (!searchQuery) return [];
 
-    return data;
-  } catch (error: any) {
-    console.error('Error in findOrCreateDirectChat:', error);
-    throw error;
-  }
-};
-
-// Send direct message
-export const sendDirectMessage = async (chatId: string, content: string) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
-
-    // Input validation
-    const trimmedContent = content.trim();
-    if (!trimmedContent) {
-      throw new Error('Message cannot be empty');
-    }
-    if (trimmedContent.length > 5000) {
-      throw new Error('Message is too long (maximum 5000 characters)');
-    }
-
-    const { data, error } = await supabase
-      .from('direct_messages')
-      .insert({
-        chat_id: chatId,
-        sender: user.id,
-        content: trimmedContent
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { data, error: null };
-  } catch (error: any) {
-    console.error('Error in sendDirectMessage:', error);
-    throw error;
-  }
-};
-
-// Get direct messages for a chat
-export const getDirectMessages = async (chatId: string, limit = 50): Promise<DirectMessage[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('direct_messages')
-      .select(`
-        *,
-        sender_profile:profiles!direct_messages_sender_fkey(
-          id,
-          username,
-          full_name,
-          avatar_url
-        )
-      `)
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    const { data, error} = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url, bio, xp, level, interests')
+      .or(`username.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`)
+      .neq('id', user.id)
+      .eq('is_deleted', false)
+      .limit(20);
 
     if (error) {
-      console.error('Error fetching messages:', error);
+      logError('searchUsers', error);
       return [];
     }
 
-    return (data || []).reverse();
+    return (data || []) as RecommendedUser[];
   } catch (error) {
-    console.error('Error in getDirectMessages:', error);
+    logError('searchUsers', error);
     return [];
   }
 };
 
-// Remove a friend
-export const removeFriend = async (friendId: string): Promise<boolean> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return false;
+// ============================================================================
+// BLOCKING
+// ============================================================================
 
-    // Delete friendship (only need to delete one direction, cascade will handle it)
-    await supabase
-      .from('friendships')
+export const blockUser = async (
+  blockedId: string,
+  reason?: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase.from('blocked_users').insert({
+      blocker_id: user.id,
+      blocked_id: blockedId,
+      reason: reason || null,
+    });
+
+    if (error) {
+      logError('blockUser', error);
+      return { success: false, error: error.message };
+    }
+
+    // Remove friendship if exists
+    await removeFriend(blockedId);
+
+    return { success: true };
+  } catch (error: any) {
+    logError('blockUser', error);
+    return { success: false, error: error.message || 'Failed to block user' };
+  }
+};
+
+export const unblockUser = async (blockedId: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase
+      .from('blocked_users')
       .delete()
-      .eq('user_id', user.id)
-      .eq('friend_id', friendId);
+      .eq('blocker_id', user.id)
+      .eq('blocked_id', blockedId);
 
-    return true;
-  } catch (error) {
-    console.error('Error in removeFriend:', error);
-    return false;
+    if (error) {
+      logError('unblockUser', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    logError('unblockUser', error);
+    return { success: false, error: error.message || 'Failed to unblock user' };
   }
 };
