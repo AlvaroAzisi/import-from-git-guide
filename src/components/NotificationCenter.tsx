@@ -4,7 +4,7 @@ import { Bell, UserPlus, MessageCircle, Users, X, Check, XCircle } from 'lucide-
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { useNavigate } from 'react-router-dom';
-import { acceptFriendRequest, rejectFriendRequest } from '../lib/friendRequests';
+import { respondToFriendRequest } from '../lib/friends';
 import { useToast } from '../hooks/useToast';
 import { validateNotification, type ValidatedNotification } from '../lib/notificationValidator';
 

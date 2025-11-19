@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getFriends, removeFriend } from '../../lib/friends';
-import type { UserProfile } from '../../lib/auth';
+import { getFriends, removeFriend, type Friendship } from '../../lib/friends';
 import { useToast } from '../../hooks/useToast';
 
 const FriendList: React.FC = () => {
-  const [friends, setFriends] = useState<UserProfile[]>([]);
+  const [friends, setFriends] = useState<Friendship[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -27,16 +26,11 @@ const FriendList: React.FC = () => {
 
   const handleRemoveFriend = async (friendId: string) => {
     if (window.confirm('Are you sure you want to remove this friend?')) {
-      try {
-        const success = await removeFriend(friendId);
-        if (success) {
-          setFriends(friends.filter(friend => friend.id !== friendId));
-          toast({ title: 'Success', description: 'Friend removed.' });
-        } else {
-          toast({ title: 'Error', description: 'Failed to remove friend.', variant: 'destructive' });
-        }
-      } catch (error) {
-        console.error('Error removing friend:', error);
+      const { success } = await removeFriend(friendId);
+      if (success) {
+        setFriends(friends.filter(f => f.friend_id !== friendId));
+        toast({ title: 'Success', description: 'Friend removed.' });
+      } else {
         toast({ title: 'Error', description: 'Failed to remove friend.', variant: 'destructive' });
       }
     }
@@ -58,13 +52,13 @@ const FriendList: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <img
                   className="w-10 h-10 rounded-full object-cover"
-                  src={friend.avatar_url || `https://i.pravatar.cc/150?u=${friend.id}`}
-                  alt={friend.username}
+                  src={friend.friend_profile?.avatar_url || `https://i.pravatar.cc/150?u=${friend.friend_id}`}
+                  alt={friend.friend_profile?.username || 'User'}
                 />
-                <span>{friend.username}</span>
+                <span>{friend.friend_profile?.username}</span>
               </div>
               <button
-                onClick={() => handleRemoveFriend(friend.id)}
+                onClick={() => handleRemoveFriend(friend.friend_id)}
                 className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
               >
                 Remove

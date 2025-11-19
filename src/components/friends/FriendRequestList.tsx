@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFriendRequests, acceptFriendRequest, rejectFriendRequest, type FriendRequest } from '../../lib/friendRequests';
+import { getPendingFriendRequests, respondToFriendRequest, type FriendRequest } from '../../lib/friends';
 import { useToast } from '../../hooks/useToast';
 
 const FriendRequestList: React.FC = () => {
@@ -10,7 +10,7 @@ const FriendRequestList: React.FC = () => {
   const fetchRequests = async () => {
     setLoading(true);
     try {
-      const fetchedRequests = await getFriendRequests();
+      const fetchedRequests = await getPendingFriendRequests();
       setRequests(fetchedRequests);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
@@ -25,31 +25,21 @@ const FriendRequestList: React.FC = () => {
   }, []);
 
   const handleAccept = async (requestId: string) => {
-    try {
-      const success = await acceptFriendRequest(requestId);
-      if (success) {
-        toast({ title: 'Success', description: 'Friend request accepted.' });
-        fetchRequests(); // Refresh the list
-      } else {
-        toast({ title: 'Error', description: 'Failed to accept request.', variant: 'destructive' });
-      }
-    } catch (error) {
-      console.error('Error accepting request:', error);
+    const { success } = await respondToFriendRequest(requestId, true);
+    if (success) {
+      toast({ title: 'Success', description: 'Friend request accepted.' });
+      fetchRequests();
+    } else {
       toast({ title: 'Error', description: 'Failed to accept request.', variant: 'destructive' });
     }
   };
 
   const handleReject = async (requestId: string) => {
-    try {
-      const success = await rejectFriendRequest(requestId);
-      if (success) {
-        toast({ title: 'Success', description: 'Friend request rejected.' });
-        fetchRequests(); // Refresh the list
-      } else {
-        toast({ title: 'Error', description: 'Failed to reject request.', variant: 'destructive' });
-      }
-    } catch (error) {
-      console.error('Error rejecting request:', error);
+    const { success } = await respondToFriendRequest(requestId, false);
+    if (success) {
+      toast({ title: 'Success', description: 'Friend request rejected.' });
+      fetchRequests();
+    } else {
       toast({ title: 'Error', description: 'Failed to reject request.', variant: 'destructive' });
     }
   };
