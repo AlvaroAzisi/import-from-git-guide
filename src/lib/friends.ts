@@ -53,6 +53,24 @@ export type FriendshipStatus =
   | 'friends'
   | 'blocked';
 
+// Direct Message types
+export interface DirectMessage {
+  id: string;
+  chat_id: string;
+  sender: string | null;
+  content: string;
+  created_at: string | null;
+  sender_profile?: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url?: string | null;
+  } | null;
+}
+
+// Friend type for chat components
+export type Friend = Friendship['friend_profile'];
+
 // ============================================================================
 // FRIEND REQUESTS
 // ============================================================================
@@ -368,6 +386,85 @@ export const searchUsers = async (query: string): Promise<RecommendedUser[]> => 
   } catch (error) {
     logError('searchUsers', error);
     return [];
+  }
+};
+
+// ============================================================================
+// DIRECT MESSAGES
+// ============================================================================
+
+export const findOrCreateDirectChat = async (otherUserId: string): Promise<string> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.rpc('find_or_create_direct_chat', {
+      p_user_a: user.id,
+      p_user_b: otherUserId,
+    });
+
+    if (error) throw error;
+    return data as string;
+  } catch (error) {
+    logError('findOrCreateDirectChat', error);
+    throw error;
+  }
+};
+
+export const getDirectMessages = async (chatId: string): Promise<DirectMessage[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select(`
+        *,
+        sender_profile:profiles!sender(id, username, full_name, avatar_url)
+      `)
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      logError('getDirectMessages', error);
+      return [];
+    }
+
+    return (data || []).map((msg: any) => ({
+      ...msg,
+      sender_profile: Array.isArray(msg.sender_profile) ? msg.sender_profile[0] : msg.sender_profile,
+    })) as DirectMessage[];
+  } catch (error) {
+    logError('getDirectMessages', error);
+    return [];
+  }
+};
+
+export const sendDirectMessage = async (chatId: string, content: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const { error } = await supabase.from('direct_messages').insert({
+      chat_id: chatId,
+      sender: user.id,
+      content,
+    });
+
+    if (error) {
+      logError('sendDirectMessage', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    logError('sendDirectMessage', error);
+    return { success: false, error: error.message || 'Failed to send message' };
   }
 };
 

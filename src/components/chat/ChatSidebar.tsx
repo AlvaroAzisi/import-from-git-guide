@@ -66,7 +66,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations = [], ac
                 <div className="relative">
                   <div className="w-8 h-8 md:w-10 md:h-10 2xl:w-12 2xl:h-12 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
                     <span className="text-xs md:text-sm 2xl:text-base font-semibold text-foreground">
-                      {convo.name.charAt(0).toUpperCase()}
+                      {(convo.name || 'C').charAt(0).toUpperCase()}
                     </span>
                   </div>
                   {onlineUsers.includes(convo.id) && (

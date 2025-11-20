@@ -78,7 +78,7 @@ export const NotificationCenter: React.FC = () => {
     setProcessingNotification(notification.id);
     
     try {
-      const { error } = await acceptFriendRequest(friendshipId);
+      const { success, error } = await respondToFriendRequest(friendshipId, true);
       
       if (error) {
         throw new Error(error);
@@ -127,7 +127,7 @@ export const NotificationCenter: React.FC = () => {
     setProcessingNotification(notification.id);
     
     try {
-      const { error } = await rejectFriendRequest(friendshipId);
+      const { success, error } = await respondToFriendRequest(friendshipId, false);
       
       if (error) {
         throw new Error(error);
