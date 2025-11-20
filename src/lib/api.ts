@@ -147,22 +147,25 @@ export const getFriends = async (): Promise<UserProfile[]> => {
       .from('friends')
       .select(
         `
-        to_user,
-        from_user,
-        to_profile:profiles!to_user(*),
-        from_profile:profiles!from_user(*)
+        *,
+        friend_profile:profiles!friend_id(
+          id,
+          username,
+          full_name,
+          avatar_url,
+          bio,
+          xp,
+          level,
+          interests
+        )
       `
       )
-      .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
-      .eq('status', 'accepted');
+      .eq('user_id', user.id);
 
     if (error) throw error;
 
-    // TODO removed redundant logic - get the friend profile (not current user)
     return (data || [])
-      .map((item) => {
-        return item.from_user === user.id ? item.to_profile : item.from_profile;
-      })
+      .map((item: any) => item.friend_profile)
       .filter(Boolean) as UserProfile[];
   } catch (error) {
     console.error('Get friends error:', error);

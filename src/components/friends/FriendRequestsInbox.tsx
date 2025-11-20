@@ -101,19 +101,6 @@ export const FriendRequestsInbox: React.FC<FriendRequestsInboxProps> = ({
                       </div>
                     )}
 
-                    {/* Interests */}
-                    {request.sender?.interests && request.sender.interests.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {request.sender.interests.slice(0, 3).map((interest: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
-                          >
-                            {interest}
-                          </span>
-                        ))}
-                      </div>
-                    )}
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
