@@ -60,7 +60,7 @@ const FriendRequestList: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <img
                   className="w-10 h-10 rounded-full object-cover"
-                  src={request.sender?.avatar_url || `https://i.pravatar.cc/150?u=${request.from_user}`}
+                  src={request.sender?.avatar_url || `https://i.pravatar.cc/150?u=${request.sender_id}`}
                   alt={request.sender?.username}
                 />
                 <span>{request.sender?.username || 'Unknown'}</span>

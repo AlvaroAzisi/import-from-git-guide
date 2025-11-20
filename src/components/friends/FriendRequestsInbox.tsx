@@ -76,18 +76,18 @@ export const FriendRequestsInbox: React.FC<FriendRequestsInboxProps> = ({
                     <div className="flex items-start gap-3">
                       <img
                         src={
-                          request.requester_profile?.avatar_url ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(request.requester_profile?.full_name || 'User')}&background=random`
+                          request.sender?.avatar_url ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(request.sender?.full_name || 'User')}&background=random`
                         }
-                        alt={request.requester_profile?.full_name}
+                        alt={request.sender?.full_name}
                         className="w-12 h-12 rounded-xl object-cover border-2 border-border/20"
                       />
                       <div className="flex-1">
                         <h3 className="font-bold text-foreground">
-                          {request.requester_profile?.full_name}
+                          {request.sender?.full_name}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          @{request.requester_profile?.username}
+                          @{request.sender?.username}
                         </p>
                       </div>
                     </div>
@@ -102,9 +102,9 @@ export const FriendRequestsInbox: React.FC<FriendRequestsInboxProps> = ({
                     )}
 
                     {/* Interests */}
-                    {request.requester_profile?.interests && request.requester_profile.interests.length > 0 && (
+                    {request.sender?.interests && request.sender.interests.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {request.requester_profile.interests.slice(0, 3).map((interest: string, idx: number) => (
+                        {request.sender.interests.slice(0, 3).map((interest: string, idx: number) => (
                           <span
                             key={idx}
                             className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
@@ -118,14 +118,14 @@ export const FriendRequestsInbox: React.FC<FriendRequestsInboxProps> = ({
                     {/* Action Buttons */}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => onRespond(request.id, true, request.requester)}
+                        onClick={() => onRespond(request.id, true, request.sender_id)}
                         className="flex-1 py-2 px-4 bg-primary hover:opacity-90 text-primary-foreground rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         <UserCheck className="w-4 h-4" />
                         Accept
                       </button>
                       <button
-                        onClick={() => onRespond(request.id, false, request.requester)}
+                        onClick={() => onRespond(request.id, false, request.sender_id)}
                         className="flex-1 py-2 px-4 bg-muted hover:bg-muted/80 text-muted-foreground rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         <UserX className="w-4 h-4" />
