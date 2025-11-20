@@ -23,10 +23,7 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import TemanKuPage from './pages/TemanKuPage';
 import RuangkuPage from './pages/RuangkuPage';
-import ChatPage from './pages/ChatPage';
-
-// New Route Pages
-import { ChatListPage } from './routes/chat/ChatListPage';
+// Removed deprecated chat imports - using new consolidated chat system
 import { ChatRedirectPage } from './routes/chat/ChatRedirectPage';
 import { RoomListPage } from './routes/rooms/RoomListPage';
 import { OnboardingPage } from './routes/onboarding/OnboardingPage';
@@ -88,11 +85,8 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           
-          {/* Chat System */}
-          <Route path="/chat" element={<ChatListPage />} />
-          <Route path="/chat/:userId" element={<ChatPage />} />
+          {/* Chat System - Using ChatRedirectPage for all chat routes */}
           <Route path="/chat/@:username" element={<ChatRedirectPage />} />
-          <Route path="/chat/group/:groupId" element={<ChatPage />} />
           
           {/* Room System */}
           <Route path="/ruangku" element={<RoomListPage />} />
